@@ -1,0 +1,285 @@
+/* ==========================================================================
+   gallery.css — past editions I–IX: numeral marquee, filterable masonry,
+   testimonial tiles set inside the grid rather than in a separate slab.
+   Module: src/modules/gallery.js
+   ========================================================================== */
+
+/* --- Numeral marquee -----------------------------------------------------
+   Nine editions running into the tenth: the hero mark restated as rhythm.
+   Decorative, aria-hidden, and paused entirely under reduced motion. */
+.gallery__marquee {
+  position: relative;
+  overflow: hidden;
+  margin-block-end: clamp(var(--sp-6), 4vw, var(--sp-8));
+  padding-block: var(--sp-3);
+  border-block: 1px solid var(--color-border);
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.gallery__marquee-track {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(var(--sp-5), 4vw, var(--sp-8));
+  inline-size: max-content;
+  animation: gallery-marquee 46s linear infinite;
+  will-change: transform;
+}
+
+.gallery__marquee-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: clamp(var(--sp-5), 4vw, var(--sp-8));
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 2.25rem);
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  letter-spacing: var(--tracking-display);
+  color: rgb(var(--rgb-text-primary) / 0.16);
+  white-space: nowrap;
+}
+
+/* The tenth is the only numeral that gets the gold. */
+.gallery__marquee-item--current {
+  color: var(--color-accent-gold);
+  opacity: 1;
+}
+
+.gallery__marquee-sep {
+  inline-size: 4px;
+  block-size: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+  transform: translateY(-0.35em);
+}
+
+@keyframes gallery-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* --- Filter bar ----------------------------------------------------------- */
+.gallery__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-5);
+  margin-block-end: var(--sp-6);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.gallery__filters-label {
+  color: var(--on-ground-muted);
+  margin-inline-end: var(--sp-2);
+}
+
+.gallery__filter {
+  padding: 0.45em 0.9em;
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground);
+  /* Same rule as the committee arrows: the pill's own edge is its only
+     boundary, so it takes --border-interactive (8.31:1) not the 1.21:1
+     content hairline. */
+  border: 1px solid var(--border-interactive);
+  border-radius: var(--radius-pill);
+  transition:
+    background-color var(--dur-base) var(--ease-house),
+    border-color var(--dur-base) var(--ease-house),
+    color var(--dur-base) var(--ease-house);
+}
+
+.gallery__filter:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.gallery__filter[aria-pressed='true'] {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+/* --- Masonry grid --------------------------------------------------------
+   Row-span masonry on a fixed row unit: deterministic, so DOM order and visual
+   order stay identical and keyboard traversal is not scrambled (which is what
+   CSS multi-column masonry would do). */
+.gallery__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 8px;
+  gap: 0 var(--grid-gap);
+  margin: 0;
+}
+
+.gallery__item {
+  position: relative;
+  margin-block-end: var(--grid-gap);
+  /* Load-bearing. Without it the item stretches to fill its grid area, which is
+     one 8px `grid-auto-rows` track before any span has been assigned — so
+     gallery.js measures 8px instead of the tile's real height, hands every tile
+     `span 1`, and the whole archive collapses into overlapping strips. Starting
+     the item means its height is content-driven and the measurement is stable. */
+  align-self: start;
+}
+
+.gallery__item[hidden] {
+  display: none;
+}
+
+/* Photograph tile */
+/* Height comes from the inline `aspect-ratio` written per tile, which reserves
+   the box before the image loads — that is what keeps CLS at zero. */
+.gallery__frame {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.gallery__frame img {
+  block-size: 100%;
+  transition: transform var(--dur-slow) var(--ease-house);
+}
+
+.gallery__item:hover .gallery__frame img {
+  transform: scale(1.03);
+}
+
+.gallery__caption {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: linear-gradient(to top, rgb(var(--rgb-ink) / 0.88), transparent);
+  color: var(--color-text-inverse);
+}
+
+.gallery__caption-edition {
+  color: var(--color-accent-gold);
+  font-family: var(--font-display);
+  font-size: var(--fs-500);
+  font-variation-settings: 'opsz' 24;
+  line-height: 1;
+}
+
+/* While a photograph is missing, the plate already shows the edition numeral at
+   display size in its centre — repeating it in the caption made the same
+   character appear three times on one tile. */
+.media-plate.is-missing .gallery__caption-edition {
+  display: none;
+}
+
+.gallery__caption-text {
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: rgb(var(--rgb-text-inverse) / 0.8);
+  text-align: right;
+}
+
+/* Testimonial tile — set inside the grid so reviews and photographs read as
+   one archive rather than two stacked sections. */
+.gallery__quote {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  padding: var(--sp-6);
+  background-color: var(--color-ink);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-sm);
+}
+
+.gallery__quote--tint {
+  background-color: var(--color-primary-tint);
+  color: var(--color-text-primary);
+}
+
+.gallery__quote-mark {
+  font-family: var(--font-display);
+  font-size: var(--fs-800);
+  line-height: 0.6;
+  color: var(--color-accent-gold);
+  margin-block-end: var(--sp-4);
+}
+
+.gallery__quote--tint .gallery__quote-mark {
+  color: var(--color-primary);
+}
+
+.gallery__quote-text {
+  font-family: var(--font-display);
+  font-size: var(--fs-500);
+  font-variation-settings: 'opsz' 24;
+  line-height: 1.36;
+  letter-spacing: var(--tracking-display);
+}
+
+.gallery__quote-attr {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-5);
+  font-size: var(--fs-200);
+  line-height: 1.5;
+  color: rgb(var(--rgb-text-inverse) / 0.66);
+}
+
+.gallery__quote--tint .gallery__quote-attr {
+  color: rgb(var(--rgb-text-primary) / 0.66);
+}
+
+.gallery__quote-name {
+  display: block;
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-accent-gold);
+}
+
+.gallery__quote--tint .gallery__quote-name {
+  color: var(--color-primary-dark);
+}
+
+/* --- Live region + empty state ------------------------------------------- */
+.gallery__status {
+  margin-block-start: var(--sp-5);
+  font-size: var(--fs-200);
+  color: var(--on-ground-muted);
+}
+
+/* --- Breakpoints ---------------------------------------------------------- */
+/* Two columns until 1280, not three from 1024. With twelve tiles instead of
+   twenty-one there is no need to pack them, and the extra width is what makes
+   each photograph readable rather than a thumbnail. */
+@media (min-width: 768px) {
+  .gallery__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(var(--sp-5), 3vw, var(--sp-7));
+  }
+}
+
+@media (min-width: 1024px) {
+  .gallery__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery__marquee-track {
+    animation: none;
+  }
+
+  .gallery__item:hover .gallery__frame img {
+    transform: none;
+  }
+}

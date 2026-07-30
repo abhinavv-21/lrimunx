@@ -1,0 +1,394 @@
+/* ==========================================================================
+   committees.css — horizontal scroll-snap rail on a paper ground.
+   Module: src/modules/committees.js
+
+   Restructured to fix crowding: the card previously carried six competing
+   elements (icon, index, name, abbr, blurb, difficulty tag, seat count) in a
+   22rem box. Seat counts and procedure notes have moved into the hover/focus
+   panel, the index numeral has become a large watermark instead of a line
+   item, and the card itself is wider and taller. Four things are visible at
+   rest — number, name, what it is, how hard it is — and the rest is one
+   interaction away.
+   ========================================================================== */
+
+.committees__rail-wrap {
+  margin-block-start: clamp(var(--sp-6), 3vw, var(--sp-8));
+}
+
+/* The rail already carries its own bottom padding, so the section does not need
+   a full --section-y underneath it as well. */
+.committees {
+  padding-block-end: clamp(var(--sp-8), 5vw, var(--sp-10));
+}
+
+.committees__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-block-end: var(--sp-5);
+}
+
+.committees__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--on-ground-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.committees__count-sep {
+  inline-size: 1.5rem;
+  block-size: 1px;
+  background-color: var(--color-primary);
+}
+
+.committees__nav {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.committees__arrow {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  display: grid;
+  place-items: center;
+  /* The border is the ONLY thing identifying this control, so it is a UI
+     component boundary and must clear 3:1. --color-border is 1.21:1 — fine for
+     dividing content, illegal as the edge of a button. */
+  border: 1px solid var(--border-interactive);
+  border-radius: var(--radius-pill);
+  color: var(--on-ground);
+  transition:
+    background-color var(--dur-base) var(--ease-house),
+    border-color var(--dur-base) var(--ease-house),
+    color var(--dur-base) var(--ease-house),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.committees__arrow svg {
+  inline-size: 1rem;
+}
+
+.committees__arrow:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  transform: scale(1.06);
+}
+
+.committees__arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* --- The rail -------------------------------------------------------------
+   The rail lives inside a `.shell` viewport rather than running full-bleed, so
+   exactly three cards fill the content column and the fourth is fully off-stage
+   instead of half-visible. Six cards crammed into view was the "cramped" read.
+
+   Snap is enabled only on touch. On a fine pointer every movement is a tween we
+   drive ourselves and always lands on a card boundary, so mandatory snap has
+   nothing to correct — and fighting a running tween is what made the scroll
+   feel like it was stuttering. */
+.committees__viewport {
+  position: relative;
+}
+
+.committees__rail {
+  display: flex;
+  gap: var(--grid-gap);
+  margin: 0;
+  padding-inline: 0;
+  padding-block: var(--sp-2) var(--sp-6);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.committees__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.committees__rail:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+@media (hover: none) {
+  .committees__rail {
+    scroll-snap-type: x mandatory;
+  }
+
+  .committee {
+    scroll-snap-align: start;
+  }
+}
+
+/* While the wheel is being remapped, the cursor advertises the axis change. */
+.committees__rail.is-wheel-active {
+  cursor: ew-resize;
+}
+
+/* One card per column of a 1 / 2 / 3 track. `--cols` is the single knob. */
+.committee {
+  --cols: 1.12;
+  flex: 0 0 auto;
+  inline-size: calc((100% - (var(--cols) - 1) * var(--grid-gap)) / var(--cols));
+}
+
+/* --- Card ----------------------------------------------------------------
+   Separation by hairline and ground-tone shift. No drop shadows anywhere. */
+.committee__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  min-block-size: 27rem;
+  padding: var(--sp-6);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    border-color var(--dur-slow) var(--ease-expo),
+    transform var(--dur-slow) var(--ease-expo);
+}
+
+/* No lift and no shadow: a card that jumps on hover is the "uniform card grid"
+   tell the art direction bans. The state change is carried by the frame, the
+   icon and the index numeral instead. */
+.committee:hover .committee__card,
+.committee__card:focus-within {
+  border-color: rgb(var(--rgb-primary) / 0.55);
+}
+
+.committee:hover .committee__index,
+.committee__card:focus-within .committee__index {
+  opacity: 0.16;
+  transform: translateY(-2px);
+}
+
+.committee__card--feature {
+  background-color: var(--color-primary-tint);
+}
+
+/* Index as a large corner watermark rather than a competing line item. */
+.committee__index {
+  position: absolute;
+  inset-block-start: var(--sp-4);
+  inset-inline-end: var(--sp-5);
+  z-index: -1;
+  font-size: clamp(3.5rem, 7vw, 5rem);
+  line-height: 1;
+  color: var(--color-primary);
+  opacity: 0.08;
+  font-variant-numeric: tabular-nums;
+  transition:
+    opacity var(--dur-base) var(--ease-house),
+    transform var(--dur-base) var(--ease-house);
+}
+
+/* Icon: top-left, small, hairline-ruled — marginalia, never centred in a
+   tinted squircle. */
+.committee__icon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  opacity: 0.9;
+  margin-block-end: var(--sp-6);
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+
+.committee:hover .committee__icon {
+  transform: translateY(-3px) scale(1.08);
+}
+
+.committee__name {
+  font-size: var(--fs-600);
+  font-variation-settings: 'opsz' 32, 'WONK' 1;
+  line-height: 1.14;
+  margin-block-end: var(--sp-3);
+  max-width: 15ch;
+}
+
+.committee__abbr {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-primary);
+  padding-block-end: var(--sp-5);
+  margin-block-end: var(--sp-5);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.committee__blurb {
+  font-size: var(--fs-300);
+  line-height: 1.62;
+  color: var(--on-ground-muted);
+}
+
+.committee__foot {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* The card's one focusable control. It exists so the agenda is reachable by
+   keyboard at all — see the note in committees.js. */
+.committee__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground-muted);
+  transition: color 200ms var(--ease-house);
+}
+
+.committee__toggle svg {
+  inline-size: 0.85em;
+  block-size: 0.85em;
+  transition: transform 260ms var(--ease-expo);
+}
+
+.committee__toggle:hover,
+.committee__toggle:focus-visible {
+  color: var(--accent-on-ground);
+}
+
+.committee__toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+/* --- Reveal panel ---------------------------------------------------------
+   Absolutely positioned: hovering or focusing a card can never move the rail.
+   Shown on hover, on :focus-within (keyboard), and on tap via .is-open. */
+.committee__reveal {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  background-color: var(--color-ink);
+  color: var(--color-text-inverse);
+  border-block-start: 1px solid var(--hairline-gold);
+  transform: translate3d(0, 101%, 0);
+  transition: transform var(--dur-slow) var(--ease-expo);
+}
+
+.committee:hover .committee__reveal,
+.committee__card:focus-within .committee__reveal,
+.committee__reveal.is-open {
+  transform: translate3d(0, 0, 0);
+}
+
+.committee__reveal-label {
+  color: var(--color-accent-gold);
+  margin-block-end: var(--sp-2);
+}
+
+.committee__reveal-text {
+  font-size: var(--fs-500);
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  line-height: 1.28;
+  margin-block-end: var(--sp-3);
+}
+
+.committee__reveal-note {
+  font-size: var(--fs-200);
+  line-height: 1.55;
+  color: rgb(var(--rgb-text-inverse) / 0.72);
+}
+
+/* --- Progress + hint ------------------------------------------------------ */
+.committees__progress-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.committees__progress {
+  position: relative;
+  flex: 1 1 12rem;
+  block-size: 2px;
+  background-color: var(--color-border);
+}
+
+.committees__progress-bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 20%;
+  background-color: var(--color-primary);
+  transform-origin: left;
+  transition: transform var(--dur-base) var(--ease-house);
+}
+
+.committees__hint {
+  color: var(--on-ground-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.committees__hint kbd {
+  font-family: var(--font-ui);
+  font-size: inherit;
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Breakpoints ---------------------------------------------------------- */
+@media (min-width: 700px) {
+  .committee {
+    --cols: 2;
+  }
+}
+
+@media (min-width: 1100px) {
+  .committee {
+    --cols: 3;
+  }
+}
+
+@media (max-width: 600px) {
+  .committees__hint {
+    display: none;
+  }
+
+  .committee__card {
+    min-block-size: 24rem;
+    padding: var(--sp-5);
+  }
+}
+
+/* Touch devices have no hover: committees.js toggles `.is-open` on tap, and the
+   panel is nudged into view so the affordance is discoverable. */
+@media (hover: none) {
+  .committee__reveal {
+    transform: translate3d(0, calc(100% - 3.25rem), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .committee:hover .committee__index,
+  .committee__card:focus-within .committee__index {
+    transform: none;
+  }
+
+  .committee:hover .committee__icon {
+    transform: none;
+  }
+}

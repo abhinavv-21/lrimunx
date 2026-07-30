@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#2B0A21" />
+
+    <title>LRI Model UN 10.0 — The Tenth Edition | LRI School, Kalanki</title>
+    <meta
+      name="description"
+      content="LRI Model United Nations 10.0 — the tenth edition of LRI School's Model UN conference in Kalanki, Kathmandu. Committees, secretariat, past editions and delegate registration."
+    />
+
+    <!-- Open Graph. PLACEHOLDER — og:image and og:url need real values before launch. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LRI Model UN 10.0 — The Tenth Edition" />
+    <meta
+      property="og:description"
+      content="Ten editions of debate, diplomacy and dissent. LRI School, Kalanki, Kathmandu."
+    />
+    <meta property="og:image" content="/assets/og-image.jpg" />
+    <meta property="og:url" content="https://example.org/mun" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/assets/lri-mun-logo.png" type="image/png" />
+
+    <!-- ================================================================
+         CRITICAL INLINE CSS — this must not move into the bundle.
+
+         All other CSS is imported from JS, so it cannot paint until the
+         module graph has downloaded and executed. That gap is what showed
+         raw unstyled HTML for a few frames on load. These rules ship in the
+         document itself, so the very first paint is already the plum
+         curtain: no flash of unstyled content, ever.
+
+         Values are duplicated literals rather than tokens on purpose —
+         tokens.css lives in the bundle and is not available yet.
+         ================================================================ -->
+    <style>
+      html {
+        background: #2b0a21;
+      }
+      body {
+        margin: 0;
+        background: #2b0a21;
+        font-family: 'General Sans', Inter, system-ui, sans-serif;
+      }
+      /* Hold the document back until the app says it is ready. The fallback
+         timer below guarantees this is always removed. */
+      html:not(.app-ready) body > *:not(#site-loader) {
+        opacity: 0;
+      }
+      #site-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        display: grid;
+        place-items: center;
+        gap: 1.25rem;
+        background: #2b0a21;
+        background-image: radial-gradient(
+          62% 50% at 50% 46%,
+          rgb(180 24 132 / 0.28),
+          transparent 68%
+        );
+        transition:
+          opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+          visibility 0s linear 700ms;
+      }
+      #site-loader .loader__inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+      #site-loader img {
+        width: clamp(84px, 14vw, 132px);
+        height: auto;
+        display: block;
+        animation: loader-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      #site-loader .loader__word {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        color: #d9a441;
+        animation: loader-in 900ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+      }
+      #site-loader .loader__rule {
+        position: relative;
+        width: clamp(120px, 22vw, 220px);
+        height: 1px;
+        background: rgb(251 244 239 / 0.16);
+        overflow: hidden;
+      }
+      #site-loader .loader__rule::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: #d9a441;
+        transform: scaleX(0);
+        transform-origin: left;
+        animation: loader-rule 900ms cubic-bezier(0.65, 0, 0.35, 1) both;
+      }
+      @keyframes loader-in {
+        from {
+          opacity: 0;
+          transform: translateY(12px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes loader-rule {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      html.app-ready #site-loader {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #site-loader,
+        #site-loader img,
+        #site-loader .loader__word,
+        #site-loader .loader__rule::after {
+          animation: none !important;
+          transition-duration: 1ms !important;
+        }
+      }
+    </style>
+
+    <script>
+      // Safety net. If the module bundle fails to execute for any reason, the
+      // document must still be readable — never leave the curtain up.
+      window.__lriReveal = function () {
+        document.documentElement.classList.add('app-ready')
+      }
+      setTimeout(window.__lriReveal, 4000)
+    </script>
+
+    <noscript>
+      <style>
+        html:not(.app-ready) body > *:not(#site-loader) {
+          opacity: 1 !important;
+        }
+        #site-loader {
+          display: none !important;
+        }
+      </style>
+    </noscript>
+
+    <!-- Self-hosted, so the LCP headline never waits on a third-party handshake. -->
+    <link
+      rel="preload"
+      href="/assets/fonts/Fraunces-Variable-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/assets/fonts/GeneralSans-500.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <script type="module" src="/src/main.js"></script>
+  </head>
+
+  <body>
+    <!-- ====================================================================
+         PRELOADER — first thing painted, removed by main.js once the app has
+         booted (with a minimum on-screen time so it reads as intentional
+         rather than as a flicker).
+         ==================================================================== -->
+    <div id="site-loader" data-loader>
+      <div class="loader__inner">
+        <img src="/assets/lri-mun-logo.png" alt="" width="512" height="418" />
+        <p class="loader__word">LRI Model UN X</p>
+        <div class="loader__rule"></div>
+      </div>
+    </div>
+
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ====================================================================
+         NAVIGATION — transparent over the hero, glass on scroll.
+         Behaviour: src/modules/nav.js · Styles: src/styles/sections/nav.css
+         ==================================================================== -->
+    <header class="nav" data-nav>
+      <div class="nav__inner shell">
+        <a class="nav__lockup" href="#top">
+          <img
+            class="nav__emblem"
+            src="/assets/lri-mun-logo.png"
+            alt=""
+            width="512"
+            height="418"
+          />
+          <span class="nav__wordmark" aria-hidden="true">
+            LRI Model UN <span class="nav__wordmark-x">X</span>
+          </span>
+          <span class="u-visually-hidden">LRI Model UN X — back to top</span>
+        </a>
+
+        <nav class="nav__links" aria-label="Section navigation">
+          <ul class="nav__list">
+            <li><a class="nav__link" href="#committees" data-nav-link>Committees</a></li>
+            <li><a class="nav__link" href="#secretariat" data-nav-link>Secretariat</a></li>
+            <li><a class="nav__link" href="#editions" data-nav-link>Past Editions</a></li>
+          </ul>
+        </nav>
+
+        <div class="nav__actions">
+          <!-- TODO: insert Google Form URL — see README placeholder list. -->
+          <a
+            class="btn btn--sm nav__cta"
+            href="https://forms.gle/PLACEHOLDER"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Register
+            <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path
+                d="M2 8h11M9 4l4 4-4 4"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="square"
+              />
+            </svg>
+          <span class="btn__mount" aria-hidden="true"></span>
+          </a>
+
+          <!-- The school is an endorsement, so it goes last — the same way the
+               footer already treats it. It is target="_blank", so the glyph is
+               an external-link arrow (↗), never a back-arrow: a ← would lie
+               about the behaviour, since there is nothing to go back to. -->
+          <a
+            class="nav__school"
+            href="https://www.lrischool.edu.np/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="nav__school-text">LRI School</span>
+            <svg class="nav__school-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path
+                d="M5.5 10.5 10.5 5.5M6 5.5h4.5V10"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="u-visually-hidden">— main school website, opens in a new tab</span>
+          </a>
+
+          <!-- Deliberately not a hamburger-in-a-box: a word plus two hairlines. -->
+          <button
+            class="nav__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="nav-overlay"
+            data-nav-toggle
+          >
+            <span class="nav__toggle-label" data-nav-toggle-label>Menu</span>
+            <span class="nav__toggle-bars" aria-hidden="true"><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Full-screen overlay (not a slide-in drawer). -->
+      <div class="nav-overlay" id="nav-overlay" data-nav-overlay hidden>
+        <div class="nav-overlay__inner shell">
+          <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
+          <ul class="nav-overlay__list">
+            <li>
+              <a href="#committees" data-nav-overlay-link
+                ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
+                >Committees</a
+              >
+            </li>
+            <li>
+              <a href="#secretariat" data-nav-overlay-link
+                ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
+                >Secretariat</a
+              >
+            </li>
+            <li>
+              <a href="#editions" data-nav-overlay-link
+                ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
+                Editions</a
+              >
+            </li>
+            <li>
+              <a href="#register" data-nav-overlay-link
+                ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Register</a
+              >
+            </li>
+          </ul>
+          <div class="nav-overlay__foot">
+            <p class="body-copy nav-overlay__contact">
+              <!-- PLACEHOLDER — replace with real contact details. -->
+              LRI School, Kalanki, Kathmandu<br />
+              <a href="mailto:placeholder@example.org">placeholder@example.org</a>
+            </p>
+            <div class="nav-overlay__actions">
+              <a
+                class="nav-overlay__school"
+                href="https://www.lrischool.edu.np/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Visit the school site ↗</a
+              >
+              <a
+                class="btn nav-overlay__cta"
+                href="https://forms.gle/PLACEHOLDER"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Register now<span class="btn__mount" aria-hidden="true"></span></a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ==================================================================
+           1. HERO
+           Behaviour: src/modules/hero.js · Styles: src/styles/sections/hero.css
+           ================================================================== -->
+      <section class="hero ground-ink" id="top" aria-label="LRI Model UN X — introduction">
+        <div class="hero__wash" aria-hidden="true"></div>
+        <div class="hero__vignette" aria-hidden="true"></div>
+        <!-- Faint, static, never rotated, never cropped. -->
+        <img
+          class="hero__emblem"
+          src="/assets/lri-mun-logo.png"
+          alt=""
+          aria-hidden="true"
+          width="512"
+          height="418"
+        />
+        <div class="hero__grain" aria-hidden="true"></div>
+
+        <div class="hero__inner shell">
+          <div class="hero__masthead">
+            <p class="hero__dateline">LRI School · Kalanki, Kathmandu</p>
+
+            <h1 class="hero__title">
+              <span class="line-mask" data-hero-line
+                ><span class="hero__title-line">Model</span></span
+              >
+              <span class="line-mask" data-hero-line
+                ><span class="hero__title-line">United</span></span
+              >
+              <span class="line-mask" data-hero-line
+                ><span class="hero__title-line">Nations</span></span
+              >
+              <span class="u-visually-hidden">, tenth edition</span>
+            </h1>
+
+            <p class="hero__tagline" data-reveal>
+              Ten editions of debate, diplomacy and dissent — the tenth convenes this year.
+            </p>
+          </div>
+
+          <!-- THE SEAL.
+               The anniversary is one struck object, not a numeral floating in a
+               corner beside a separate logo. The laurel is the emblem's own
+               wreath, redrawn as line art — branches and ribbon only, because
+               the shield, endless knot and lotus turn to mud above ~60px and
+               belong to the full-colour mark at small size.
+
+               It is inlined rather than an <img> so `currentColor` reaches it
+               from the stylesheet, and so hero.js can draw it on.
+
+               The crown is left OPEN on purpose. That gap is the single detail
+               that makes it read as a laurel rather than a spinner ring. -->
+          <div class="hero__seal" data-hero-seal aria-hidden="true">
+            <svg
+              class="hero__seal-wreath"
+              viewBox="0 0 400 400"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.1"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              focusable="false"
+            >
+              <path d="M194.77 355.91L186.00 355.35L177.29 354.27L168.65 352.69L160.12 350.60L151.73 348.02L143.51 344.95L135.47 341.41L127.66 337.40L120.10 332.95L112.81 328.05L105.81 322.74L99.14 317.03L92.82 310.94L86.87 304.49L81.30 297.70L76.13 290.60L71.40 283.21L67.10 275.55L63.26 267.66L59.88 259.55L56.99 251.26L54.59 242.82L52.68 234.25L51.28 225.58L50.39 216.84L50.01 208.07L50.15 199.29L50.80 190.54L51.96 181.83L53.63 173.21L55.80 164.71L58.46 156.34L61.61 148.14L65.23 140.15L69.31 132.37L73.84 124.85L78.81 117.61L84.19 110.67L89.96 104.06L96.12 97.80L102.62 91.90L109.47 86.40L116.62 81.31L124.06 76.65L131.76 72.42L139.69 68.66L147.83 65.37L156.14 62.55"/>
+              <path d="M168.67 357.80Q143.97 353.98 140.72 329.19Q165.42 333.01 168.67 357.80Z"/>
+              <path d="M136.83 336.52Q114.61 327.05 117.38 303.06Q139.59 312.52 136.83 336.52Z"/>
+              <path d="M100.38 324.74Q81.86 310.60 90.06 288.79Q108.58 302.94 100.38 324.74Z"/>
+              <path d="M82.45 290.89Q68.53 273.28 81.29 254.81Q95.21 272.42 82.45 290.89Z"/>
+              <path d="M55.95 263.23Q47.16 243.50 63.38 229.23Q72.17 248.97 55.95 263.23Z"/>
+              <path d="M56.24 224.93Q52.75 204.47 71.19 194.95Q74.68 215.40 56.24 224.93Z"/>
+              <path d="M46.05 188.00Q47.67 168.17 67.03 163.58Q65.41 183.41 46.05 188.00Z"/>
+              <path d="M64.48 154.42Q70.69 136.41 89.74 136.63Q83.53 154.64 64.48 154.42Z"/>
+              <path d="M73.04 117.09Q83.06 101.89 100.67 106.48Q90.65 121.68 73.04 117.09Z"/>
+              <path d="M105.20 96.28Q118.06 84.62 133.30 92.92Q120.44 104.58 105.20 96.28Z"/>
+              <path d="M130.45 67.48Q145.06 59.78 157.23 70.93Q142.63 78.63 130.45 67.48Z"/>
+              <path d="M205.23 355.91L214.00 355.35L222.71 354.27L231.35 352.69L239.88 350.60L248.27 348.02L256.49 344.95L264.53 341.41L272.34 337.40L279.90 332.95L287.19 328.05L294.19 322.74L300.86 317.03L307.18 310.94L313.13 304.49L318.70 297.70L323.87 290.60L328.60 283.21L332.90 275.55L336.74 267.66L340.12 259.55L343.01 251.26L345.41 242.82L347.32 234.25L348.72 225.58L349.61 216.84L349.99 208.07L349.85 199.29L349.20 190.54L348.04 181.83L346.37 173.21L344.20 164.71L341.54 156.34L338.39 148.14L334.77 140.15L330.69 132.37L326.16 124.85L321.19 117.61L315.81 110.67L310.04 104.06L303.88 97.80L297.38 91.90L290.53 86.40L283.38 81.31L275.94 76.65L268.24 72.42L260.31 68.66L252.17 65.37L243.86 62.55"/>
+              <path d="M231.33 357.80Q234.58 333.01 259.28 329.19Q256.03 353.98 231.33 357.80Z"/>
+              <path d="M263.17 336.52Q260.41 312.52 282.62 303.06Q285.39 327.05 263.17 336.52Z"/>
+              <path d="M299.62 324.74Q291.42 302.94 309.94 288.79Q318.14 310.60 299.62 324.74Z"/>
+              <path d="M317.55 290.89Q304.79 272.42 318.71 254.81Q331.47 273.28 317.55 290.89Z"/>
+              <path d="M344.05 263.23Q327.83 248.97 336.62 229.23Q352.84 243.50 344.05 263.23Z"/>
+              <path d="M343.76 224.93Q325.32 215.40 328.81 194.95Q347.25 204.47 343.76 224.93Z"/>
+              <path d="M353.95 188.00Q334.59 183.41 332.97 163.58Q352.33 168.17 353.95 188.00Z"/>
+              <path d="M335.52 154.42Q316.47 154.64 310.26 136.63Q329.31 136.41 335.52 154.42Z"/>
+              <path d="M326.96 117.09Q309.35 121.68 299.33 106.48Q316.94 101.89 326.96 117.09Z"/>
+              <path d="M294.80 96.28Q279.56 104.58 266.70 92.92Q281.94 84.62 294.80 96.28Z"/>
+              <path d="M269.55 67.48Q257.37 78.63 242.77 70.93Q254.94 59.78 269.55 67.48Z"/>
+              <path d="M158.65 350.19C160.00 372.00 186.00 354.00 200.00 358.00"/><path d="M241.35 350.19C240.00 372.00 214.00 354.00 200.00 358.00"/>
+            </svg>
+            <span class="hero__seal-numeral">X</span>
+            <span class="hero__seal-caption">Tenth Edition</span>
+          </div>
+        </div>
+
+        <div class="hero__plinth">
+          <div class="shell hero__plinth-inner">
+            <dl class="hero__facts" data-reveal>
+              <div class="hero__fact">
+                <dt class="label">Dates</dt>
+                <!-- PLACEHOLDER — replace with real conference dates. -->
+                <dd>To be announced</dd>
+              </div>
+              <div class="hero__fact">
+                <dt class="label">Venue</dt>
+                <dd>LRI School, Kalanki</dd>
+              </div>
+              <div class="hero__fact">
+                <dt class="label">Edition</dt>
+                <dd>X — the tenth</dd>
+              </div>
+            </dl>
+
+            <div class="hero__actions" data-reveal>
+              <!-- TODO: insert Google Form URL — see README placeholder list. -->
+              <a
+                class="btn btn--lg hero__cta"
+                href="https://forms.gle/PLACEHOLDER"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="btn__label"
+                  ><span>Register now</span><span aria-hidden="true">Register now</span></span
+                >
+                <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M2 8h11M9 4l4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+                <span class="btn__mount" aria-hidden="true"></span>
+              </a>
+              <a class="btn btn--lg btn--ghost" href="#committees">
+                <span class="btn__label"
+                  ><span>Explore committees</span
+                  ><span aria-hidden="true">Explore committees</span></span
+                >
+                <span class="btn__mount" aria-hidden="true"></span>
+              </a>
+            </div>
+
+            <a class="hero__cue" href="#committees" data-hero-cue>
+              <span class="label">Scroll</span>
+              <span class="hero__cue-line" aria-hidden="true"></span>
+            </a>
+          </div>
+
+          <div class="hero__ribbon" data-hero-ribbon-root aria-hidden="true">
+            <div class="hero__ribbon-track" data-hero-ribbon></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           2. COMMITTEES — horizontal rail, keyboard + wheel operable.
+           Behaviour: src/modules/committees.js
+           Styles: src/styles/sections/committees.css
+           ================================================================== -->
+      <section
+        class="section committees ground-paper"
+        id="committees"
+        aria-labelledby="committees-title"
+        data-committees-section
+      >
+        <div class="section__margin" aria-hidden="true">
+          <span class="numeral">01</span>
+          <span class="section__margin__rule"></span>
+          <span class="section__margin__label">Committees</span>
+        </div>
+
+        <div class="shell grid">
+          <header class="section__head">
+            <p class="section__eyebrow label">Six committees</p>
+            <h2 class="section__title" id="committees-title">Choose your floor.</h2>
+            <p class="lede section__intro">
+              Each committee runs its own rules of procedure, its own pace and its own appetite for
+              crisis. Pick the room that will stretch you — not the one you have already won.
+            </p>
+          </header>
+        </div>
+
+        <div class="committees__rail-wrap">
+          <div class="shell committees__toolbar">
+            <p class="label committees__count">
+              <span data-committees-position>01</span>
+              <span class="committees__count-sep" aria-hidden="true">—</span>
+              <span data-committees-total>06</span>
+            </p>
+            <div class="committees__nav">
+              <button
+                class="committees__arrow"
+                type="button"
+                data-committees-prev
+                aria-label="Previous committee"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M14 8H3M7 4L3 8l4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </button>
+              <button
+                class="committees__arrow"
+                type="button"
+                data-committees-next
+                aria-label="Next committee"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M2 8h11M9 4l4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Native overflow container: a real scroll region for touch and AT,
+               not a transform carousel with faked semantics. `data-lenis-prevent`
+               keeps Lenis from proxying wheel events inside it.
+
+               PLACEHOLDER DATA IN EVERY CARD BELOW — the committee names and the
+               one-line descriptions of what each body does are factual, but
+               these are NOT and must be confirmed with the OC before launch:
+                 · seat counts        ("15 seats", "40 seats", …)
+                 · difficulty tags    (Beginner / Intermediate / Advanced)
+                 · agendas            (all currently "to be announced")
+                 · procedure notes    ("Double-delegate", "Position paper
+                                       required", "Chair-led training", …)
+               The committee line-up itself — which six bodies run — also needs
+               confirming; six is the structure the layout was built for. -->
+          <div class="shell committees__viewport">
+          <ul
+            class="committees__rail"
+            data-committees-rail
+            data-lenis-prevent
+            tabindex="0"
+            role="region"
+            aria-label="Committees — scrollable list, use left and right arrow keys"
+          >
+            <!-- COMMITTEE 1 -->
+            <li class="committee" data-committee>
+              <article class="committee__card">
+                <span class="numeral committee__index" aria-hidden="true">01</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/unsc.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">United Nations Security Council</h3>
+                <p class="committee__abbr">UNSC</p>
+                <p class="committee__blurb">
+                  Convenes on international peace and security, with the power to impose measures
+                  the rest of the UN can only recommend.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--advanced">Advanced</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-1"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <!-- Absolutely positioned reveal: hover/focus never causes layout. -->
+                <div class="committee__reveal" id="committee-agenda-1" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">To be announced.</p>
+                  <p class="committee__reveal-note">
+                    15 seats · Double-delegate · Position paper required
+                  </p>
+                </div>
+              </article>
+            </li>
+
+            <!-- COMMITTEE 2 -->
+            <li class="committee" data-committee>
+              <article class="committee__card">
+                <span class="numeral committee__index" aria-hidden="true">02</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/unhrc.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">Human Rights Council</h3>
+                <p class="committee__abbr">UNHRC</p>
+                <p class="committee__blurb">
+                  Responsible for the promotion and protection of human rights worldwide, and for
+                  addressing violations wherever they occur.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--intermediate">Intermediate</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-2"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <div class="committee__reveal" id="committee-agenda-2" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">To be announced.</p>
+                  <p class="committee__reveal-note">
+                    40 seats · Single-delegate · Position paper required
+                  </p>
+                </div>
+              </article>
+            </li>
+
+            <!-- COMMITTEE 3 -->
+            <li class="committee" data-committee>
+              <article class="committee__card">
+                <span class="numeral committee__index" aria-hidden="true">03</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/disec.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">Disarmament &amp; International Security</h3>
+                <p class="committee__abbr">DISEC</p>
+                <p class="committee__blurb">
+                  The First Committee of the General Assembly: disarmament, global challenges and
+                  threats to international peace.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--beginner">Beginner</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-3"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <div class="committee__reveal" id="committee-agenda-3" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">To be announced.</p>
+                  <p class="committee__reveal-note">
+                    60 seats · Single-delegate · First-time delegates welcome
+                  </p>
+                </div>
+              </article>
+            </li>
+
+            <!-- COMMITTEE 4 -->
+            <li class="committee" data-committee>
+              <article class="committee__card">
+                <span class="numeral committee__index" aria-hidden="true">04</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/ecosoc.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">Economic &amp; Social Council</h3>
+                <p class="committee__abbr">ECOSOC</p>
+                <p class="committee__blurb">
+                  Coordinates the economic, social and environmental work of the United Nations
+                  system and its specialised agencies.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--intermediate">Intermediate</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-4"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <div class="committee__reveal" id="committee-agenda-4" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">To be announced.</p>
+                  <p class="committee__reveal-note">
+                    45 seats · Single-delegate · Working-paper focused
+                  </p>
+                </div>
+              </article>
+            </li>
+
+            <!-- COMMITTEE 5 -->
+            <li class="committee" data-committee>
+              <article class="committee__card">
+                <span class="numeral committee__index" aria-hidden="true">05</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/who.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">World Health Organization</h3>
+                <p class="committee__abbr">WHO</p>
+                <p class="committee__blurb">
+                  Directs and coordinates international health within the UN system — outbreak
+                  response, health systems and equity of access.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--beginner">Beginner</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-5"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <div class="committee__reveal" id="committee-agenda-5" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">To be announced.</p>
+                  <p class="committee__reveal-note">
+                    50 seats · Single-delegate · First-time delegates welcome
+                  </p>
+                </div>
+              </article>
+            </li>
+
+            <!-- COMMITTEE 6 -->
+            <li class="committee" data-committee>
+              <article class="committee__card committee__card--feature">
+                <span class="numeral committee__index" aria-hidden="true">06</span>
+                <img
+                  class="committee__icon"
+                  src="/assets/icons/hcc.svg"
+                  alt=""
+                  width="28"
+                  height="28"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <h3 class="committee__name">Historical Crisis Committee</h3>
+                <p class="committee__abbr">HCC</p>
+                <p class="committee__blurb">
+                  A continuously updating cabinet: individual portfolios, live crisis dispatches,
+                  and directives instead of resolutions.
+                </p>
+                <footer class="committee__foot">
+                  <span class="tag tag--advanced">Advanced</span>
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="committee-agenda-6"
+                    data-committee-toggle
+                  >
+                    <span>Agenda</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M4 6l4 4 4-4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </footer>
+                <div class="committee__reveal" id="committee-agenda-6" data-committee-reveal>
+                  <p class="label committee__reveal-label">Agenda</p>
+                  <!-- PLACEHOLDER — replace with the real agenda when announced. -->
+                  <p class="committee__reveal-text">Freeze date to be announced.</p>
+                  <p class="committee__reveal-note">
+                    20 seats · Portfolio powers · Prior MUN experience expected
+                  </p>
+                </div>
+              </article>
+            </li>
+          </ul>
+          </div>
+
+          <div class="shell committees__progress-wrap">
+            <div class="committees__progress" aria-hidden="true">
+              <span class="committees__progress-bar" data-committees-progress></span>
+            </div>
+            <p class="committees__hint label" data-committees-hint>
+              Scroll, drag or use <kbd>←</kbd> <kbd>→</kbd>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           3. ORGANIZING COMMITTEE — tiered by hierarchy.
+           Roster data + rendering: src/modules/oc.js
+           Styles: src/styles/sections/oc.css
+           ================================================================== -->
+      <section class="section oc ground-ink" id="secretariat" aria-labelledby="oc-title">
+        <div class="section__margin" aria-hidden="true">
+          <span class="numeral">02</span>
+          <span class="section__margin__rule"></span>
+          <span class="section__margin__label">Secretariat</span>
+        </div>
+
+        <div class="shell grid">
+          <header class="section__head">
+            <p class="section__eyebrow label">The organizing committee</p>
+            <h2 class="section__title" id="oc-title">The people who run the room.</h2>
+            <p class="lede section__intro">
+              Advisors, an upper secretariat and an under secretariat — three tiers, one conference,
+              built and run by students of LRI School.
+            </p>
+          </header>
+        </div>
+
+        <div class="shell oc__body" data-oc-root>
+          <noscript>
+            <p class="body-copy">
+              The organizing committee roster is rendered with JavaScript. Enable JavaScript, or
+              contact the conference at
+              <a href="mailto:placeholder@example.org">placeholder@example.org</a> for the full list.
+            </p>
+          </noscript>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           4. PAST ITERATIONS & REVIEWS — editions I–IX leading into X.
+           Gallery data + rendering: src/modules/gallery.js
+           Styles: src/styles/sections/gallery.css
+           ================================================================== -->
+      <section class="section gallery ground-blush" id="editions" aria-labelledby="editions-title">
+        <div class="section__margin" aria-hidden="true">
+          <span class="numeral">03</span>
+          <span class="section__margin__rule"></span>
+          <span class="section__margin__label">Editions</span>
+        </div>
+
+        <!-- Nine numerals running into the tenth — the hero mark, restated as
+             rhythm. Decorative and paused under reduced motion. -->
+        <div class="gallery__marquee" aria-hidden="true" data-gallery-marquee>
+          <div class="gallery__marquee-track" data-gallery-marquee-track></div>
+        </div>
+
+        <div class="shell grid">
+          <header class="section__head">
+            <p class="section__eyebrow label">Editions I — IX</p>
+            <h2 class="section__title" id="editions-title">Nine editions in the archive.</h2>
+            <p class="lede section__intro">
+              One frame from each conference that came before. The tenth is being built on top of
+              them.
+            </p>
+          </header>
+        </div>
+
+        <div class="shell gallery__body" data-gallery-root>
+          <noscript>
+            <p class="body-copy">
+              The edition archive is rendered with JavaScript. Photographs from past conferences are
+              available at
+              <!-- PLACEHOLDER — replace with the real Instagram handle. -->
+              <a
+                href="https://www.instagram.com/PLACEHOLDER"
+                target="_blank"
+                rel="noopener noreferrer"
+                >@PLACEHOLDER on Instagram</a
+              >.
+            </p>
+          </noscript>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           5. REGISTRATION — the closing call. Ships with the footer module
+           because it shares its ground and its outbound link.
+           Styles: src/styles/sections/footer.css
+           ================================================================== -->
+      <section class="register ground-magenta" id="register" aria-labelledby="register-title">
+        <div class="shell register__inner">
+          <div class="register__panel">
+            <span class="register__mark numeral" aria-hidden="true">X</span>
+            <p class="section__eyebrow label register__eyebrow">Delegate registration</p>
+            <h2 class="register__title" id="register-title">Take a seat at the tenth.</h2>
+            <p class="lede register__lede">
+              Registration runs through a single form — school, committee preference and delegate
+              details. Allocations are released by email once the form closes.
+            </p>
+
+            <div class="register__actions">
+              <!-- TODO: insert Google Form URL — see README placeholder list. -->
+              <a
+                class="btn btn--lg register__cta"
+                href="https://forms.gle/PLACEHOLDER"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="btn__label"
+                  ><span>Open the registration form</span
+                  ><span aria-hidden="true">Open the registration form</span></span
+                >
+                <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M2 8h11M9 4l4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              <span class="btn__mount" aria-hidden="true"></span>
+          </a>
+              <p class="register__note label">
+                <!-- PLACEHOLDER — replace with the real registration deadline. -->
+                Deadline to be announced · Opens in a new tab
+              </p>
+            </div>
+
+            <dl class="register__facts">
+              <div class="register__fact">
+                <dt class="label">Delegate fee</dt>
+                <!-- PLACEHOLDER — replace with the real fee. -->
+                <dd>To be announced</dd>
+              </div>
+              <div class="register__fact">
+                <dt class="label">Eligibility</dt>
+                <!-- PLACEHOLDER — confirm eligibility wording with the OC. -->
+                <dd>To be announced</dd>
+              </div>
+              <div class="register__fact">
+                <dt class="label">Delegations</dt>
+                <!-- PLACEHOLDER — confirm delegation policy with the OC. -->
+                <dd>Individual and school delegations</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ====================================================================
+         FOOTER — Behaviour: src/modules/footer.js
+         Styles: src/styles/sections/footer.css
+         ==================================================================== -->
+    <footer class="footer ground-ink" aria-label="Site footer">
+      <div class="shell footer__inner">
+        <div class="footer__brand">
+          <div class="footer__lockup">
+            <img
+              class="footer__emblem"
+              src="/assets/lri-mun-logo.png"
+              alt="LRI Model UN"
+              width="512"
+              height="418"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="footer__wordmark" aria-hidden="true">
+              LRI Model UN <span class="footer__wordmark-x">X</span>
+            </span>
+          </div>
+          <p class="footer__brandline">
+            The tenth edition of LRI School's Model United Nations conference.
+          </p>
+          <a
+            class="footer__endorse"
+            href="https://www.lrischool.edu.np/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="/assets/school-logo.png"
+              alt="Learning Realm International School"
+              width="256"
+              height="332"
+              class="footer__school-logo"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="footer__endorse-text">
+              <span class="label footer__endorse-label">Presented by</span>
+              <span class="footer__endorse-name">Learning Realm Int'l School ↗</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="footer__nav" aria-label="Footer navigation">
+          <h2 class="label footer__heading">Sections</h2>
+          <ul class="footer__list">
+            <li><a href="#top">Home</a></li>
+            <li><a href="#committees">Committees</a></li>
+            <li><a href="#secretariat">Secretariat</a></li>
+            <li><a href="#editions">Past editions</a></li>
+            <li><a href="#register">Register</a></li>
+          </ul>
+        </nav>
+
+        <div class="footer__contact">
+          <h2 class="label footer__heading">Contact</h2>
+          <!-- PLACEHOLDER — replace every line below with real contact details. -->
+          <address class="footer__address">
+            LRI School<br />
+            Kalanki, Kathmandu, Nepal<br />
+            <a href="mailto:placeholder@example.org">placeholder@example.org</a><br />
+            <a href="tel:+000000000000">+000 000 000 000</a>
+          </address>
+
+          <!-- Static link, not an API integration — feed embeds were explicitly
+               out of scope, see README. -->
+          <a
+            class="footer__social"
+            href="https://www.instagram.com/PLACEHOLDER"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="footer__social-icon">
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" />
+            </svg>
+            <span>Instagram — @PLACEHOLDER</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="shell footer__base">
+        <p class="footer__copy label">
+          © <span data-footer-year>2026</span> LRI Model United Nations, LRI School. All rights
+          reserved.
+        </p>
+        <p class="footer__credit label">Designed and built by the LRI MUN organizing committee.</p>
+      </div>
+    </footer>
+
+    <!-- ====================================================================
+         BACK TO TOP — the ring is a live scroll-progress indicator.
+         Behaviour: src/modules/footer.js
+         ==================================================================== -->
+    <button class="to-top" type="button" data-to-top hidden>
+      <svg class="to-top__ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+        <circle class="to-top__ring-track" cx="22" cy="22" r="20" />
+        <circle class="to-top__ring-bar" cx="22" cy="22" r="20" data-to-top-ring />
+      </svg>
+      <svg class="to-top__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path
+          d="M8 13V3M4 7l4-4 4 4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span class="u-visually-hidden">Back to top</span>
+    </button>
+  </body>
+</html>

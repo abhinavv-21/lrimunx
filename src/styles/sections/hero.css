@@ -1,0 +1,455 @@
+/* ==========================================================================
+   hero.css — the struck seal.
+   Module: src/modules/hero.js
+
+   Register: a state banquet, not a school hall. An engraved order-of-
+   proceedings on deep plum stock, struck once in gold.
+
+   The composition is two columns. Left: the masthead, three words flush on one
+   left edge, cream on plum (16.51:1). Right: the anniversary as a single
+   OBJECT — the laurel wreath redrawn as gold line art, upright and opaque,
+   framing a TYPESET Fraunces X. The wreath is open at the crown, and that
+   opening is why it reads as a laurel rather than a ring.
+
+   Three things this replaces, all of them the same mistake — treating the
+   emblem and the numeral as decoration to be scattered rather than as one
+   struck mark:
+     · a brand logo on `150s linear infinite`, cropped by the viewport at 10%
+       alpha, which mid-cycle simply looked like a tilted crop;
+     · a hand-drawn "didone" X of four butt-capped strokes and four detached
+       serif bars, which read as a ✕ close icon because that is what it was;
+     · a full-bleed metadata rule pinned under a fixed header, which cannot
+       read as anything but a second navbar.
+
+   The full-colour PNG emblem now appears ONLY at true small scale — nav,
+   footer, preloader, favicon — where its shield, knot and lotus are legible.
+   The extracted device is used large. That split is the whole discipline, and
+   it also takes a 44.7 KB raster off the critical path.
+
+   Layout note: `.hero` is a grid with `grid-template-rows: 1fr auto`, NOT a
+   flex column with `margin-block: auto` on the middle child. Auto margins split
+   all free space evenly above and below, which is what opened the void under
+   the tagline on tall viewports. Free space now collects in the 1fr row.
+
+   Every colour here reads a ground token (--on-ground, --accent-on-ground), so
+   the ground can flip without stranding a value. The previous version
+   hardcoded --color-text-primary on the masthead, which on plum is 1.02:1.
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  display: grid;
+  /* `minmax(0, 1fr)`, not the implicit `auto`. An auto column is sized to the
+     max-content of its widest item, and the ribbon track inside the plinth is
+     `inline-size: max-content` across many repeated copies — so the column
+     resolved to ~4100px and pushed the entire composition off to the right.
+     `minmax(0, …)` lets the column be narrower than its content. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  min-block-size: 100svh;
+  padding-block-start: calc(var(--nav-h) + var(--sp-6));
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* --- Atmosphere ----------------------------------------------------------
+   Six layers instead of three, at different scales and softnesses, so the
+   ground has depth rather than reading as one flat two-stop ramp. Still pure
+   CSS: zero bytes, zero requests. The whole field drifts very slowly, which is
+   what turns a gradient into a room. */
+.hero__wash {
+  position: absolute;
+  inset: -25%;
+  z-index: -3;
+  background-image:
+    /* two tight, brighter cores */
+    radial-gradient(22% 26% at 70% 26%, rgb(var(--rgb-primary) / 0.5), transparent 60%),
+    radial-gradient(16% 20% at 24% 68%, rgb(var(--rgb-gold) / 0.14), transparent 62%),
+    /* broad body */
+    radial-gradient(46% 50% at 78% 34%, rgb(var(--rgb-primary) / 0.26), transparent 70%),
+    radial-gradient(52% 54% at 10% 78%, rgb(var(--rgb-primary-dark) / 0.5), transparent 72%),
+    radial-gradient(60% 40% at 50% 0%, rgb(var(--rgb-gold) / 0.07), transparent 74%),
+    /* deep base so the corners sink */
+    radial-gradient(70% 70% at 50% 60%, transparent 40%, rgb(var(--rgb-ink) / 0.7) 100%);
+  animation: hero-drift 38s var(--ease-house) infinite alternate;
+}
+
+@keyframes hero-drift {
+  from {
+    transform: translate3d(-1.5%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0) scale(1.06);
+  }
+}
+
+/* A vignette pinned to the section, so the drift never drags the darkening
+   with it. This is what stops the hero looking like a flat colour field. */
+.hero__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: radial-gradient(
+    78% 68% at 50% 46%,
+    transparent 42%,
+    rgb(var(--rgb-ink) / 0.55) 100%
+  );
+}
+
+/* The emblem, faint and STATIC. It never rotates and it is never cropped by a
+   viewport edge — it sits in the lower-left quadrant, clear of the masthead's
+   cap-height and clear of the seal. Deliberately smaller than the masthead
+   block so the LCP candidate stays the headline text. */
+.hero__emblem {
+  position: absolute;
+  z-index: -1;
+  /* Clear of the plinth, which occupies roughly the bottom quarter — at 12% the
+     mark was being sliced by the plinth's top edge, which is the cropped-emblem
+     failure this design exists to avoid. */
+  inset-block-end: 32%;
+  inset-inline-start: 3%;
+  inline-size: clamp(10rem, 17vw, 17rem);
+  block-size: auto;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+}
+
+.hero__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgb(var(--rgb-paper) / 0.03) 0 1px,
+    transparent 1px 3px
+  );
+  pointer-events: none;
+}
+
+/* --- Composition ---------------------------------------------------------- */
+.hero__inner {
+  position: relative;
+  inline-size: 100%;
+  align-self: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(var(--sp-7), 6vw, var(--sp-10));
+  align-items: center;
+}
+
+.hero__masthead {
+  min-inline-size: 0;
+}
+
+/* The dateline lives INSIDE the content column, above the first cap-line.
+   No rule, no full-bleed bar — that was the second navbar. */
+.hero__dateline {
+  display: block;
+  margin-block-end: var(--sp-5);
+  font-size: var(--fs-100);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--accent-on-ground);
+}
+
+.hero__title {
+  margin: 0;
+  text-transform: uppercase;
+  /* WONK on, low SOFT: the wedge serifs and the flared diagonal are where
+     Fraunces earns its keep — and exactly what the drawn X was failing to
+     fake. Display sizes only. */
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+  font-weight: 500;
+  color: var(--on-ground);
+  /* Large Fraunces carries an optical left sidebearing that makes the headline
+     look indented against the copy below it. */
+  margin-inline-start: -0.045em;
+}
+
+/* All three lines share one left edge. The composition comes from the ragged
+   right the three word-widths already make — that rag is organic. The old
+   staircase indent was arbitrary and read as accidental. */
+.hero__title-line {
+  display: block;
+}
+
+html.has-motion .hero__title-line {
+  transform: translate3d(0, 110%, 0);
+  will-change: transform;
+}
+
+.hero__tagline {
+  margin-block-start: clamp(var(--sp-5), 3vw, var(--sp-6));
+  max-width: var(--measure-tight);
+  font-size: var(--fs-500);
+  line-height: 1.5;
+  color: var(--on-ground-muted);
+  text-wrap: pretty;
+}
+
+/* --- The seal ------------------------------------------------------------- */
+.hero__seal {
+  position: relative;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  inline-size: clamp(15rem, 24vw, 23rem);
+  aspect-ratio: 1;
+  color: var(--color-accent-gold); /* the wreath is currentColor — 7.99:1 */
+}
+
+.hero__seal-wreath {
+  grid-area: 1 / 1;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.hero__seal-numeral {
+  grid-area: 1 / 1;
+  font-family: var(--font-display);
+  /* Typeset, not drawn: real thick/thin modulation and a real overlapping
+     join at the crossing, for free. */
+  font-variation-settings: 'opsz' 144, 'WONK' 1;
+  font-weight: 500;
+  font-size: clamp(6rem, 10vw, 9.5rem);
+  line-height: 1;
+  color: var(--color-gold-light); /* 13.01:1 on plum */
+  /* A Roman X optically centres slightly high; nudged down so it sits. */
+  transform: translateY(0.02em);
+}
+
+.hero__seal-caption {
+  grid-area: 1 / 1;
+  align-self: end;
+  transform: translateY(1.5em);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgb(var(--rgb-gold-light) / 0.75);
+  white-space: nowrap;
+}
+
+/* --- The plinth ----------------------------------------------------------
+   One substantial base carrying the facts, the actions and the cue, rather
+   than two thin stacked bands. */
+.hero__plinth {
+  position: relative;
+  margin-block-start: clamp(var(--sp-6), 4vw, var(--sp-8));
+  background-color: var(--color-ink-raised);
+  border-block-start: 1px solid var(--hairline-gold);
+}
+
+.hero__plinth-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding-block: clamp(var(--sp-5), 3vw, var(--sp-6));
+}
+
+.hero__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5) clamp(var(--sp-5), 4vw, var(--sp-8));
+  margin: 0;
+}
+
+.hero__fact dt {
+  color: var(--accent-on-ground);
+  margin-block-end: var(--sp-2);
+}
+
+.hero__fact dd {
+  margin: 0;
+  font-size: var(--fs-300);
+  color: var(--on-ground);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+/* --- Endorsement ribbon ---------------------------------------------------
+   hero.js measures a run and repeats it until the track is at least twice the
+   container wide, keeping the count EVEN so -50% lands on a copy boundary.
+   Duplicating content exactly twice leaves a visible seam whenever one copy is
+   narrower than the viewport. */
+.hero__ribbon {
+  border-block-start: 1px solid var(--hairline-on-ink);
+  padding-block: var(--sp-3);
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+.hero__ribbon-track {
+  display: flex;
+  inline-size: max-content;
+  animation: hero-ribbon var(--ribbon-duration, 48s) linear infinite;
+}
+
+/* Paused off-screen: an infinite animation otherwise keeps its compositor
+   layer alive and ticking for the rest of the session. */
+.hero__ribbon:not(.is-onscreen) .hero__ribbon-track {
+  animation-play-state: paused;
+}
+
+.hero__ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding-inline-end: var(--sp-5);
+  font-size: var(--fs-100);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label-wide);
+  text-transform: uppercase;
+  color: rgb(var(--rgb-text-inverse) / 0.62);
+  white-space: nowrap;
+}
+
+.hero__ribbon-star {
+  color: var(--color-accent-gold);
+}
+
+@keyframes hero-ribbon {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* --- Scroll cue ----------------------------------------------------------- */
+.hero__cue {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+  text-decoration: none;
+  color: var(--on-ground-muted);
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.hero__cue:hover,
+.hero__cue:focus-visible {
+  color: var(--accent-on-ground);
+}
+
+.hero__cue .label {
+  writing-mode: vertical-rl;
+  letter-spacing: var(--tracking-label-wide);
+}
+
+.hero__cue-line {
+  inline-size: 1px;
+  block-size: 2.75rem;
+  background-color: rgb(var(--rgb-gold) / 0.24);
+  overflow: hidden;
+  position: relative;
+}
+
+.hero__cue-line::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 40%;
+  background-color: var(--color-accent-gold);
+  animation: hero-cue 2.4s var(--ease-house) infinite;
+}
+
+@keyframes hero-cue {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  20%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(280%);
+    opacity: 0;
+  }
+}
+
+/* --- Breakpoints ---------------------------------------------------------- */
+
+/* Below 900 the seal leads: it sits ABOVE the masthead, centred. For an
+   anniversary edition that is the correct first thing to see on a phone. */
+@media (max-width: 899px) {
+  /* The emblem would sit under the centred stack at this width and muddy it. */
+  .hero__emblem {
+    display: none;
+  }
+
+  .hero__inner {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hero__seal {
+    order: -1;
+    inline-size: clamp(11rem, 46vw, 15rem);
+  }
+
+  .hero__title {
+    margin-inline-start: 0;
+  }
+
+  .hero__tagline {
+    margin-inline: auto;
+  }
+
+  .hero__plinth-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero__actions {
+    inline-size: 100%;
+  }
+
+  .hero__actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero__cue {
+    display: flex;
+  }
+
+  /* Masthead on cols 1–7, seal on 8–12. The seal is a real column with real
+     clear space: it never touches a viewport edge and never crops. */
+  .hero__inner {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero__inner {
+    padding-inline-start: clamp(0px, 3vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__wash,
+  .hero__ribbon-track,
+  .hero__cue-line::after {
+    animation: none;
+  }
+
+  .hero__cue-line::after {
+    transform: none;
+    opacity: 1;
+  }
+}
