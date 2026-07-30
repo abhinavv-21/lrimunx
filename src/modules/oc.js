@@ -199,7 +199,7 @@ function renderCard(member, tier) {
   li.innerHTML = `
     <div class="oc-card__media media-plate">
       <img
-        src="/assets/oc/${member.photo}"
+        src="${import.meta.env.BASE_URL}assets/oc/${member.photo}"
         alt="${member.name} — ${member.role}"
         loading="lazy"
         decoding="async"

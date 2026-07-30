@@ -6,6 +6,11 @@
  * multi-column, because columns reflow DOM order into visual columns and
  * scramble keyboard traversal. Row spans keep DOM order and visual order equal.
  *
+ * Paths are built from `import.meta.env.BASE_URL` because these URLs are
+ * assembled at runtime — Vite never sees them, so it cannot rewrite them the
+ * way it rewrites paths in HTML and CSS. Hardcoding a leading "/" would break
+ * the moment the site is served from a sub-path.
+ *
  * ─── PLACEHOLDER DATA ─────────────────────────────────────────────────────
  * Photograph filenames below are placeholders. Drop the real images into
  * /assets/past-galleries/edition-NN/ using these filenames (or edit the list).
@@ -35,7 +40,7 @@ const PHOTOS = ROMAN.map((roman, index) => {
     type: 'photo',
     edition: roman,
     editionIndex: index + 1,
-    src: `/assets/past-galleries/${folder}/01.jpg`,
+    src: `${import.meta.env.BASE_URL}assets/past-galleries/${folder}/01.jpg`,
     ratio: RATIOS[index % RATIOS.length],
     // PLACEHOLDER — replace with a description of what the photograph shows.
     alt: `LRI Model UN edition ${roman}. PLACEHOLDER alt text.`,

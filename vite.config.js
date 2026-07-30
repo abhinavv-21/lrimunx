@@ -37,9 +37,16 @@ function copyAssets() {
 }
 
 export default defineConfig({
-  // Absolute base. If the page is injected into the school CMS under a sub-path,
-  // change this to that sub-path (e.g. '/mun/') and rebuild — asset URLs follow.
-  base: '/',
+  // RELATIVE base, deliberately. With an absolute '/', every asset URL resolves
+  // against the domain root — so on GitHub Pages at /lrimunx/ the bundle was
+  // requested from github.io/assets/... and 404'd, leaving only the inline
+  // critical CSS painting a bare plum page.
+  //
+  // './' resolves against the document instead, so the same build works at the
+  // domain root, at /lrimunx/, or in any folder the school drops it into. This
+  // is a single-page site with no client-side routing, so there is no depth for
+  // relative paths to get wrong.
+  base: './',
   publicDir: false,
   plugins: [copyAssets()],
   server: { port: 5173, open: false },
