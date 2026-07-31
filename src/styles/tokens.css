@@ -166,7 +166,11 @@
   --dur-slow: 620ms;
   --dur-reveal: 900ms;
   --dur-curtain: 700ms; /* preloader curtain lift */
-  --reveal-y: 14px; /* content reveal travel: 8–16px, per art direction */
+  /* Content reveal travel. Was 14px, which is below the distance the eye reads
+     as movement — the element only appeared to switch on. 26px over the 1.25s
+     expo tail is still restrained (no bounce, no long slide) but it reads as
+     arriving rather than materialising. */
+  --reveal-y: 26px;
 
   /* ---- Chrome (preloader, back-to-top) ---------------------------------- */
   --z-chrome: 250;

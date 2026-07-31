@@ -63,7 +63,7 @@ export function initHero({ gsap, ScrollTrigger, reduced }) {
     return
   }
 
-  gsap.set(staged, { opacity: 0, y: 16 })
+  gsap.set(staged, { opacity: 0, y: 26 })
   staged.forEach((el) => el.removeAttribute('data-reveal'))
 
   // Prime the wreath for the draw. Measuring here rather than in CSS because

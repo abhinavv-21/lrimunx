@@ -35,19 +35,19 @@ export function initFooter(ctx) {
     '.register__eyebrow, .register__title, .register__lede, .register__actions, .register__facts'
   )
 
-  gsap.set(parts, { opacity: 0, y: 18 })
+  gsap.set(parts, { opacity: 0, y: 26 })
 
   ScrollTrigger.create({
     trigger: panel,
-    start: 'top 80%',
+    start: 'top 90%',
     once: true,
     onEnter: () =>
       gsap.to(parts, {
         opacity: 1,
         y: 0,
-        duration: 1.05,
+        duration: 1.25,
         ease: 'expo.out',
-        stagger: 0.09,
+        stagger: 0.075,
         clearProps: 'transform',
       }),
   })

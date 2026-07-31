@@ -157,19 +157,22 @@ export function initOc({ gsap, ScrollTrigger, reduced }) {
 
   root.querySelectorAll('[data-oc-tier]').forEach((tier) => {
     const cards = tier.querySelectorAll('.oc-card')
-    gsap.set(cards, { opacity: 0, y: 16 })
+    gsap.set(cards, { opacity: 0, y: 26 })
 
     ScrollTrigger.create({
       trigger: tier,
-      start: 'top 82%',
+      // Fires at the fold, not a fifth of the way up the screen, so a card is
+      // never sitting visibly empty before it animates. Same start / travel /
+      // curve as the shared batch in main.js — one reveal language, not five.
+      start: 'top 94%',
       once: true,
       onEnter: () =>
         gsap.to(cards, {
           opacity: 1,
           y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.05,
+          duration: 1.15,
+          ease: 'expo.out',
+          stagger: 0.06,
           clearProps: 'transform',
         }),
     })

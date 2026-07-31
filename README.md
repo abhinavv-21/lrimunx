@@ -215,13 +215,27 @@ the "obvious" version:
    bar height was subtracted twice and every jump stopped 71px short (measured:
    the section top sat 144px down instead of 73). Passing a **number** removes
    its element resolution entirely.
-2. **The bar hides itself.** Even once corrected, reserving the bar's height
-   exposed a strip of the *previous* section, because the nav tucks away on
+2. **The bar hid itself.** Even once corrected, reserving the bar's height
+   exposed a strip of the *previous* section, because the nav tucked away on
    downward scroll and the space it had reserved was left showing.
 
 Every section carries a `--section-y` top padding of 88–176px — comfortably more
 than the bar — so the heading is never covered. `scroll-padding-top` is `0` to
 match, so the no-JS path behaves identically.
+
+### The bar no longer hides on scroll-down
+
+`.is-tucked` is gone. Hide-on-scroll-down had a bug it could not be rid of: an
+anchor jump *is* a downward scroll, so tapping a nav link tucked the bar away as
+the direct result of using it — the control vanished in response to being
+pressed. Suppressing the tuck for programmatic scrolls alone would have fixed
+that one path and left the bar still disappearing under the reader everywhere
+else, taking the Register CTA (the page's conversion path) with it. On a single
+landing page with four destinations, a bar that is always there is the better
+trade for ~73px of viewport.
+
+The flush landing is still correct — more so, now. The bar simply overlaps the
+destination section's own top padding, in that section's own ground colour.
 
 ## Design system contract
 
@@ -274,7 +288,13 @@ they would for a person):
 - Hero headline reveal completes (`matrix(1, 0, 0, 1, 0, 0)`).
 - All scroll reveals fire: committees 6/6, OC cards 16/16, gallery tiles 12/12,
   registration 3/3 — at both widths.
-- Nav picks up `is-scrolled` / `is-tucked` on scroll.
+- Nav picks up `is-scrolled` once the hero is behind it, and stays at
+  `top: 0` through every anchor jump and after Back to top.
+- Scrollspy clears: `aria-current` is empty at the top of the page and inside
+  the registration panel, and moves to exactly one link inside each section.
+- Section titles split into per-word masks (3 / 6 / 5 words) with `textContent`
+  preserved verbatim; sampled mid-flight the words sit at 15/20/27/35/46/60px
+  below their masks, i.e. a real staggered rise, and settle at 0.
 - Gallery masonry: 0 overlapping tile pairs.
 - No horizontal overflow: `scrollWidth === innerWidth` at 1440 and at 375.
 - Zero page errors and zero failed requests, in dev **and** against the

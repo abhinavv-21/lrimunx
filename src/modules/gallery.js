@@ -198,17 +198,17 @@ export function initGallery({ gsap, ScrollTrigger, reduced }) {
      Entrance
      -------------------------------------------------------------------- */
   if (!reduced) {
-    gsap.set(items, { opacity: 0, y: 16 })
+    gsap.set(items, { opacity: 0, y: 26 })
     ScrollTrigger.batch(items, {
-      start: 'top 90%',
+      start: 'top 94%',
       once: true,
       onEnter: (batch) =>
         gsap.to(batch, {
           opacity: 1,
           y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.05,
+          duration: 1.15,
+          ease: 'expo.out',
+          stagger: 0.06,
           clearProps: 'transform',
         }),
     })

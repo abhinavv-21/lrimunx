@@ -213,6 +213,31 @@
           <span class="u-visually-hidden">LRI Model UN X — back to top</span>
         </a>
 
+        <!-- Provenance, not an action — which is why it sits beside the lockup
+             behind a hairline rather than out among the CTA and menu toggle on
+             the right. It is target="_blank", so the glyph is an external-link
+             arrow (↗), never a back-arrow: a ← would lie about the behaviour,
+             since there is nothing to go back to. -->
+        <a
+          class="nav__school"
+          href="https://www.lrischool.edu.np/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="nav__school-text">LRI School</span>
+          <svg class="nav__school-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path
+              d="M5.5 10.5 10.5 5.5M6 5.5h4.5V10"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="u-visually-hidden">— main school website, opens in a new tab</span>
+        </a>
+
         <nav class="nav__links" aria-label="Section navigation">
           <ul class="nav__list">
             <li><a class="nav__link" href="#committees" data-nav-link>Committees</a></li>
@@ -240,30 +265,6 @@
               />
             </svg>
           <span class="btn__mount" aria-hidden="true"></span>
-          </a>
-
-          <!-- The school is an endorsement, so it goes last — the same way the
-               footer already treats it. It is target="_blank", so the glyph is
-               an external-link arrow (↗), never a back-arrow: a ← would lie
-               about the behaviour, since there is nothing to go back to. -->
-          <a
-            class="nav__school"
-            href="https://www.lrischool.edu.np/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="nav__school-text">LRI School</span>
-            <svg class="nav__school-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path
-                d="M5.5 10.5 10.5 5.5M6 5.5h4.5V10"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <span class="u-visually-hidden">— main school website, opens in a new tab</span>
           </a>
 
           <!-- Deliberately not a hamburger-in-a-box: a word plus two hairlines. -->

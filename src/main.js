@@ -97,8 +97,10 @@ const ctx = {
     //      and every jump stopped 71px short (measured: 144px instead of 73).
     //      Passing a NUMBER removes its element resolution entirely.
     //   2. Even once corrected, reserving the bar's height exposed a strip of
-    //      the PREVIOUS section — because the bar hides itself on downward
-    //      scroll, so the space it had reserved was left showing.
+    //      the PREVIOUS section. (The bar no longer hides on scroll-down, which
+    //      is what made that strip visible — but flush is still right: the bar
+    //      now simply overlaps the destination section's own top padding, in
+    //      the destination's own ground colour.)
     //
     // Every section carries a --section-y top padding of 88–176px, comfortably
     // more than the bar, so the heading is never covered.
@@ -204,7 +206,18 @@ function initAnchors() {
  * elements on this page would otherwise mean 40+ triggers.
  *
  * Transform + opacity only, played once, never reversed on scroll-up.
+ *
+ * The two numbers that matter are the START and the TRAVEL, and both were
+ * wrong. At `top 85%` an element is already 15% inside the viewport before
+ * anything begins, so you watch an empty slot for a beat and then text appears
+ * in it. And 14px of travel over 1.1s is below the threshold where the eye
+ * reads movement at all — only the opacity change registers, which is exactly
+ * the "materialises out of nowhere" feeling. Starting at the fold (`top 94%`)
+ * with real travel means every element is always ARRIVING, never sitting blank
+ * and then switching on.
  */
+const REVEAL = { start: 'top 94%', duration: 1.25, ease: 'expo.out', stagger: 0.075 }
+
 function initReveals() {
   if (reduced) return
 
@@ -212,17 +225,17 @@ function initReveals() {
   if (!targets.length) return
 
   ScrollTrigger.batch(targets, {
-    start: 'top 85%',
+    start: REVEAL.start,
     once: true,
     onEnter: (batch) =>
       gsap.to(batch, {
         opacity: 1,
         y: 0,
-        duration: 1.1,
+        duration: REVEAL.duration,
         // expo.out has a long, late tail — the same curve as --ease-expo in the
         // stylesheet, so scripted and CSS motion feel like one system.
-        ease: 'expo.out',
-        stagger: 0.08,
+        ease: REVEAL.ease,
+        stagger: REVEAL.stagger,
         overwrite: true,
         // Drop the inline transform once it has served its purpose so nothing
         // is left composited for the rest of the session.
@@ -234,16 +247,52 @@ function initReveals() {
 }
 
 /**
+ * Split an element's text into per-word masks: `<span class="mask-word"><span>
+ * word</span></span>`, joined by real space characters.
+ *
+ * Word masks, not a whole-block mask, because the words then arrive in reading
+ * order — the line assembles itself left to right instead of sliding in as one
+ * slab. And a masked rise cannot read as "out of nowhere" the way a fade can:
+ * the word is travelling out from behind a hard edge, so there is a physical
+ * account of where it came from.
+ *
+ * The literal spaces between masks are load-bearing. Without them the element's
+ * textContent becomes "Chooseyourfloor." for anything reading it as a string,
+ * and inline-blocks give assistive tech no word boundary to announce.
+ */
+function splitWords(el) {
+  const words = el.textContent.trim().split(/\s+/)
+  if (words.length < 2) return []
+
+  const frag = document.createDocumentFragment()
+  words.forEach((word, index) => {
+    const mask = document.createElement('span')
+    mask.className = 'mask-word'
+    const inner = document.createElement('span')
+    inner.textContent = word
+    mask.append(inner)
+    frag.append(mask)
+    if (index < words.length - 1) frag.append(document.createTextNode(' '))
+  })
+
+  el.textContent = ''
+  el.append(frag)
+  return Array.from(el.querySelectorAll('.mask-word > span'))
+}
+
+/**
  * Section headings — a sequenced unroll rather than one fade.
  *
- * Three beats that overlap: the eyebrow rule draws, the heading rises into it,
- * and the marginal apparatus (gold numeral + vertical rule) resolves last. The
- * negative offsets are the point — three beats that breathe into each other
- * read composed; three sequential beats read like a loading spinner.
+ * Four beats that overlap: the eyebrow rule draws, the title's words rise out
+ * from behind their masks, the lede follows, and the marginal apparatus (gold
+ * numeral + vertical rule) resolves last. The negative offsets are the point —
+ * beats that breathe into each other read composed; sequential beats read like
+ * a loading spinner.
  *
- * Previously section headings had no scroll animation at all: only elements
- * carrying `data-reveal` were picked up, and the heads carried none, so every
- * section title simply existed.
+ * The title does NOT fade. It was the worst offender for the "out of nowhere"
+ * problem: the largest text on screen, appearing from zero opacity with 22px of
+ * travel. Now it is the same masked rise the hero masthead uses, so the two
+ * ends of the page speak one motion language.
  */
 function initHeadings({ gsap, ScrollTrigger, reduced }) {
   if (reduced) return
@@ -255,26 +304,45 @@ function initHeadings({ gsap, ScrollTrigger, reduced }) {
     const lede = head.querySelector('.section__intro')
     const margin = section?.querySelector('.section__margin')
 
-    const parts = [eyebrow, title, lede].filter(Boolean)
-    if (!parts.length) return
+    const parts = [eyebrow, lede].filter(Boolean)
+    const words = title ? splitWords(title) : []
+    // A one-word title cannot be split usefully; fall back to the fade so it is
+    // still animated rather than silently static.
+    const titleFades = title && !words.length
 
-    gsap.set(parts, { opacity: 0, y: 22 })
+    if (!parts.length && !title) return
+
+    if (parts.length) gsap.set(parts, { opacity: 0, y: 26 })
+    if (words.length) gsap.set(words, { yPercent: 118 })
+    if (titleFades) gsap.set(title, { opacity: 0, y: 26 })
     if (eyebrow) gsap.set(eyebrow, { '--rule-scale': 0 })
-    if (margin) gsap.set(margin, { opacity: 0, y: 14 })
+    if (margin) gsap.set(margin, { opacity: 0, y: 16 })
 
     ScrollTrigger.create({
       trigger: head,
-      start: 'top 82%',
+      start: 'top 88%',
       once: true,
       onEnter: () => {
         const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
         if (eyebrow) {
-          tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.7 })
-            .to(eyebrow, { '--rule-scale': 1, duration: 0.62 }, '-=0.55')
+          tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.75 }).to(
+            eyebrow,
+            { '--rule-scale': 1, duration: 0.66 },
+            '-=0.58'
+          )
         }
-        if (title) tl.to(title, { opacity: 1, y: 0, duration: 0.95 }, '-=0.42')
-        if (lede) tl.to(lede, { opacity: 1, y: 0, duration: 0.85 }, '-=0.7')
-        if (margin) tl.to(margin, { opacity: 1, y: 0, duration: 0.8 }, '-=0.6')
+        if (words.length) {
+          tl.to(words, { yPercent: 0, duration: 1.15, stagger: 0.045 }, '-=0.45')
+        } else if (titleFades) {
+          tl.to(title, { opacity: 1, y: 0, duration: 1.05 }, '-=0.45')
+        }
+        if (lede) tl.to(lede, { opacity: 1, y: 0, duration: 0.95 }, '-=0.85')
+        if (margin) tl.to(margin, { opacity: 1, y: 0, duration: 0.85 }, '-=0.7')
+
+        // Masks are only needed while the words are outside them.
+        if (words.length) {
+          tl.set(words, { clearProps: 'transform' }).set(title, { '--mask-clip': 'visible' })
+        }
         tl.set([...parts, margin].filter(Boolean), { clearProps: 'transform' })
       },
     })

@@ -16,14 +16,21 @@ export function initNav({ ScrollTrigger, lenis, reduced }) {
   const links = Array.from(document.querySelectorAll('[data-nav-link]'))
 
   /* --------------------------------------------------------------------
-     1. Ground state + hide-on-scroll-down.
+     1. Ground state.
 
-     Both are driven off the HERO'S BOTTOM EDGE, not a pixel constant.
-     Previously `is-scrolled` fired at scroll > 24 and `is-tucked` at > 560.
-     Over a light hero that was invisible; over the plum hero it painted a
+     Driven off the HERO'S BOTTOM EDGE, not a pixel constant. Previously
+     `is-scrolled` fired at scroll > 24, which over the plum hero painted a
      slightly-darker translucent rectangle with a gold bottom hairline floating
-     across the whole opening composition, and tucked the bar away while the
-     reader was still on the masthead.
+     across the whole opening composition.
+
+     The bar no longer hides on scroll-down. That behaviour had a bug it could
+     not be rid of: an anchor jump IS a downward scroll, so tapping a nav link
+     tucked the bar away as its direct result — you pressed a control and the
+     control left. Suppressing the tuck for programmatic scrolls only would fix
+     that one path and leave the bar still disappearing under the reader
+     everywhere else, hiding the Register CTA (the page's conversion path) for
+     most of the session. On a single landing page with four destinations, a bar
+     that is always there is the better trade.
      -------------------------------------------------------------------- */
   const hero = document.querySelector('.hero')
   const navH = () => nav.getBoundingClientRect().height
@@ -37,21 +44,7 @@ export function initNav({ ScrollTrigger, lenis, reduced }) {
       start: () => `bottom top+=${navH()}`,
       invalidateOnRefresh: true,
       onEnter: () => nav.classList.add('is-scrolled'),
-      onLeaveBack: () => {
-        nav.classList.remove('is-scrolled')
-        nav.classList.remove('is-tucked')
-      },
-    })
-
-    // Tucking only ever applies once the bar has a ground of its own.
-    ScrollTrigger.create({
-      start: 0,
-      end: 'max',
-      onUpdate: (self) => {
-        if (!nav.classList.contains('is-scrolled')) return
-        const tuck = self.direction === 1 && !nav.classList.contains('is-menu-open')
-        nav.classList.toggle('is-tucked', tuck)
-      },
+      onLeaveBack: () => nav.classList.remove('is-scrolled'),
     })
   } else {
     // Defensive: no hero in the document (e.g. the section is CMS-injected
@@ -68,22 +61,42 @@ export function initNav({ ScrollTrigger, lenis, reduced }) {
   /* --------------------------------------------------------------------
      2. Scrollspy — aria-current on the section currently occupying the
      middle band of the viewport.
+
+     The observer keeps a SET of what is currently in the band and re-derives
+     the marker from it. It used to act only on `isIntersecting` entries and
+     ignore the leaving ones, which meant nothing ever cleared the marker: back
+     at the hero, or down in the registration panel, none of the three linked
+     sections is in the band — but the last one to have been there kept its gold
+     diamond and bold weight, so the bar claimed you were still in a section you
+     had left. Most visible straight after Back to top.
      -------------------------------------------------------------------- */
   const sections = links
     .map((link) => document.querySelector(link.getAttribute('href')))
     .filter(Boolean)
 
   if (sections.length) {
+    const inBand = new Set()
+
+    const mark = () => {
+      // DOM order breaks the tie when two sections overlap the band, so the
+      // marker moves monotonically down the page instead of flickering.
+      const active = sections.find((section) => inBand.has(section))
+      links.forEach((link) => {
+        if (active && link.getAttribute('href') === `#${active.id}`) {
+          link.setAttribute('aria-current', 'true')
+        } else {
+          link.removeAttribute('aria-current')
+        }
+      })
+    }
+
     const spy = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return
-          links.forEach((link) => {
-            const isCurrent = link.getAttribute('href') === `#${entry.target.id}`
-            if (isCurrent) link.setAttribute('aria-current', 'true')
-            else link.removeAttribute('aria-current')
-          })
+          if (entry.isIntersecting) inBand.add(entry.target)
+          else inBand.delete(entry.target)
         })
+        mark()
       },
       { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
     )
@@ -116,7 +129,6 @@ export function initNav({ ScrollTrigger, lenis, reduced }) {
     toggle.setAttribute('aria-expanded', 'true')
     if (toggleLabel) toggleLabel.textContent = 'Close'
     nav.classList.add('is-menu-open')
-    nav.classList.remove('is-tucked')
     document.body.classList.add('u-no-scroll')
     lenis?.stop()
 

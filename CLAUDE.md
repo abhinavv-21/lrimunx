@@ -58,6 +58,25 @@ Sections land FLUSH with the viewport top — no nav-height offset. Pass Lenis a
 number, never an element (given an element it also applies
 `scroll-padding-top`, double-counting the bar). `scroll-padding-top: 0`.
 
+## The nav is persistent
+It never hides on scroll-down. An anchor jump is itself a downward scroll, so
+hide-on-scroll made the bar disappear the moment you used it, and it took the
+Register CTA with it for most of the session. Do not reintroduce `.is-tucked`.
+Scrollspy keeps a Set of what is in the middle band and re-derives the marker
+from it, so `aria-current` CLEARS when no linked section is there (top of page,
+registration panel) rather than stranding the last one.
+
+## Reveal language — one system, five modules
+Every scroll reveal on the page uses the same four numbers: start `top 94%`,
+travel 26px (`--reveal-y`), duration ~1.2s, `expo.out`, stagger ~0.075. Starting
+at 85% with 14px of travel is what made text read as "appearing out of nowhere":
+the element sat visibly empty for a beat, then switched on, because 14px is
+below the distance the eye reads as movement. Section titles do not fade at all
+— `splitWords()` in main.js wraps each word in a `.mask-word` and they rise out
+from behind it, so the line assembles left to right. Keep the literal space
+text nodes between masks; they are what preserves `textContent` and word
+boundaries for assistive tech.
+
 ## Signature interaction — "The Mount"
 A 1px hairline frame that draws itself clockwise around a control, sitting just
 outside the plate. Four arms, each scaled along its own long axis so the 1px

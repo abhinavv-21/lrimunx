@@ -263,16 +263,16 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
     gsap.set(items, { opacity: 0, y: 26, rotateZ: 0.6 })
     ScrollTrigger.create({
       trigger: rail,
-      start: 'top 85%',
+      start: 'top 94%',
       once: true,
       onEnter: () =>
         gsap.to(items, {
           opacity: 1,
           y: 0,
           rotateZ: 0,
-          duration: 1,
+          duration: 1.15,
           ease: 'expo.out',
-          stagger: 0.08,
+          stagger: 0.075,
           clearProps: 'transform',
         }),
     })

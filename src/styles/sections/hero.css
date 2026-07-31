@@ -275,7 +275,11 @@ html.has-motion .hero__title-line {
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-4);
+  /* Row gap stays sp-4; the COLUMN gap is wider. Both buttons carry a Mount —
+     a hairline frame that draws just OUTSIDE the plate — so at sp-4 the two
+     frames very nearly met when you hovered one, and the pair read as a single
+     segmented control rather than a primary action and an alternative. */
+  gap: var(--sp-4) var(--sp-5);
 }
 
 /* --- Endorsement ribbon ---------------------------------------------------

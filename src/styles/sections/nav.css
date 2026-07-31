@@ -58,24 +58,28 @@
   }
 }
 
-.nav.is-tucked {
-  transform: translate3d(0, -100%, 0);
-  transition:
-    transform var(--dur-base) var(--ease-house),
-    background-color var(--dur-base) var(--ease-house);
-}
+/* The bar no longer hides itself on scroll-down. It used to, and it cost more
+   than it bought: tapping a nav link starts a downward programmatic scroll, so
+   the bar tucked away the instant you used it — the control vanished in
+   response to being used, which is the worst possible feedback. The Register
+   CTA lives in this bar and is the page's conversion path, so it staying
+   reachable at every scroll position is worth ~73px of viewport.
+
+   `.is-tucked` is gone rather than left dormant; a class no code sets is a trap
+   for whoever reads this next. */
 
 /* --- School link ---------------------------------------------------------
-   Demoted to last, after the CTA. It previously sat to the LEFT of the LRI MUN
-   lockup, which put a parent institution's name ahead of the conference's own
-   mark — precisely the "school club page" signal this project exists to avoid.
-   The footer already treats the school as an endorsement ("Presented by"); the
-   nav now agrees with it. */
+   Left-hand side, immediately after the LRI MUN lockup and separated from it by
+   a hairline. It sat last, after the Register CTA, on the reasoning that a
+   parent institution should not lead ahead of the conference's own mark — but
+   parked between the CTA and the menu toggle it read as a third action of
+   unclear rank. Beside the lockup, behind a divider, it is unambiguously
+   provenance rather than a call to action. */
 .nav__school {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  padding-inline-start: var(--sp-5);
+  padding-inline-start: var(--sp-4);
   border-inline-start: 1px solid var(--hairline-on-ink);
   font-size: var(--fs-100);
   font-weight: 500;
@@ -138,31 +142,44 @@
 }
 
 /* The X is the anniversary, so it must not read as the next character in the
-   wordmark. Boxed in a gold hairline it becomes an edition stamp — the
-   small-scale echo of the seal in the hero. */
+   wordmark — but the boxed treatment overcorrected. A 1.5em square around a
+   0.72em glyph pushed the whole lockup's optical centre off the baseline (it
+   needed a -0.28em nudge to sit level, which is the tell), and at nav scale the
+   hairline square read as a UI chip bolted onto the end of a serif wordmark.
+   Two competing shapes where there should be one word.
+
+   So: no box. Just the numeral, in gold, cut at a display optical size so its
+   thick/thin contrast is visibly higher than the text it follows. That is the
+   whole distinction — same baseline, same family, different voice. The rule
+   underneath draws on hover, which is the Mount's grammar at glyph scale. */
 .nav__wordmark-x {
-  display: inline-grid;
-  place-items: center;
-  inline-size: 1.5em;
-  block-size: 1.5em;
-  margin-inline-start: 0.35em;
-  vertical-align: -0.28em;
-  font-size: 0.72em;
-  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  position: relative;
+  display: inline-block;
+  margin-inline-start: 0.16em;
+  font-size: 1.06em;
+  /* opsz 72, not 24: the display cut. High enough contrast to read as a struck
+     numeral, not so high it goes spindly at ~20px. */
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
   letter-spacing: 0;
   color: var(--color-accent-gold);
-  border: 1px solid rgb(var(--rgb-gold) / 0.55);
-  transition:
-    background-color var(--dur-base) var(--ease-house),
-    color var(--dur-base) var(--ease-house),
-    border-color var(--dur-base) var(--ease-house);
+  transition: color var(--dur-base) var(--ease-house);
 }
 
-.nav__lockup:hover .nav__wordmark-x,
-.nav__lockup:focus-visible .nav__wordmark-x {
-  background-color: var(--color-accent-gold);
-  border-color: var(--color-accent-gold);
-  color: var(--color-ink);
+.nav__wordmark-x::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -0.14em;
+  block-size: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--ease-house);
+}
+
+.nav__lockup:hover .nav__wordmark-x::after,
+.nav__lockup:focus-visible .nav__wordmark-x::after {
+  transform: scaleX(1);
 }
 
 .nav__links {
@@ -477,10 +494,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav.is-tucked {
-    transform: none;
-  }
-
   .nav__link,
   .nav__link::before,
   .nav-overlay__list li,

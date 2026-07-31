@@ -854,6 +854,32 @@ html.has-motion [data-reveal] {
   padding-block-end: 0.06em; /* room for descenders inside the mask */
 }
 
+/* Per-word mask, built by `splitWords()` in main.js for section titles. Words
+   wrap exactly as unsplit text does, because a word is atomic either way.
+
+   `vertical-align: bottom` is what keeps the split line sitting on the same
+   baseline as an unsplit one: an inline-block with `overflow: hidden` reports
+   its bottom margin edge as its baseline, so the default `baseline` alignment
+   would shove every word down by the descender space.
+
+   --mask-clip is released to `visible` once the rise finishes. Fraunces at
+   display sizes with WONK on has descenders and swashes that reach past the
+   line box, and the padding below is a guess; letting the clip go afterwards
+   means the resting state is pixel-identical to text that was never split. */
+.mask-word {
+  display: inline-block;
+  overflow: var(--mask-clip, hidden);
+  vertical-align: bottom;
+  padding-block-end: 0.12em;
+}
+
+/* No `will-change` here: a ten-word title across three sections would hold 30
+   composited layers for the whole session. GSAP's default force3D promotes each
+   word for the life of the tween and `clearProps` releases it after. */
+.mask-word > span {
+  display: inline-block;
+}
+
 /* --------------------------------------------------------------------------
    8b. PAGE CHROME — preloader exit + back-to-top.
    These are page-level, not section-level, so they live here rather than
