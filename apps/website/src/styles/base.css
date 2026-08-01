@@ -1,0 +1,1037 @@
+/* ==========================================================================
+   base.css — @font-face, reset, element defaults, and the shared primitives
+   (grid, section apparatus, buttons, tags, reveal states) that every section
+   module builds on. Section-specific rules live in styles/sections/*.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. FONTS — self-hosted, no external CDN handshake on the critical path.
+
+   Fraunces ships as a true variable font (SIL OFL): the optical-size axis is
+   what lets the same family be a 128px display face in the hero and a 20px
+   sub-head in a committee card without either looking like the other scaled.
+   The WONK axis is where its character lives and is used on display sizes only.
+   Latin subset only — the page is English, and U+0000–00FF covers the accented
+   glyphs used (e.g. "Chargé d'Affaires").
+
+   General Sans (ITF free licence) has no public variable build, so the three
+   weights the design actually uses are self-hosted as static cuts. Adding a
+   fourth means adding a file, so keep to 400/500/600.
+   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/assets/fonts/Fraunces-Variable-latin.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-stretch: 100%;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/assets/fonts/GeneralSans-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/assets/fonts/GeneralSans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/assets/fonts/GeneralSans-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --------------------------------------------------------------------------
+   2. RESET
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Zero, matching the scripted path in main.js: sections land flush with the
+     viewport top and their own top padding clears the bar. Reserving the bar's
+     height here instead exposed a strip of the previous section, because the
+     bar hides itself on downward scroll. */
+  scroll-padding-top: 0;
+}
+
+/* Lenis drives scroll when it is active; these are its required host styles. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--color-ink);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-400);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  letter-spacing: var(--tracking-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Belt-and-braces against horizontal scroll at 375px — verified per breakpoint,
+     but full-bleed decorative elements get no chance to escape. */
+  overflow-x: clip;
+}
+
+img,
+picture,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: rgb(var(--rgb-primary) / 0.45);
+  text-underline-offset: 0.22em;
+}
+
+ul[class],
+ol[class] {
+  list-style: none;
+  padding: 0;
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+/* --------------------------------------------------------------------------
+   3. FOCUS — never removed, never the browser default. Gold on ink grounds,
+   magenta on paper grounds; both clear 3:1 against their ground.
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring, var(--color-primary));
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* Suppress the ring for pointer users only — keyboard focus always shows. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  z-index: var(--z-skiplink);
+  padding: var(--sp-3) var(--sp-5);
+  background-color: var(--color-paper);
+  color: var(--color-text-primary);
+  font-size: var(--fs-200);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--color-primary);
+  transform: translateY(calc(-100% - var(--sp-5)));
+  transition: transform var(--dur-base) var(--ease-house);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   4. TYPOGRAPHY PRIMITIVES
+   -------------------------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-900);
+  line-height: var(--lh-tight);
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+}
+
+h2 {
+  font-size: var(--fs-800);
+  line-height: var(--lh-display);
+  font-variation-settings: 'opsz' 72;
+}
+
+h3 {
+  font-size: var(--fs-600);
+  font-variation-settings: 'opsz' 24;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Small-caps sans metadata: the counterweight to the display serif throughout. */
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.lede {
+  font-size: var(--fs-500);
+  line-height: 1.52;
+  max-width: var(--measure);
+  color: var(--on-ground-muted, inherit);
+}
+
+.body-copy {
+  max-width: var(--measure);
+  color: var(--on-ground-muted, inherit);
+}
+
+/* Anniversary numerals. Gold, display serif, decorative — always aria-hidden
+   where they merely restate a heading, per the contrast contract. */
+.numeral {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: 'opsz' 96, 'WONK' 1;
+  color: var(--color-accent-gold);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. LAYOUT PRIMITIVES — asymmetric 12-column grid.
+   Content hangs on columns 2–9; the outer left column carries the marginal
+   apparatus (section numeral + vertical label + hairline).
+   -------------------------------------------------------------------------- */
+.shell {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+  gap: var(--grid-gap);
+}
+
+.section {
+  position: relative;
+  padding-block: var(--section-y);
+}
+
+/* Marginal apparatus — hidden below 1024px where there is no outer column. */
+.section__margin {
+  display: none;
+}
+
+.section__head {
+  grid-column: 1 / -1;
+  margin-bottom: clamp(var(--sp-7), 4vw, var(--sp-10));
+}
+
+.section__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  color: var(--on-ground-muted);
+}
+
+/* The magenta survives here as a 2px rule (non-text UI, 3:1 is sufficient)
+   while the adjacent label text uses the accessible on-ground colour. */
+/* Driven from a custom property so the heading timeline can draw it. */
+.section__eyebrow::before {
+  content: '';
+  inline-size: clamp(1.5rem, 3vw, 3rem);
+  block-size: 2px;
+  background-color: var(--accent-on-ground);
+  flex: none;
+  transform: scaleX(var(--rule-scale, 1));
+  transform-origin: left;
+}
+
+.section__title {
+  max-width: 18ch;
+}
+
+.section__intro {
+  margin-top: var(--sp-5);
+}
+
+.rule {
+  border: 0;
+  block-size: 1px;
+  background-color: var(--hairline);
+}
+
+.rule--gold {
+  background-color: var(--hairline-gold);
+}
+
+@media (min-width: 1024px) {
+  .section__margin {
+    position: absolute;
+    inset-block-start: var(--section-y);
+    inset-inline-start: var(--gutter);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-4);
+    pointer-events: none;
+  }
+
+  .section__margin .numeral {
+    font-size: var(--fs-600);
+  }
+
+  .section__margin__label {
+    writing-mode: vertical-rl;
+    letter-spacing: var(--tracking-label-wide);
+    color: var(--on-ground-muted);
+    font-size: var(--fs-100);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .section__margin__rule {
+    inline-size: 1px;
+    block-size: clamp(3rem, 8vw, 6rem);
+    background: linear-gradient(to bottom, var(--hairline-gold), transparent);
+  }
+
+  /* Asymmetric offset: content starts at column 2 and stops short of the
+     right edge, leaving one deliberately empty column. */
+  .section__head,
+  .section__body {
+    grid-column: 2 / 10;
+  }
+
+  .section__body--wide {
+    grid-column: 2 / 13;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. BUTTONS — "The Mount"
+
+   The signature interaction of the whole site: a 1px gold hairline frame that
+   draws itself CLOCKWISE around the control, sitting just outside the plate —
+   the printed rule around an engraved invitation.
+
+   It is a system rather than an effect, which is the point: the same four-arm
+   mechanism scales onto buttons, cards and the back-to-top control, so the page
+   shares one gesture instead of accumulating unrelated ones.
+
+   Mechanism: four 1px lines, each scaled along its OWN long axis. The naive
+   version — a bordered pseudo-element at scale(0.16) — scales the 1px border
+   down to 0.16px and it vanishes. Scaling each arm only along its length means
+   thickness is never touched. Four elements are needed, so the button's
+   ::before/::after supply two and a <span class="btn__mount"> child supplies
+   the other two.
+
+   Origins run left → top → right → bottom so each arm begins where the previous
+   one ended. Reverse one and the frame assembles from random corners.
+
+   Colour rule: gold on dark grounds and on magenta fills, where the frame is
+   decorative and the fill already carries the affordance. MAGENTA on paper
+   grounds, where the frame is the only state indicator and must clear 3:1 —
+   gold on paper is 2.1:1 and would fail.
+   -------------------------------------------------------------------------- */
+.btn {
+  --btn-fill: var(--color-primary);
+  --btn-fill-hover: var(--color-primary-dark);
+  --btn-text: var(--color-text-inverse);
+  --mount-color: var(--color-accent-gold);
+  --mount-offset: -5px;
+  --mount-rest: 0.16;
+  --mount-rest-opacity: 0.55;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: 0.95rem 2.25rem;
+  min-block-size: 3rem;
+  font-family: var(--font-ui);
+  font-size: var(--fs-200);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--btn-text);
+  background-color: var(--btn-fill);
+  border: 1px solid var(--btn-fill);
+  /* Hard corners read letterpress. 2px is the radius of indecision. */
+  border-radius: var(--radius-none);
+  overflow: visible;
+  transition:
+    background-color 260ms var(--ease-house),
+    border-color 260ms var(--ease-house),
+    color 260ms var(--ease-house),
+    transform 240ms var(--ease-house);
+}
+
+/* The four arms. */
+.btn::before,
+.btn::after,
+.btn .btn__mount::before,
+.btn .btn__mount::after {
+  content: '';
+  position: absolute;
+  background-color: var(--mount-color);
+  opacity: var(--mount-rest-opacity);
+  pointer-events: none;
+  transition:
+    transform 200ms var(--ease-expo),
+    opacity 200ms linear;
+}
+
+/* top */
+.btn::before {
+  inset: var(--mount-offset) var(--mount-offset) auto var(--mount-offset);
+  block-size: 1px;
+  transform-origin: left;
+  transform: scaleX(var(--mount-rest));
+}
+
+/* right */
+.btn .btn__mount::before {
+  inset: var(--mount-offset) var(--mount-offset) var(--mount-offset) auto;
+  inline-size: 1px;
+  transform-origin: top;
+  transform: scaleY(var(--mount-rest));
+}
+
+/* bottom */
+.btn .btn__mount::after {
+  inset: auto var(--mount-offset) var(--mount-offset) var(--mount-offset);
+  block-size: 1px;
+  transform-origin: right;
+  transform: scaleX(var(--mount-rest));
+}
+
+/* left */
+.btn::after {
+  inset: var(--mount-offset) auto var(--mount-offset) var(--mount-offset);
+  inline-size: 1px;
+  transform-origin: bottom;
+  transform: scaleY(var(--mount-rest));
+}
+
+/* Draw — clockwise and sequenced. Gated on a fine pointer: on touch the
+   resting ticks are the affordance and nothing draws.
+   `:focus-visible` gets the identical state, never a consolation ring. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover::before,
+  .btn:focus-visible::before,
+  .btn:hover .btn__mount::before,
+  .btn:focus-visible .btn__mount::before,
+  .btn:hover .btn__mount::after,
+  .btn:focus-visible .btn__mount::after,
+  .btn:hover::after,
+  .btn:focus-visible::after {
+    transform: scale(1);
+    opacity: 1;
+    transition-duration: var(--dur-draw, 260ms), 200ms;
+  }
+
+  .btn:hover::before,
+  .btn:focus-visible::before {
+    transition-delay: 0ms;
+  }
+  .btn:hover .btn__mount::before,
+  .btn:focus-visible .btn__mount::before {
+    transition-delay: 70ms;
+  }
+  .btn:hover .btn__mount::after,
+  .btn:focus-visible .btn__mount::after {
+    transition-delay: 140ms;
+  }
+  .btn:hover::after,
+  .btn:focus-visible::after {
+    transition-delay: 210ms;
+  }
+}
+
+/* Dark grounds: the magenta plate is only 2.91:1 against plum, so the Mount is
+   doing real boundary work rather than decoration. At 0.70 it is 4.49:1 —
+   comfortably past the 3:1 required of a UI component edge.
+
+   The hover fill is also pinned. --btn-fill-hover is primary-dark, which is
+   8.31:1 on paper but 2.03:1 on plum — meaning the page's primary action would
+   become LESS distinguishable from its ground on hover. On dark grounds the
+   fill holds and the gold frame closing to 7.99:1 carries the state instead.
+   `:not(.btn--ghost)` so the ghost variant keeps its own translucent hover. */
+.ground-ink .btn,
+.ground-magenta .btn {
+  --mount-rest-opacity: 0.7;
+}
+
+.ground-ink .btn:not(.btn--ghost),
+.ground-magenta .btn:not(.btn--ghost) {
+  --btn-fill-hover: var(--btn-fill);
+}
+
+/* Touch: the ticks are permanent and read as frame corners. */
+@media (hover: none) {
+  .btn {
+    --mount-rest: 0.24;
+    --mount-rest-opacity: 0.7;
+  }
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background-color: var(--btn-fill-hover);
+  border-color: var(--btn-fill-hover);
+}
+
+/* A seal press: plate and mount compress together, like wax being struck. */
+.btn:active {
+  transform: scale(0.986);
+  transition-duration: 60ms;
+}
+
+/* Clears the -5px mount rather than sitting on top of it. */
+.btn:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring, var(--color-primary));
+  outline-offset: 8px;
+}
+
+.btn[disabled],
+.btn[aria-disabled='true'] {
+  background-color: transparent;
+  border-color: var(--color-border);
+  color: var(--on-ground-muted);
+  cursor: not-allowed;
+  transition: none;
+}
+
+.btn[disabled]::before,
+.btn[disabled]::after,
+.btn[aria-disabled='true']::before,
+.btn[aria-disabled='true']::after,
+.btn[disabled] .btn__mount::before,
+.btn[disabled] .btn__mount::after {
+  opacity: 0;
+}
+
+.btn__arrow {
+  flex: none;
+  inline-size: 0.85em;
+  transition: transform var(--dur-base) var(--ease-expo);
+}
+
+/* --- Variants ------------------------------------------------------------- */
+
+/* Ghost on dark grounds: the frame is contained inside the border rather than
+   floating outside it, which reads better on a dark field. */
+.btn--ghost {
+  --btn-fill: transparent;
+  --btn-fill-hover: rgb(var(--rgb-text-inverse) / 0.06);
+  --btn-text: var(--color-text-inverse);
+  --mount-offset: 4px;
+  --mount-rest-opacity: 0.6;
+  border-color: var(--hairline-on-ink-strong);
+}
+
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  border-color: var(--color-accent-gold);
+  /* The label deliberately holds still — letting the frame do the work is what
+     keeps the interaction from reading as two competing changes. */
+  color: var(--color-text-inverse);
+}
+
+/* Ghost on light grounds. The mount is MAGENTA here: it is the only state
+   indicator, so it is informational and must clear 3:1. */
+.btn--ghost-dark {
+  --btn-fill: transparent;
+  --btn-fill-hover: transparent;
+  --btn-text: var(--color-text-primary);
+  --mount-color: var(--color-primary);
+  --mount-rest-opacity: 0.5;
+  border-color: var(--color-border);
+}
+
+.btn--ghost-dark:hover,
+.btn--ghost-dark:focus-visible {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Nav scale. High-frequency, so the ceremony is shortened — a 470ms draw
+   becomes tiresome by the fourth hover. */
+.btn--sm {
+  padding: 0.6rem 1.15rem;
+  min-block-size: 2.75rem;
+  font-size: var(--fs-100);
+  letter-spacing: 0.2em;
+  --mount-offset: -3px;
+  --mount-rest: 0.22;
+  --dur-draw: 200ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn--sm:hover .btn__mount::before,
+  .btn--sm:focus-visible .btn__mount::before {
+    transition-delay: 40ms;
+  }
+  .btn--sm:hover .btn__mount::after,
+  .btn--sm:focus-visible .btn__mount::after {
+    transition-delay: 80ms;
+  }
+  .btn--sm:hover::after,
+  .btn--sm:focus-visible::after {
+    transition-delay: 120ms;
+  }
+}
+
+/* Hero + registration. Scale the ceremony with the stakes. */
+.btn--lg {
+  padding: 1.4rem 3rem;
+  min-block-size: 3.75rem;
+  font-size: var(--fs-300);
+  letter-spacing: 0.16em;
+  --mount-offset: -7px;
+  --dur-draw: 320ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn--lg:hover .btn__mount::before,
+  .btn--lg:focus-visible .btn__mount::before {
+    transition-delay: 90ms;
+  }
+  .btn--lg:hover .btn__mount::after,
+  .btn--lg:focus-visible .btn__mount::after {
+    transition-delay: 180ms;
+  }
+  .btn--lg:hover::after,
+  .btn--lg:focus-visible::after {
+    transition-delay: 270ms;
+  }
+}
+
+/* The label roll, reserved for the two most important buttons on the page.
+   A real duplicate rides underneath and both translate up together, so the
+   label advances rather than merely recolouring. */
+.btn__label {
+  display: grid;
+  overflow: hidden;
+}
+
+.btn__label > span {
+  grid-area: 1 / 1;
+  transition: transform 420ms var(--ease-expo);
+}
+
+.btn__label > span:last-child {
+  transform: translateY(110%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn--lg:hover .btn__label > span,
+  .btn--lg:focus-visible .btn__label > span {
+    transform: translateY(-110%);
+    transition-delay: 60ms;
+  }
+
+  .btn--lg:hover .btn__label > span:last-child,
+  .btn--lg:focus-visible .btn__label > span:last-child {
+    transform: translateY(0);
+  }
+}
+
+/* Windows high-contrast mode paints backgrounds away; without this the frame
+   disappears entirely. */
+@media (forced-colors: active) {
+  .btn::before,
+  .btn::after,
+  .btn .btn__mount::before,
+  .btn .btn__mount::after {
+    background-color: CanvasText;
+  }
+}
+
+/* A 470ms sequenced draw collapsed to 1ms reads as a glitch, so the reduced
+   state is specified outright: the frame is already closed and hover is a
+   brightness step, with no transform ever animating. */
+@media (prefers-reduced-motion: reduce) {
+  .btn::before,
+  .btn::after,
+  .btn .btn__mount::before,
+  .btn .btn__mount::after {
+    transform: scale(1);
+    opacity: 0.3;
+    transition-delay: 0ms !important;
+  }
+
+  .btn:hover::before,
+  .btn:hover::after,
+  .btn:focus-visible::before,
+  .btn:focus-visible::after,
+  .btn:hover .btn__mount::before,
+  .btn:hover .btn__mount::after,
+  .btn:focus-visible .btn__mount::before,
+  .btn:focus-visible .btn__mount::after {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .btn__label > span:last-child {
+    display: none;
+  }
+
+  .btn:active {
+    transform: none;
+  }
+}
+
+/* Difficulty tags and edition chips. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.35em 0.75em;
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* Difficulty is real information, not decoration, so every tier has to clear
+   4.5:1 on both grounds a committee card can have (paper, and primary-tint on
+   the feature card). That rules out the obvious gold/tint/magenta trio —
+   gold on paper is 2.2:1 and primary-tint on paper is 1.2:1.
+   The ladder is weight instead of hue: outline → magenta outline → magenta
+   fill, which also reads as escalation rather than as three arbitrary colours. */
+.tag--beginner {
+  color: var(--color-text-primary); /* 17.3:1 on paper · 14.1:1 on tint */
+  border-color: rgb(var(--rgb-text-primary) / 0.35);
+}
+
+.tag--intermediate {
+  color: var(--color-primary); /* 5.5:1 on paper · 4.5:1 on tint */
+}
+
+.tag--advanced {
+  color: var(--color-text-inverse); /* 5.3:1 on the magenta fill */
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   7. MEDIA FALLBACKS
+   Every <img> in this build points at an asset that may not exist yet. The JS
+   modules add `.is-missing` on error and a painted plate takes over, so a
+   missing headshot or gallery frame reads as an intentional placeholder rather
+   than a broken image.
+   -------------------------------------------------------------------------- */
+/* Navy-dominant with a magenta blush in one corner. An even mix of magenta and
+   navy across the whole plate averages out to purple, which is the exact
+   register this palette exists to avoid. */
+.media-plate {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-ink);
+  /* Deliberately shallow. A strong two-colour ramp across every plate made the
+     placeholders louder than the photographs they stand in for. */
+  background-image:
+    radial-gradient(90% 70% at 20% 4%, rgb(var(--rgb-primary) / 0.13), transparent 58%),
+    radial-gradient(70% 60% at 88% 96%, rgb(var(--rgb-gold) / 0.06), transparent 62%),
+    linear-gradient(160deg, rgb(var(--rgb-ink-raised) / 1), rgb(var(--rgb-ink) / 1));
+}
+
+.media-plate > img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.media-plate.is-missing > img {
+  display: none;
+}
+
+.media-plate__fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-700);
+  font-variation-settings: 'opsz' 48;
+  color: rgb(var(--rgb-gold) / 0.72);
+  letter-spacing: 0.06em;
+}
+
+.media-plate.is-missing .media-plate__fallback {
+  display: flex;
+}
+
+/* --------------------------------------------------------------------------
+   8. SCROLL REVEALS
+   Elements are visible by default. The hidden start-state only applies once
+   main.js has confirmed JS *and* motion are both available, so no-JS users and
+   reduced-motion users never see a blank page.
+   -------------------------------------------------------------------------- */
+html.has-motion [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y), 0);
+}
+
+/* Masked line reveal wrapper — `overflow: hidden` + inner translate rather than
+   animated clip-path (Safari jank + font-swap mis-clipping). The start-state
+   for the inner line lives in hero.css, gated on `.has-motion`. */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-block-end: 0.06em; /* room for descenders inside the mask */
+}
+
+/* Per-word mask, built by `splitWords()` in main.js for section titles. Words
+   wrap exactly as unsplit text does, because a word is atomic either way.
+
+   `vertical-align: bottom` is what keeps the split line sitting on the same
+   baseline as an unsplit one: an inline-block with `overflow: hidden` reports
+   its bottom margin edge as its baseline, so the default `baseline` alignment
+   would shove every word down by the descender space.
+
+   --mask-clip is released to `visible` once the rise finishes. Fraunces at
+   display sizes with WONK on has descenders and swashes that reach past the
+   line box, and the padding below is a guess; letting the clip go afterwards
+   means the resting state is pixel-identical to text that was never split. */
+.mask-word {
+  display: inline-block;
+  overflow: var(--mask-clip, hidden);
+  vertical-align: bottom;
+  padding-block-end: 0.12em;
+}
+
+/* No `will-change` here: a ten-word title across three sections would hold 30
+   composited layers for the whole session. GSAP's default force3D promotes each
+   word for the life of the tween and `clearProps` releases it after. */
+.mask-word > span {
+  display: inline-block;
+}
+
+/* --------------------------------------------------------------------------
+   8b. PAGE CHROME — preloader exit + back-to-top.
+   These are page-level, not section-level, so they live here rather than
+   inventing a seventh file in styles/sections/ (which maps 1:1 to modules).
+   The preloader's *entry* styles are inlined in index.html; they have to paint
+   before this stylesheet exists. What follows only governs its exit.
+   -------------------------------------------------------------------------- */
+
+/* Content fades up as the curtain lifts, so the reveal is one gesture rather
+   than a curtain and then a separate page.
+
+   `.to-top` is excluded deliberately: it is chrome, not content, and it owns
+   its own visibility (it must stay hidden until you are past the hero). Without
+   the exclusion this rule wins on specificity and pins it visible at load. */
+html:not(.app-ready) body > *:not(#site-loader):not(.to-top) {
+  opacity: 0;
+}
+
+html.app-ready body > *:not(#site-loader):not(.to-top) {
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease-expo);
+}
+
+/* --- Back to top ---------------------------------------------------------
+   The ring is a live scroll-progress readout, not decoration: it fills as the
+   document is consumed, so the control doubles as a position indicator. */
+.to-top {
+  position: fixed;
+  inset-block-end: clamp(var(--sp-4), 3vw, var(--sp-6));
+  inset-inline-end: clamp(var(--sp-4), 3vw, var(--sp-6));
+  z-index: var(--z-chrome);
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-inverse);
+  background-color: rgb(var(--rgb-ink) / 0.78);
+  border: 1px solid var(--hairline-on-ink);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  /* `visibility`, not opacity alone: an opacity-0 control stays in the tab
+     order, so at the top of the page this was focusable while invisible. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.9);
+  transition:
+    opacity var(--dur-base) var(--ease-house),
+    visibility 0s linear var(--dur-base),
+    transform var(--dur-base) var(--ease-spring),
+    border-color var(--dur-base) var(--ease-house),
+    background-color var(--dur-base) var(--ease-house);
+}
+
+.to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+  transform: none;
+}
+
+.to-top:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.to-top__ring {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.to-top__ring-track,
+.to-top__ring-bar {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.to-top__ring-track {
+  stroke: rgb(var(--rgb-text-inverse) / 0.16);
+}
+
+/* Dash offset is driven from footer.js against the real scroll progress. */
+.to-top__ring-bar {
+  stroke: var(--color-accent-gold);
+  stroke-linecap: round;
+  stroke-dasharray: 125.6; /* 2πr, r = 20 */
+  stroke-dashoffset: 125.6;
+  transition: stroke-dashoffset 120ms linear;
+}
+
+.to-top__arrow {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.to-top:hover .to-top__arrow {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .to-top {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. UTILITIES
+   -------------------------------------------------------------------------- */
+.u-visually-hidden {
+  position: absolute !important;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.u-no-scroll {
+  overflow: hidden;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. GLOBAL REDUCED-MOTION FALLBACK
+   Transforms and parallax are disabled outright; opacity fades survive.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html.has-motion [data-reveal] {
+    transform: none;
+  }
+}

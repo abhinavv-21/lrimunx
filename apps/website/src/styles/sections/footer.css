@@ -1,0 +1,368 @@
+/* ==========================================================================
+   footer.css — registration block + site footer.
+   The registration panel lives here rather than in a seventh module: it is a
+   single CTA panel sharing the footer's ink ground and its outbound form link.
+   Module: src/modules/footer.js
+   ========================================================================== */
+
+/* --- Registration ---------------------------------------------------------
+   Still the one saturated ground on the page, but sunk toward magenta-dark and
+   given a soft radial so it has depth. At full --color-primary across a whole
+   viewport it was genuinely painful after the plum sections either side of it.
+   text-inverse on magenta-dark is 8.15:1, so the contrast actually improves. */
+.register {
+  position: relative;
+  padding-block: var(--section-y);
+  overflow: hidden;
+  background-image: radial-gradient(
+    82% 70% at 28% 22%,
+    rgb(var(--rgb-primary) / 0.62),
+    transparent 72%
+  );
+}
+
+.register__panel {
+  position: relative;
+  padding: clamp(var(--sp-6), 5vw, var(--sp-10));
+  border: 1px solid rgb(var(--rgb-gold) / 0.55);
+  border-radius: var(--radius-none);
+  overflow: hidden;
+}
+
+/* The section itself is the one saturated ground on the page — .ground-magenta
+   — placed exactly at the conversion point. The panel is therefore a hairline
+   frame on that ground, not a second gradient competing with it.
+
+   Every piece of copy inside is text-inverse at FULL alpha (5.67:1). Muted
+   variants drop below 4.5:1 on magenta, and gold is 2.5:1 here and never
+   appears as text — only as this frame and the watermark. */
+.register__mark {
+  position: absolute;
+  inset-block-start: -0.22em;
+  inset-inline-end: 0.06em;
+  font-size: clamp(9rem, 26vw, 20rem);
+  line-height: 1;
+  /* Filled, not outlined: `-webkit-text-stroke` outlines each contour of the
+     glyph separately, so the two diagonals of an X cross and their outlines
+     peek through one another. */
+  color: rgb(var(--rgb-gold-light) / 0.16);
+  pointer-events: none;
+}
+
+.register__eyebrow {
+  color: var(--on-ground);
+}
+
+.register__eyebrow::before {
+  background-color: var(--color-gold-light);
+}
+
+.register__title {
+  position: relative;
+  font-size: var(--fs-800);
+  line-height: var(--lh-display);
+  max-width: 14ch;
+}
+
+.register__lede {
+  position: relative;
+  margin-block-start: var(--sp-5);
+  color: var(--on-ground);
+}
+
+.register__actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-7);
+}
+
+/* Inverted CTA: paper fill on the magenta panel, so the button is the single
+   lightest object in the composition. */
+.register__cta {
+  --btn-fill: var(--color-paper);
+  --btn-fill-hover: var(--color-gold-light);
+  --btn-text: var(--color-text-primary);
+  border-color: var(--color-paper);
+}
+
+.register__cta:hover,
+.register__cta:focus-visible {
+  border-color: var(--color-gold-light);
+  color: var(--color-text-primary);
+}
+
+.register__note {
+  color: var(--on-ground);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.register__facts {
+  position: relative;
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-9));
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid rgb(var(--rgb-text-inverse) / 0.34);
+}
+
+/* text-inverse, not gold: gold on magenta is 2.5:1. */
+.register__fact dt {
+  color: var(--on-ground);
+  opacity: 0.82;
+  margin-block-end: var(--sp-2);
+}
+
+.register__fact dd {
+  margin: 0;
+  font-size: var(--fs-300);
+}
+
+/* --- Footer --------------------------------------------------------------- */
+.footer {
+  padding-block: clamp(var(--sp-8), 6vw, var(--sp-10)) var(--sp-6);
+  border-block-start: 1px solid var(--hairline-on-ink);
+}
+
+.footer__inner {
+  display: grid;
+  gap: clamp(var(--sp-7), 5vw, var(--sp-9));
+}
+
+.footer__lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.footer__emblem {
+  block-size: 3.25rem;
+  inline-size: auto;
+}
+
+.footer__wordmark {
+  font-family: var(--font-display);
+  font-size: var(--fs-600);
+  font-weight: 600;
+  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--color-text-inverse);
+}
+
+/* The X is the anniversary, so it must not read as the next character in the
+   wordmark. Boxed in a gold hairline it becomes an edition stamp — the
+   small-scale echo of the seal in the hero. */
+.footer__wordmark-x {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5em;
+  block-size: 1.5em;
+  margin-inline-start: 0.35em;
+  vertical-align: -0.28em;
+  font-size: 0.72em;
+  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  letter-spacing: 0;
+  color: var(--color-accent-gold);
+  border: 1px solid rgb(var(--rgb-gold) / 0.55);
+  transition:
+    background-color var(--dur-base) var(--ease-house),
+    color var(--dur-base) var(--ease-house),
+    border-color var(--dur-base) var(--ease-house);
+}
+
+
+.footer__brandline {
+  margin-block-start: var(--sp-5);
+  max-width: 34ch;
+  font-size: var(--fs-300);
+  color: rgb(var(--rgb-text-inverse) / 0.66);
+}
+
+/* The endorsement is a real outbound link to the school, not just a mark. */
+.footer__endorse {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--hairline-on-ink);
+  text-decoration: none;
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.footer__endorse-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.footer__endorse-label {
+  color: rgb(var(--rgb-text-inverse) / 0.55);
+}
+
+.footer__endorse-name {
+  font-size: var(--fs-300);
+  color: rgb(var(--rgb-text-inverse) / 0.86);
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.footer__endorse:hover .footer__endorse-name {
+  color: var(--color-accent-gold);
+}
+
+.footer__school-logo {
+  block-size: 2.75rem;
+  inline-size: auto;
+  opacity: 0.85;
+  transition:
+    opacity var(--dur-base) var(--ease-house),
+    transform var(--dur-slow) var(--ease-spring);
+}
+
+.footer__endorse:hover .footer__school-logo {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.footer__heading {
+  color: var(--color-accent-gold);
+  margin-block-end: var(--sp-4);
+}
+
+.footer__list {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+/* The sitemap now uses the same small-caps UI voice as the header nav and every
+   other label on the page, with the same diamond marker. Previously it was the
+   only run of sentence-case body sans on the site, which is what made it read
+   as belonging to a different design. */
+.footer__list a {
+  position: relative;
+  display: inline-block;
+  padding-inline-start: 0.85rem;
+  font-size: var(--fs-100);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: rgb(var(--rgb-text-inverse) / 0.72);
+  text-decoration: none;
+  transition:
+    color 200ms var(--ease-house),
+    transform 200ms var(--ease-house);
+}
+
+.footer__list a::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 50%;
+  inline-size: 3px;
+  block-size: 3px;
+  margin-block-start: -1.5px;
+  background-color: var(--color-accent-gold);
+  opacity: 0;
+  transform: rotate(45deg) scale(0.4);
+  transition:
+    opacity 220ms var(--ease-house),
+    transform 220ms var(--ease-house);
+}
+
+.footer__list a:hover,
+.footer__list a:focus-visible {
+  color: var(--color-text-inverse);
+  transform: translateY(-1px);
+}
+
+.footer__list a:hover::before,
+.footer__list a:focus-visible::before {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+
+.footer__address a {
+  font-size: var(--fs-300);
+  color: rgb(var(--rgb-text-inverse) / 0.78);
+  text-decoration: none;
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.footer__address a:hover,
+.footer__address a:focus-visible {
+  color: var(--color-accent-gold);
+}
+
+.footer__address {
+  font-style: normal;
+  font-size: var(--fs-300);
+  line-height: 1.8;
+  color: rgb(var(--rgb-text-inverse) / 0.78);
+}
+
+.footer__social {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-text-inverse);
+  border: 1px solid var(--hairline-on-ink-strong);
+  border-radius: var(--radius-pill);
+  transition:
+    border-color var(--dur-base) var(--ease-house),
+    color var(--dur-base) var(--ease-house);
+}
+
+.footer__social:hover {
+  border-color: var(--color-accent-gold);
+  color: var(--color-accent-gold);
+}
+
+.footer__social-icon {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  flex: none;
+}
+
+.footer__base {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-start: clamp(var(--sp-8), 5vw, var(--sp-10));
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--hairline-on-ink);
+  color: rgb(var(--rgb-text-inverse) / 0.52);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* --- Breakpoints ---------------------------------------------------------- */
+@media (min-width: 768px) {
+  .register__facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .footer__inner {
+    grid-template-columns: 1.4fr 1fr 1.2fr;
+    gap: var(--grid-gap);
+  }
+}
+
+@media (min-width: 1024px) {
+  .register__inner {
+    padding-inline: clamp(0px, 3vw, 4rem);
+  }
+}
