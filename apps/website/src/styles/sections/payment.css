@@ -13,12 +13,12 @@
 
    So there is no card, no shield, no colour change and no alarm state. The step
    is three numbered beats in the page's own marginal-numeral voice — the same
-   device as the step indicator — separated by the same hairline the rest of the
+   device as the step indicator — divided by the same hairline the rest of the
    page divides content with.
 
    All colour comes from register-page.css §7's field tokens and from the
-   ground's own --accent-on-ground. Nothing new is introduced and nothing is
-   re-measured here.
+   ground's own --accent-on-ground. Nothing new is introduced here and nothing
+   is re-measured.
    ========================================================================== */
 
 .regpay {
@@ -40,8 +40,8 @@
 
 /* Display serif, magenta, tabular — the step indicator's numeral at the same
    size, so the two readouts on this page are visibly one system. Not `.numeral`
-   (gold, 2.1:1 on paper) because these numbers are the running order, not
-   ornament. */
+   (gold, 2.1:1 on paper) because these numbers are the running order rather
+   than ornament. */
 .regpay__index {
   font-family: var(--font-display);
   font-weight: 500;
@@ -72,8 +72,8 @@
 }
 
 /* The fee is the one number in this block that has to be unmistakable. It is
-   set in the display face at text weight rather than boxed or coloured — a
-   figure in a tinted pill is a promotion, and this is a price. */
+   set in the display face at text colour rather than boxed or tinted — a figure
+   in a coloured pill is a promotion, and this is a price. */
 .regpay__amount {
   font-family: var(--font-display);
   font-weight: 600;
@@ -102,7 +102,7 @@
   padding: var(--sp-4);
   inline-size: 100%;
   max-inline-size: 17rem;
-  /* Paper, not the lotus plate: a QR needs a quiet zone in a light neutral or
+  /* Paper, not the lotus plate: a QR needs its quiet zone in a light neutral or
      scanners lose the finder patterns. */
   background-color: var(--color-paper);
   border: 1px solid var(--color-border);
@@ -115,8 +115,8 @@
   object-fit: contain;
 }
 
-/* PLACEHOLDER marker. It is magenta and it is a full sentence, because the one
-   thing that must not happen is this shipping unnoticed. */
+/* PLACEHOLDER marker. Magenta, and a full sentence, because the one thing that
+   must not happen is this shipping unnoticed. */
 .regpay__qr-caption {
   display: flex;
   align-items: baseline;
@@ -162,14 +162,13 @@
 
    The plate carries .regfield__control, so its ground, its 5.8:1 edge, its
    focus ring and the Mount are the ones declared and measured in
-   register-page.css §7–8. Only three things are added here: the layout, the
-   focus wiring (the <input> is a hidden SIBLING of the plate, so :focus-within
-   cannot reach it), and the result row.
+   register-page.css §7–8. Three things are added here: the layout, the focus
+   wiring, and the result row.
 
-   The input is visually hidden rather than absent, and it is the label's own
-   control: the picker opens from a click anywhere on the plate, from Enter or
-   Space on the keyboard, and from a tap — one control, three inputs, no
-   div-with-a-click-handler.
+   The <input> is visually hidden rather than absent, and the plate is its
+   <label>: the picker opens from a click anywhere on the plate, from Enter or
+   Space, and from a tap. One control, three inputs, no div with a click
+   handler.
    -------------------------------------------------------------------------- */
 .regupload {
   margin-block-start: var(--sp-6);
@@ -207,9 +206,10 @@
   color: var(--on-ground-muted);
 }
 
-/* Focus. The wiring register-page.css does with :focus-within cannot apply
-   here, because the input sits OUTSIDE the plate — it has to, so that the plate
-   can be its <label>. The adjacent-sibling selector does the same job. */
+/* Focus. The :focus-within wiring in register-page.css cannot reach this one:
+   the input sits OUTSIDE the plate, as it must, so that the plate can be its
+   <label>. The adjacent-sibling selector does the same job, and the four Mount
+   arms are drawn in the same clockwise order. */
 .regupload__input:focus-visible + .regupload__plate {
   background-color: var(--field-plate-active);
   border-color: var(--field-edge-active);
@@ -233,16 +233,14 @@
   border-color: var(--field-edge-active);
 }
 
-/* While an upload is running the plate stops accepting a second one. Pointer
-   events are removed rather than the input being `disabled`, which would throw
-   focus back to <body> mid-upload. */
-.regupload.is-uploading .regupload__plate {
+/* While an upload is running — or while the registration itself is in flight —
+   the plate stops accepting a file. Pointer events are removed rather than the
+   input being `disabled`, which would throw focus back to <body> mid-upload;
+   the module refuses a second file regardless of how it is offered. */
+.regupload.is-uploading .regupload__plate,
+.regupload.is-locked .regupload__plate {
   cursor: progress;
   pointer-events: none;
-}
-
-.regupload.is-uploading .regupload__action::after {
-  content: '';
 }
 
 /* --------------------------------------------------------------------------

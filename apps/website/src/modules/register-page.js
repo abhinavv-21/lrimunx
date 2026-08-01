@@ -1,18 +1,18 @@
 /**
  * register-page.js — the two-step delegate registration form.
  *
- * Successor to the single-panel form that lived on the landing page. What is
- * carried over from it is the thinking, not the markup: a real <form> that is
+ * Successor to the single-panel form that lived on the landing page. What
+ * carries over from it is the thinking, not the markup: a real <form> that is
  * upgraded rather than replaced, client validation as a courtesy with the
  * server as the authority, a state machine in which every non-success state
- * leaves the reader's answers untouched, and announcements that move focus to
- * the problem rather than reading it out from somewhere else.
+ * leaves the reader's answers untouched, and failures that move focus to the
+ * problem rather than reading it out from somewhere else.
  *
  * Responsibilities:
  *   1. The step machine. Step 1 must validate before step 2 opens — nobody
  *      should reach a payment screen and only then be told their email is
  *      wrong. Moving between steps hides and shows; it never rebuilds, so
- *      nothing typed is ever lost, including in-flight upload state.
+ *      nothing typed is ever lost, the uploaded screenshot included.
  *   2. Validation, including the one cross-field rule (awards ≤ MUNs).
  *   3. The two committee listboxes and the rule that they cannot hold the same
  *      committee, plus preselection from ?committee=CODE.
@@ -54,7 +54,7 @@ const REQUEST_TIMEOUT_MS = 20000
 
 /* The page's reveal language, unchanged: 26px of travel on expo.out. The only
    number that differs is the duration — 1.2s is right for something arriving as
-   you scroll towards it, and far too slow for something answering a click. */
+   you scroll towards it, and much too slow for something answering a click. */
 const REVEAL = { y: 26, ease: 'expo.out', duration: 0.55, stagger: 0.05 }
 
 /* -------------------------------------------------------------------------
@@ -62,7 +62,9 @@ const REVEAL = { y: 26, ease: 'expo.out', duration: 0.55, stagger: 0.05 }
 
    Mirrors the API's own rules so the obvious failures never leave the device.
    The lengths are the SERVER's lengths — if they ever diverge the server wins,
-   and its 422 is mapped back onto the field regardless.
+   and its 422 is mapped back onto the field regardless. Nothing here is
+   STRICTER than the server: a client that rejects what the API would have
+   accepted is a client that invents policy.
 
    `focus` names the element an error should move the reader to. It exists for
    the two committee fields, whose value lives in a hidden <input> that nothing
@@ -144,18 +146,14 @@ const FIELDS = [
     label: 'MUNs attended',
     step: 1,
     integer: { min: 0, max: 99 },
-    messages: {
-      integer: 'Enter a whole number of conferences, between 0 and 99.',
-    },
+    messages: { integer: 'Enter a whole number of conferences, between 0 and 99.' },
   },
   {
     name: 'awardsWon',
     label: 'Awards won',
     step: 1,
     integer: { min: 0, max: 99 },
-    messages: {
-      integer: 'Enter a whole number of awards, between 0 and 99.',
-    },
+    messages: { integer: 'Enter a whole number of awards, between 0 and 99.' },
   },
   {
     name: 'committeePreference',
@@ -239,6 +237,7 @@ const LIVE = {
   invalid: 'Your registration was not sent. The errors are listed at the top of the form.',
   step1: 'Step 1 of 2: delegate details.',
   step2: 'Step 2 of 2: payment.',
+  missingProof: 'Your payment screenshot is missing. Add it to send your registration.',
 }
 
 const STEP_STATE = {
@@ -253,7 +252,23 @@ const PRESELECT_NOTICE =
 const SUBMIT_NOTE = {
   blocked: 'Add your payment screenshot to finish.',
   ready: 'This sends your registration to the secretariat.',
+  sending: 'Sending — do not close this page.',
+  /**
+   * Offered only after uploads have failed twice.
+   *
+   * Requiring the screenshot is right when uploading works. When it does not —
+   * a store that is not configured yet, a captive-portal network, a phone on
+   * one bar — an unconditional requirement means nobody can register at all,
+   * and a registration form that cannot be submitted is worse than one missing
+   * an attachment the secretariat can ask for later.
+   */
+  fallback: 'Uploads are not working. You can send this now and the secretariat will ask for the screenshot by email.',
 }
+
+/** Failed attempts before the send-anyway path appears. */
+const UPLOAD_FAILURES_BEFORE_FALLBACK = 2
+
+const MISSING_PROOF = 'Add the screenshot of your payment before sending this.'
 
 export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}) {
   const root = document.querySelector('[data-register]')
@@ -365,8 +380,8 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   }
 
   /* --------------------------------------------------------------------
-     Preselection from ?committee=UNSC — the Apply button on a committee
-     card. An unknown or absent code degrades to nothing selected; it is a
+     Preselection from ?committee=UNSC — the Apply button on a committee card.
+     An unknown or absent code degrades to nothing selected: it is a
      convenience, and a convenience that can fail loudly is not one.
      -------------------------------------------------------------------- */
   function applyQueryPreselect() {
@@ -389,17 +404,31 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     onChange: () => paintSubmitState(),
   })
 
+  /** True once uploading has failed enough times to stop being the only route. */
+  function uploadsGivenUp() {
+    return (upload?.failures ?? 0) >= UPLOAD_FAILURES_BEFORE_FALLBACK
+  }
+
   function paintSubmitState() {
     if (!submit) return
-    const ready = Boolean(upload?.url)
+    const uploaded = Boolean(upload?.url)
+    const ready = uploaded || uploadsGivenUp()
     submit.setAttribute('aria-disabled', String(!ready || busy))
     root.classList.toggle('is-ready', ready)
-    if (submitNote && !busy) submitNote.textContent = ready ? SUBMIT_NOTE.ready : SUBMIT_NOTE.blocked
+    if (submitNote) {
+      submitNote.textContent = busy
+        ? SUBMIT_NOTE.sending
+        : uploaded
+          ? SUBMIT_NOTE.ready
+          : ready
+            ? SUBMIT_NOTE.fallback
+            : SUBMIT_NOTE.blocked
+    }
   }
 
   /* --------------------------------------------------------------------
-     Validation. Length and shape only — every rule here exists on the
-     server too, and this pass is a courtesy, not a gate.
+     Validation. Length and shape only — every rule here exists on the server
+     too, and this pass is a courtesy, not a gate.
      -------------------------------------------------------------------- */
   function readValues() {
     const values = {}
@@ -424,31 +453,24 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   }
 
   /**
-   * The one rule that spans two fields.
+   * The one rule that spans two fields: you cannot have won an award at a
+   * conference you did not attend.
    *
-   * Both are optional, so it only bites when there is something to compare.
-   * Awards with no conferences at all is caught on the MUNs field rather than
-   * the awards field, because that is the answer that is actually missing —
-   * telling somebody their award count is wrong when the number they left out
-   * is the other one sends them to correct the wrong box.
+   * Checked only when BOTH numbers are answered, which is exactly the condition
+   * the server's own superRefine uses — either one alone is legitimate, and a
+   * client that refused what the API accepts would be inventing policy.
+   *
+   * Reported against awardsWon, because that is the number to lower. The other
+   * reading — "they under-counted their conferences" — is not ours to guess at.
    */
   function checkAwards(values, errors) {
+    if (errors.has('awardsWon') || errors.has('munsAttended')) return
+
     const muns = values.munsAttended ?? ''
     const awards = values.awardsWon ?? ''
-    if (!awards || errors.has('awardsWon') || errors.has('munsAttended')) return
+    if (!muns || !awards) return
 
-    const awardsN = Number(awards)
-    if (awardsN === 0) return
-
-    if (!muns) {
-      errors.set(
-        'munsAttended',
-        'Enter how many MUNs you have attended — you have listed awards from them.'
-      )
-      return
-    }
-
-    if (awardsN > Number(muns)) {
+    if (Number(awards) > Number(muns)) {
       errors.set(
         'awardsWon',
         `You cannot have won more awards than the conferences you have sat in. You entered ${muns} ${
@@ -474,19 +496,19 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
      Error presentation.
 
      The summary takes FOCUS rather than being a live region. Focus both moves
-     the reader to the problem and reads it out; a live region only reads it
-     and leaves them wherever they were, which on a form this long is several
+     the reader to the problem and reads it out; a live region only reads it and
+     leaves them wherever they were, which on a form this long is several
      screens from the field that failed.
      -------------------------------------------------------------------- */
   function focusTargetFor(name) {
     const field = FIELD_BY_NAME.get(name)
     if (field?.focus) return form.querySelector(field.focus)
-    if (name === PAYMENT_FIELD.name) return null
     return inputs.get(name) ?? null
   }
 
   function labelFor(name) {
-    return FIELD_BY_NAME.get(name)?.label ?? (name === PAYMENT_FIELD.name ? PAYMENT_FIELD.label : name)
+    if (name === PAYMENT_FIELD.name) return PAYMENT_FIELD.label
+    return FIELD_BY_NAME.get(name)?.label ?? name
   }
 
   function clearErrors() {
@@ -598,9 +620,9 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
      The step machine.
 
      Steps are hidden and shown, never built and torn down. Everything typed
-     survives a trip back to step 1 and a trip forward again — including the
-     uploaded screenshot — because none of it is ever removed from the
-     document. Losing a filled form is the worst thing this page can do.
+     survives a trip back to step 1 and forward again — the uploaded screenshot
+     included — because none of it is ever removed from the document. Losing a
+     filled form is the worst thing this page can do.
      -------------------------------------------------------------------- */
   function paintSteps() {
     markers.forEach((marker, index) => {
@@ -616,9 +638,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
 
   function revealPanel(panel) {
     if (reduced || !gsap) return
-    const rows = panel.querySelectorAll(
-      '.regstep__intro, .regfield, .regpay__block, .regstep__foot'
-    )
+    const rows = panel.querySelectorAll('.regstep__intro, .regfield, .regpay__block, .regstep__foot')
     if (!rows.length) return
     gsap.fromTo(
       rows,
@@ -649,10 +669,9 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     if (panel) revealPanel(panel)
 
     // The step heading takes focus, so a screen-reader user is placed at the
-    // top of the new step rather than left at a button that has just been
-    // hidden. Scrolling is done separately, and to the INDICATOR rather than
-    // the heading, so the progress marks are on screen at the moment they
-    // change.
+    // top of the new step rather than left on a button that has just been
+    // hidden. Scrolling is separate, and goes to the INDICATOR rather than the
+    // heading, so the progress marks are on screen at the moment they change.
     legends.get(step)?.focus({ preventScroll: true })
     if (steps && scrollTo) scrollTo(steps)
     else steps?.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
@@ -679,20 +698,17 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
      `busy` is checked before anything else and set before any await, so a
      double click, a double tap and Enter-held-down all collapse into one
      request. The submit button is aria-disabled rather than disabled:
-     `disabled` throws focus back to <body>, which on a form this tall leaves
-     a keyboard user at the top of the document with no idea what happened.
+     `disabled` throws focus back to <body>, which on a form this tall leaves a
+     keyboard user at the top of the document with no idea what happened.
      -------------------------------------------------------------------- */
   function setBusy(state) {
     busy = state
     root.classList.toggle('is-submitting', state)
     form.setAttribute('aria-busy', String(state))
 
-    if (submit) {
-      submitLabels.forEach((span) => {
-        span.textContent = state ? 'Sending…' : 'Send my registration'
-      })
-    }
-    if (submitNote && state) submitNote.textContent = 'Do not close this page.'
+    submitLabels.forEach((span) => {
+      span.textContent = state ? 'Sending…' : 'Send my registration'
+    })
 
     // read-only, not disabled — same reasoning as the button.
     inputs.forEach((input) => {
@@ -701,7 +717,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     primary?.setReadOnly(state)
     second?.setReadOnly(state)
     upload?.setReadOnly(state)
-    if (backButton) backButton.setAttribute('aria-disabled', String(state))
+    backButton?.setAttribute('aria-disabled', String(state))
 
     paintSubmitState()
   }
@@ -760,19 +776,18 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     const values = readValues()
     const errors = validate(values)
     if (errors.size) {
-      showFieldErrors(errors)
-      // The failure is on the step behind this one; go back to it, or the
-      // summary lists fields the reader cannot see.
+      // Back to the step the failures are on FIRST, then report them — goTo
+      // moves focus to the step heading, and doing it the other way round would
+      // take focus straight back off the summary.
       goTo(1)
+      showFieldErrors(errors)
       return
     }
 
     if (!upload?.url) {
       clearErrors()
-      upload?.setError('Add the screenshot of your payment before sending this.')
-      showSummary(SUMMARY.payment, [
-        [PAYMENT_FIELD.name, 'Upload the screenshot of your payment.'],
-      ])
+      upload?.setError(MISSING_PROOF)
+      showSummary(SUMMARY.payment, [[PAYMENT_FIELD.name, 'Upload the screenshot of your payment.']])
       return
     }
 
@@ -802,8 +817,8 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
 
     if (response.status === 201 || (response.ok && data?.status === 'received')) {
       // `data.reference` is deliberately ignored. The reader is told what
-      // happens next, not handed a code to keep — and the API returns the same
-      // shape for a repeat submission, so a reference on screen would raise a
+      // happens next, not handed a code to keep — and the API answers a repeat
+      // submission with the same shape, so a reference on screen would raise a
       // question ("is this a new one?") that the page cannot answer.
       showDone()
       return
@@ -812,8 +827,8 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     if (response.status === 422) {
       const mapped = mapDetails(data?.details)
       if (mapped.size) {
-        showFieldErrors(mapped)
         if (Array.from(mapped.keys()).some((name) => FIELD_BY_NAME.get(name)?.step === 1)) goTo(1)
+        showFieldErrors(mapped)
       } else {
         showSummary({
           title: SUMMARY.rejected.title,
@@ -884,10 +899,10 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   // the thing that is missing. A greyed-out control that does nothing when you
   // press it is the least helpful state a form can hold.
   submit?.addEventListener('click', (event) => {
-    if (busy || upload?.url) return
+    if (busy || upload?.url || uploadsGivenUp()) return
     event.preventDefault()
-    upload?.setError('Add the screenshot of your payment before sending this.')
-    announce('Your payment screenshot is missing. Add it to send your registration.')
+    upload?.setError(MISSING_PROOF)
+    announce(LIVE.missingProof)
     upload?.focus()
   })
 

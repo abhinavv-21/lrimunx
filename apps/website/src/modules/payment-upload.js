@@ -97,6 +97,16 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
 
   let url = ''
   let busy = false
+  /**
+   * Consecutive failed attempts.
+   *
+   * A blob upload that fails looks identical from here whatever caused it —
+   * `@vercel/blob` throws the same bare error for a 503 with no store
+   * configured, a 429, and a dropped connection. Rather than guess, the page
+   * counts failures and offers a way through after the second, which is the
+   * one response that is correct for all three.
+   */
+  let failures = 0
   let locked = false
   let preview = ''
 
@@ -209,6 +219,7 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
 
       setBusy(false)
       hideProgress()
+      failures = 0
       setStatus(COPY.uploaded)
       showResult(file)
       say('Screenshot uploaded. You can send your registration now.')
@@ -217,6 +228,7 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
       // A refused token, a dropped connection, a blocked request and a store
       // error all mean the same thing to the reader: it is not up there.
       url = ''
+      failures += 1
       setBusy(false)
       hideProgress()
       clearResult()
@@ -278,6 +290,9 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
     },
     get busy() {
       return busy
+    },
+    get failures() {
+      return failures
     },
 
     /** Called when step 2 opens: pull the client down before it is needed. */

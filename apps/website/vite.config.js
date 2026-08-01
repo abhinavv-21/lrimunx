@@ -59,6 +59,14 @@ export default defineConfig({
     // Single JS + single CSS file: the whole point of the stack decision is that
     // the output can be pasted into an existing CMS template.
     rollupOptions: {
+      // Two pages, one build. `base: './'` above means both documents resolve
+      // their assets against themselves, so index.html and register.html work
+      // side by side at the domain root or in any folder the build is dropped
+      // into.
+      input: {
+        main: resolve(import.meta.dirname, 'index.html'),
+        register: resolve(import.meta.dirname, 'register.html'),
+      },
       output: {
         entryFileNames: 'assets/build/[name].[hash].js',
         chunkFileNames: 'assets/build/[name].[hash].js',
