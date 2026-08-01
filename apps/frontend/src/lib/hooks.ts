@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tan
 import { apiFetch } from './api'
 import type {
   AttendanceSummary, AuditEntry, Award, AwardInput, Committee, CommitteeDetail, DashboardData,
-  Delegate, DelegateInput, IngestResult, LogisticsRequest, Paginated, Settings, AuthUser,
+  Delegate, DelegateInput, IngestResult, LogisticsRequest, Paginated, Registration,
+  RegistrationStats, Settings, AuthUser,
 } from '@/types/api'
 
 function qs(params: Record<string, string | number | boolean | undefined | null>): string {
@@ -243,6 +244,71 @@ export function useDeleteUser() {
   return useMutation({
     mutationFn: (id: string) => apiFetch<void>(`/users/${id}`, { method: 'DELETE' }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['users'] }),
+  })
+}
+
+/* ------------------------------ Registrations ----------------------------- */
+// Submissions from the public website. Approving one creates a Delegate, so
+// every mutation invalidates the roster and the dashboard too.
+
+export interface RegistrationFilters {
+  status?: string
+  search?: string
+}
+
+export function useRegistrations(filters: RegistrationFilters = {}) {
+  return useQuery({
+    queryKey: ['registrations', filters],
+    queryFn: () =>
+      apiFetch<Paginated<Registration>>(`/registrations${qs({ ...filters, pageSize: 200 })}`),
+  })
+}
+
+export function useRegistrationStats() {
+  return useQuery({
+    queryKey: ['registrations', 'stats'],
+    queryFn: () => apiFetch<RegistrationStats>('/registrations/stats'),
+  })
+}
+
+function useRegistrationInvalidation() {
+  const queryClient = useQueryClient()
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: ['registrations'] })
+    void queryClient.invalidateQueries({ queryKey: ['delegates'] })
+    void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+  }
+}
+
+export function useApproveRegistration() {
+  const invalidate = useRegistrationInvalidation()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<{ registration: Registration; delegate: Delegate }>(
+        `/registrations/${id}/approve`,
+        { method: 'POST' },
+      ),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRejectRegistration() {
+  const invalidate = useRegistrationInvalidation()
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      apiFetch<Registration>(`/registrations/${id}/reject`, {
+        method: 'POST',
+        body: reason ? { reason } : {},
+      }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteRegistration() {
+  const invalidate = useRegistrationInvalidation()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/registrations/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
   })
 }
 

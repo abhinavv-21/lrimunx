@@ -8,6 +8,7 @@ import { DelegatesPage } from '@/features/delegates/DelegatesPage'
 import { CommitteesPage } from '@/features/committees/CommitteesPage'
 import { CommitteeDetailPage } from '@/features/committees/CommitteeDetailPage'
 import { AllocationsPage } from '@/features/allocations/AllocationsPage'
+import { RegistrationsPage } from '@/features/registrations/RegistrationsPage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { LogisticsPage } from '@/features/logistics/LogisticsPage'
 import { AttendancePage } from '@/features/attendance/AttendancePage'
@@ -59,6 +60,12 @@ export function App() {
         <Route path="committees/:id" element={<CommitteeDetailPage />} />
         <Route path="logistics" element={<LogisticsPage />} />
         <Route path="attendance" element={<AttendancePage />} />
+        {/*
+          Both roles read the queue — a contributor working the desk needs to
+          see who has applied. Only an ADMIN can approve or reject, enforced on
+          the server and reflected in the card's controls.
+        */}
+        <Route path="registrations" element={<RegistrationsPage />} />
         <Route
           path="allocations"
           element={<AdminOnly what="Allocating delegates"><AllocationsPage /></AdminOnly>}

@@ -49,7 +49,7 @@ export default defineConfig({
   base: './',
   publicDir: false,
   plugins: [copyAssets()],
-  server: { port: 5173, open: false },
+  server: { port: 5174, open: false },
   build: {
     target: 'es2020',
     cssTarget: 'safari16',

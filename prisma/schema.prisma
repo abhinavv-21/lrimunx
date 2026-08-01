@@ -30,6 +30,12 @@ enum RequestStatus {
   RESOLVED
 }
 
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            String         @id @default(uuid())
   username      String         @unique
@@ -43,6 +49,7 @@ model User {
   resolvedReqs  LogisticsReq[] @relation("ResolvedBy")
   auditLogs     AuditLog[]
   subscriptions PushSub[]
+  reviewedRegs  Registration[] @relation("ReviewedBy")
 }
 
 model Delegate {
@@ -62,8 +69,52 @@ model Delegate {
   attendanceStatus    AttendanceStatus @default(ABSENT)
   assignment          Assignment?
   awards              Award[]
+  registration        Registration?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
+}
+
+/// A registration submitted from the public conference site.
+///
+/// Deliberately a separate model from Delegate rather than a Delegate with a
+/// status flag: an application is a claim by a member of the public, and a
+/// Delegate is a person the OC has accepted. Approval is what turns one into
+/// the other, and nothing on this table ever produces a User — the only way
+/// into the ops hub is an account an admin creates.
+///
+/// `email` is intentionally NOT unique. A rejected applicant may legitimately
+/// reapply, and a school secretary can submit for two students from one inbox.
+/// The duplicate rule that matters — one live application per address — is a
+/// PENDING/APPROVED lookup in the route, not a database constraint.
+///
+/// `submittedIp` and `userAgent` exist for abuse review after the fact, since
+/// the endpoint is unauthenticated and rate limiting only sees one instance.
+model Registration {
+  id                  String             @id @default(uuid())
+  /// Human-quotable handle an applicant can read down the phone. LMX-XXXXXX.
+  reference           String             @unique
+  fullName            String
+  email               String
+  phone               String
+  schoolName          String
+  grade               String
+  committeePreference String?
+  dietaryNotes        String?
+  accessibilityNotes  String?
+  status              RegistrationStatus @default(PENDING)
+  reviewedById        String?
+  reviewedAt          DateTime?
+  rejectionReason     String?
+  delegateId          String?            @unique
+  submittedIp         String?
+  userAgent           String?
+  reviewedBy          User?              @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  delegate            Delegate?          @relation(fields: [delegateId], references: [id])
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
 }
 
 model Committee {

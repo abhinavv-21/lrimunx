@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   AttendanceStatus,
+  RegistrationStatus,
   RequestCategory,
   RequestStatus,
   Role,
@@ -269,6 +270,49 @@ export const sheetsWebhookSchema = z.object({
 export const csvImportSchema = z.object({
   csv: z.string().min(1, 'CSV content is empty').max(2_000_000),
   upsert: z.boolean().default(true),
+})
+
+/* -------------------------------------------------------------------------- */
+/* Public registrations                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The body the public conference website posts to /public/register.
+ *
+ * The field list mirrors ingestRowSchema rather than createDelegateSchema on
+ * purpose: an applicant supplies the same facts a Google Form row carries, and
+ * nothing that represents a decision the secretariat makes. There is no role,
+ * no attendance status and no committee placement here, and there is no path
+ * from this payload to a User — see the Registration model note.
+ */
+export const publicRegistrationSchema = z.object({
+  fullName: trimmed(2, 120),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(160),
+  phone,
+  schoolName: trimmed(2, 160),
+  grade: trimmed(1, 20),
+  committeePreference: z.string().trim().max(160).nullish(),
+  dietaryNotes: z.string().trim().max(500).nullish(),
+  accessibilityNotes: z.string().trim().max(500).nullish(),
+  /**
+   * Honeypot. Hidden from humans on the website, so a real applicant always
+   * leaves it empty — declared as "must be blank" rather than "must be absent"
+   * because a browser submits an empty hidden input.
+   *
+   * A filled one never reaches this schema: honeypotGate runs ahead of
+   * validation and answers with the same 201 a real submission gets, so a bot
+   * is never told which field caught it.
+   */
+  hp_website: z.literal('').optional(),
+})
+export type PublicRegistrationInput = z.infer<typeof publicRegistrationSchema>
+
+export const registrationQuery = paginationQuery.extend({
+  status: z.nativeEnum(RegistrationStatus).optional(),
+})
+
+export const rejectRegistrationSchema = z.object({
+  reason: z.string().trim().max(300).nullish(),
 })
 
 /* -------------------------------------------------------------------------- */

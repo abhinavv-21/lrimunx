@@ -14,3 +14,8 @@ apps/frontend/dev-dist/
 prisma/*.db
 prisma/*.db-journal
 .claude/settings.local.json
+
+# Scratch space for browser-driven verification (headless profiles, screenshots).
+apps/.verify-website/
+.verify-*/
+*.tmp.mjs

@@ -12,7 +12,13 @@ const PLACEHOLDER = /^replace-me/i
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
-  CORS_ORIGIN: z.string().min(1).default('http://localhost:5173'),
+  /**
+   * Comma-separated allow-list. Two origins by default because two front ends
+   * call this API: the ops hub on 5173 and the public conference website on
+   * 5174, which posts the registration form. Production adds the deployed
+   * origins here and nowhere else — CORS is configuration, not code.
+   */
+  CORS_ORIGIN: z.string().min(1).default('http://localhost:5173,http://localhost:5174'),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 

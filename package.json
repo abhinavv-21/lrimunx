@@ -1,20 +1,23 @@
 {
-  "name": "lri-mun-x-operations-hub",
+  "name": "lri-mun-x",
   "private": true,
   "version": "1.0.0",
-  "description": "Operations hub for the LRI MUN X conference — delegates, committees, assignments, logistics and attendance.",
+  "description": "LRI MUN X — the public conference site, the OC operations hub and the API behind both.",
   "workspaces": [
     "apps/backend",
-    "apps/frontend"
+    "apps/frontend",
+    "apps/website"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "dev:website": "npm run dev --workspace apps/website",
     "dev:frontend": "npm run dev --workspace apps/frontend",
     "dev:backend": "npm run dev --workspace apps/backend",
-    "dev": "npm run dev:backend & npm run dev:frontend",
-    "build": "npm run build --workspace apps/backend && npm run build --workspace apps/frontend",
+    "dev": "npm run dev:backend & npm run dev:frontend & npm run dev:website",
+    "build": "npm run build --workspace apps/backend && npm run build --workspace apps/frontend && npm run build --workspace apps/website",
+    "vercel-build": "prisma generate && npm run build --workspace apps/backend && npm run build --workspace apps/frontend && npm run build --workspace apps/website && node scripts/build-vercel.mjs",
     "typecheck": "npm run typecheck --workspace apps/backend && npm run typecheck --workspace apps/frontend",
     "lint": "eslint apps --ext .ts,.tsx",
     "test": "npm run test --workspace apps/backend",
@@ -26,6 +29,14 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "//allowScripts": "npm 12 blocks dependency install scripts unless they are listed here. These four need theirs: Prisma downloads and places its query engine, and esbuild places its platform binary. Without this a clean install — which is exactly what a Vercel build does — produces a tree that cannot generate a client or run Vite. Locally you may not notice, because an older node_modules already has the binaries.",
+  "allowScripts": {
+    "prisma": true,
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true,
+    "core-js": false
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",

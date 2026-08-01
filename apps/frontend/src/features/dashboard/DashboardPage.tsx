@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Inbox, PackageSearch } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useDashboard } from '@/lib/hooks'
+import { useDashboard, useRegistrationStats } from '@/lib/hooks'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardHeader, CapacityMeter, Stat } from '@/components/ui/Card'
 import { CategoryBadge, RequestStatusBadge } from '@/components/ui/Badge'
@@ -12,7 +12,9 @@ import { formatDateTime } from '@/lib/utils'
 export function DashboardPage() {
   const { user } = useAuth()
   const { data, isPending, isError, error, refetch } = useDashboard()
+  const { data: registrationStats } = useRegistrationStats()
   const isAdmin = user?.role === 'ADMIN'
+  const pendingRegistrations = registrationStats?.pending ?? 0
 
   return (
     <>
@@ -20,10 +22,30 @@ export function DashboardPage() {
         title={`Good to see you, ${user?.fullName.split(' ')[0] ?? 'there'}`}
         description={
           isAdmin
-            ? 'Where the conference stands right now — payments, seats and open requests.'
+            ? 'Where the conference stands right now — seats, attendance and open requests.'
             : 'Your board for the day. Raise anything the desk needs to know about.'
         }
       />
+
+      {/*
+        Registrations arrive from the public site with nobody watching. A count
+        buried behind a nav item is a count nobody reads, so a waiting queue
+        says so here and links straight to it.
+      */}
+      {pendingRegistrations > 0 ? (
+        <Link
+          to="/registrations"
+          className="mb-6 flex min-h-tap items-center gap-3 rounded-card border border-accent bg-accent-wash p-4 text-body text-ink transition-colors duration-micro hover:bg-surface"
+        >
+          <Inbox size={20} className="shrink-0 text-accent" aria-hidden />
+          <span className="flex-1">
+            <strong className="font-medium">
+              {pendingRegistrations} {pendingRegistrations === 1 ? 'registration is' : 'registrations are'} waiting
+            </strong>
+            <span className="text-ink-secondary"> — review and add them to the roster.</span>
+          </span>
+        </Link>
+      ) : null}
 
       {isPending ? (
         <SkeletonCards count={isAdmin ? 4 : 3} />

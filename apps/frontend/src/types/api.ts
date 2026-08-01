@@ -160,6 +160,41 @@ export interface LogisticsRequest {
   deduplicated?: boolean
 }
 
+export type RegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+/**
+ * A submission from the public website, before it is anyone in the roster.
+ *
+ * A registration is never a user account. Approving one creates a Delegate —
+ * it grants no access to this hub at all.
+ */
+export interface Registration {
+  id: string
+  /** Human-quotable code the applicant was shown, e.g. LMX-7Q4H2M. */
+  reference: string
+  fullName: string
+  email: string
+  phone: string
+  schoolName: string
+  grade: string
+  committeePreference: string | null
+  dietaryNotes: string | null
+  accessibilityNotes: string | null
+  status: RegistrationStatus
+  rejectionReason: string | null
+  reviewedAt: string | null
+  reviewedBy: { id: string; fullName: string } | null
+  delegateId: string | null
+  createdAt: string
+}
+
+export interface RegistrationStats {
+  pending: number
+  approved: number
+  rejected: number
+  total: number
+}
+
 export interface AuditEntry {
   id: string
   action: string

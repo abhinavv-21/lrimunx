@@ -33,7 +33,12 @@ createRoot(container).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+        {/*
+          Vite's BASE_URL carries the trailing slash the router rejects, so it
+          is trimmed here. One source of truth: change `base` in vite.config.ts
+          and the router follows.
+        */}
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <ToastProvider>
             <AuthProvider>
               <OfflineProvider>

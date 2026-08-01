@@ -1,4 +1,21 @@
-# Running the Operations Hub
+# Running LRI MUN X locally
+
+This repository holds three things that run together:
+
+| | Where | What it is |
+| :--- | :--- | :--- |
+| `apps/website` | `localhost:5174` | the public conference site and its registration form |
+| `apps/frontend` | `localhost:5173/admin` | the OC operations hub |
+| `apps/backend` | `localhost:4000` | the API both of them talk to |
+
+For deploying all three to one domain, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+**The ops hub lives under `/admin`, in development as well as production.**
+`localhost:5173` on its own will 404 — that path belongs to the public site once
+deployed, and having it differ locally is how you discover a base-path bug after
+you ship rather than before.
+
+---
 
 Three things have to be up, in this order: **PostgreSQL → backend → frontend**.
 Postgres is the one that catches people out — it does not start with Windows, so
@@ -19,11 +36,15 @@ cd /mnt/c && cmd.exe /c 'D:\pgportable\pg16\bin\pg_ctl.exe -D D:\pgportable\data
 # 2 · Backend API  →  http://localhost:4000/api/v1
 cd "/mnt/d/LRI MUN X/Management Webapp" && npm run dev:backend
 
-# 3 · Frontend     →  http://localhost:5173
+# 3 · Ops hub      →  http://localhost:5173/admin
 cd "/mnt/d/LRI MUN X/Management Webapp" && npm run dev:frontend
+
+# 4 · Public site  →  http://localhost:5174   (only when working on the site)
+cd "/mnt/d/LRI MUN X/Management Webapp" && npm run dev:website
 ```
 
-Then open **http://localhost:5173**.
+Then open **http://localhost:5173/admin** for the ops hub, or
+**http://localhost:5174** for the public site.
 
 The `cd /mnt/c` in step 1 is not cosmetic — `cmd.exe` refuses to run from a WSL
 path and will warn and fall back to `C:\Windows` if you don't.

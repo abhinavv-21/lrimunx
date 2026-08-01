@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { requireAuth } from '../middleware/auth.js'
 import { authRouter } from './auth.routes.js'
 import { integrationsRouter } from './integrations.routes.js'
+import { publicRouter } from './public.routes.js'
+import { registrationsRouter } from './registrations.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { delegatesRouter } from './delegates.routes.js'
 import { committeesRouter } from './committees.routes.js'
@@ -18,16 +20,20 @@ export const apiRouter = Router()
 
 /* --- Routes with their own authentication -------------------------------- */
 // /auth issues tokens; /integrations carries the Apps Script webhook, which
-// authenticates with a shared secret rather than a JWT. Both are mounted
-// before the global guard.
+// authenticates with a shared secret rather than a JWT; /public carries the
+// registration form on the conference website, which has no caller to
+// authenticate at all and defends itself with rate limits and a honeypot
+// instead. All three are mounted before the global guard.
 apiRouter.use('/auth', authRouter)
 apiRouter.use('/integrations', integrationsRouter)
+apiRouter.use('/public', publicRouter)
 
 /* --- Everything below requires a valid access token ---------------------- */
 apiRouter.use(requireAuth)
 
 apiRouter.use('/dashboard', dashboardRouter)
 apiRouter.use('/delegates', delegatesRouter)
+apiRouter.use('/registrations', registrationsRouter)
 apiRouter.use('/committees', committeesRouter)
 apiRouter.use('/assignments', assignmentsRouter)
 apiRouter.use('/logistics-requests', logisticsRouter)

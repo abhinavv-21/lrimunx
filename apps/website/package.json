@@ -1,8 +1,8 @@
 {
-  "name": "lri-mun-x",
+  "name": "@lri-mun-x/website",
   "private": true,
   "version": "1.0.0",
-  "description": "LRI Model UN 10.0 — single-page conference site for the 10th anniversary edition.",
+  "description": "LRI Model UN 10.0 — the public conference site and delegate registration form.",
   "type": "module",
   "scripts": {
     "dev": "vite",

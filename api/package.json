@@ -1,0 +1,6 @@
+{
+  "name": "@lri-mun-x/api-entry",
+  "private": true,
+  "type": "module",
+  "//": "Not a workspace — it is not listed in the root workspaces array. This file exists only to mark the directory as ESM. The backend it imports is an ESM package, and without this Vercel's function bundler treats api/index.ts as CommonJS and the import fails at cold start."
+}
