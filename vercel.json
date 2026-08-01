@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
-  "//installCommand": "NODE_ENV is production for the function runtime, and npm omits devDependencies whenever it is set. TypeScript and Vite are devDependencies, so the default install produced a tree with no compiler and the build died with 'tsc: command not found'. This overrides that for the build only.",
   "installCommand": "npm install --include=dev",
   "framework": null,
   "functions": {

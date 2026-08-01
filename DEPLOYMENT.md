@@ -76,14 +76,24 @@ valid admin token without a password.
 `VITE_`-prefixed variables are compiled into the browser bundle and are public
 by definition. Never put a secret behind that prefix.
 
-### 3. Vercel project settings
+### 3. Two build settings that are not obvious
+
+**`installCommand` is `npm install --include=dev`.** `NODE_ENV=production` is
+right for the function runtime, but npm omits devDependencies whenever it is
+set — and TypeScript and Vite are devDependencies. The default install produces
+a tree with no compiler, and the build fails with `tsc: command not found`.
+
+**`vercel.json` rejects unknown keys**, including `//`-prefixed comment keys
+that are legal in most JSON tooling. Explanations go here, not in that file.
+
+### 4. Vercel project settings
 
 - **Framework preset:** Other
 - **Build command:** leave blank — `vercel.json` sets `npm run vercel-build`
 - **Output directory:** leave blank — `vercel.json` sets `dist`
 - **Node version:** 20 or later
 
-### 4. Seed the first admin account
+### 5. The first admin account
 
 There is no signup page, by design. The first account has to be created
 directly against the production database from your machine:
