@@ -241,7 +241,17 @@ function initReveals() {
         // Drop the inline transform once it has served its purpose so nothing
         // is left composited for the rest of the session.
         onComplete() {
-          this.targets().forEach((el) => gsap.set(el, { clearProps: 'transform,opacity' }))
+          // Drop the attribute BEFORE clearing the inline styles. The start
+          // state lives in `html.has-motion [data-reveal]`, which keeps
+          // matching for as long as the attribute is there — so clearing the
+          // inline opacity handed the element straight back to opacity 0 and
+          // it vanished the moment its own reveal finished. Removing the hook
+          // first means clearProps leaves it in its natural state, which is
+          // visible.
+          this.targets().forEach((el) => {
+            el.removeAttribute('data-reveal')
+            gsap.set(el, { clearProps: 'transform,opacity' })
+          })
         },
       }),
   })
@@ -265,6 +275,7 @@ function initReveals() {
       const box = el.getBoundingClientRect()
       const onScreen = box.top < window.innerHeight && box.bottom > 0
       if (onScreen && Number(getComputedStyle(el).opacity) === 0) {
+        el.removeAttribute('data-reveal')
         gsap.set(el, { clearProps: 'transform,opacity' })
       }
     })

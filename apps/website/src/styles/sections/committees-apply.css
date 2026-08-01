@@ -262,3 +262,17 @@
     transition-delay: 0ms;
   }
 }
+
+/* Interim: the foot rides above the panel, so it needs its own ground or the
+   panel's agenda text runs straight under the controls. A solid strip in the
+   panel's own colour reads as part of it rather than as a collision.
+   The card treatment is being reworked; this keeps it legible until then. */
+.committee:hover .committee__foot,
+.committee__card:focus-within .committee__foot,
+.committee:has(.committee__reveal.is-open) .committee__foot {
+  background-color: var(--color-ink);
+  border-block-start: 1px solid var(--hairline-gold);
+  margin-inline: calc(var(--sp-6) * -1);
+  padding-inline: var(--sp-6);
+  padding-block: var(--sp-4);
+}
