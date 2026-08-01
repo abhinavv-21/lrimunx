@@ -31,8 +31,14 @@ export function initFooter(ctx) {
   const panel = document.querySelector('.register__panel')
   if (!panel) return
 
+  // The panel is now ~1400px tall, so only the copy above the form belongs to
+  // this one beat. `.register__actions` no longer exists — the Google Form
+  // button it named was replaced by the inline form, which reveals per-field
+  // through the shared batch. `.register__facts` sits below the fold of the
+  // panel and would have animated far off-screen, so it carries data-reveal
+  // and is picked up at its own position instead.
   const parts = panel.querySelectorAll(
-    '.register__eyebrow, .register__title, .register__lede, .register__actions, .register__facts'
+    '.register__eyebrow, .register__title, .register__lede'
   )
 
   gsap.set(parts, { opacity: 0, y: 26 })

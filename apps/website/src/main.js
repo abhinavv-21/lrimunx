@@ -24,6 +24,7 @@ import './styles/sections/committees.css'
 import './styles/sections/oc.css'
 import './styles/sections/gallery.css'
 import './styles/sections/footer.css'
+import './styles/sections/register-form.css'
 
 import { initNav } from './modules/nav.js'
 import { initHero } from './modules/hero.js'
@@ -31,6 +32,7 @@ import { initCommittees } from './modules/committees.js'
 import { initOc } from './modules/oc.js'
 import { initGallery } from './modules/gallery.js'
 import { initFooter } from './modules/footer.js'
+import { initRegister } from './modules/register.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -126,6 +128,9 @@ function boot() {
   initOc(ctx)
   initGallery(ctx)
   initFooter(ctx)
+  // Before initReveals(), like oc and gallery: the form's fields are created
+  // and marked up here, and the shared reveal batch has to see them.
+  initRegister(ctx)
 
   initAnchors()
   initReveals()

@@ -247,13 +247,11 @@
         </nav>
 
         <div class="nav__actions">
-          <!-- TODO: insert Google Form URL — see README placeholder list. -->
-          <a
-            class="btn btn--sm nav__cta"
-            href="https://forms.gle/PLACEHOLDER"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <!-- Registration is on this page now, so this is an anchor, not an
+               outbound link. Dropping target/rel is the point: sending someone
+               to a new tab to fill in a form that is already below them was
+               the old Google Form's constraint, not a design decision. -->
+          <a class="btn btn--sm nav__cta" href="#register">
             Register
             <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path
@@ -324,11 +322,7 @@
                 rel="noopener noreferrer"
                 >Visit the school site ↗</a
               >
-              <a
-                class="btn nav-overlay__cta"
-                href="https://forms.gle/PLACEHOLDER"
-                target="_blank"
-                rel="noopener noreferrer"
+              <a class="btn nav-overlay__cta" href="#register" data-nav-overlay-link
                 >Register now<span class="btn__mount" aria-hidden="true"></span></a
               >
             </div>
@@ -451,13 +445,7 @@
             </dl>
 
             <div class="hero__actions" data-reveal>
-              <!-- TODO: insert Google Form URL — see README placeholder list. -->
-              <a
-                class="btn btn--lg hero__cta"
-                href="https://forms.gle/PLACEHOLDER"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a class="btn btn--lg hero__cta" href="#register">
                 <span class="btn__label"
                   ><span>Register now</span><span aria-hidden="true">Register now</span></span
                 >
@@ -994,9 +982,12 @@
       </section>
 
       <!-- ==================================================================
-           5. REGISTRATION — the closing call. Ships with the footer module
-           because it shares its ground and its outbound link.
-           Styles: src/styles/sections/footer.css
+           5. REGISTRATION — the closing call, and now the conversion itself:
+           the form posts straight to the conference API rather than handing
+           off to a Google Form. The panel's own reveal ships with the footer
+           module because it shares its ground; the form inside it is
+           src/modules/register.js.
+           Styles: src/styles/sections/footer.css + sections/register-form.css
            ================================================================== -->
       <section class="register ground-magenta" id="register" aria-labelledby="register-title">
         <div class="shell register__inner">
@@ -1009,36 +1000,320 @@
               details. Allocations are released by email once the form closes.
             </p>
 
-            <div class="register__actions">
-              <!-- TODO: insert Google Form URL — see README placeholder list. -->
-              <a
-                class="btn btn--lg register__cta"
-                href="https://forms.gle/PLACEHOLDER"
-                target="_blank"
-                rel="noopener noreferrer"
+            <!-- The delegate registration form. Real markup with a same-origin
+                 action; register.js repoints it at VITE_API_BASE_URL and takes
+                 over the submit. Styles: src/styles/sections/register-form.css
+                 Behaviour: src/modules/register.js -->
+            <div class="regform" data-register>
+              <form
+                class="regform__form"
+                id="register-form"
+                action="/api/v1/public/register"
+                method="post"
+                data-register-form
               >
-                <span class="btn__label"
-                  ><span>Open the registration form</span
-                  ><span aria-hidden="true">Open the registration form</span></span
-                >
-                <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path
-                    d="M2 8h11M9 4l4 4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="square"
+                <!-- Honeypot. Positioned off-screen rather than display:none —
+                     a bot that honours display:none skips the field and the
+                     trap catches nothing. Hidden from AT, out of the tab order,
+                     and no pointer can reach it. -->
+                <div class="regform__hp" aria-hidden="true">
+                  <label for="hp_website">Website</label>
+                  <input
+                    type="text"
+                    id="hp_website"
+                    name="hp_website"
+                    tabindex="-1"
+                    autocomplete="off"
                   />
-                </svg>
-              <span class="btn__mount" aria-hidden="true"></span>
-          </a>
-              <p class="register__note label">
-                <!-- PLACEHOLDER — replace with the real registration deadline. -->
-                Deadline to be announced · Opens in a new tab
-              </p>
+                </div>
+
+                <p class="regform__privacy">
+                  All fields are required unless marked optional. Your details go to the LRI MUN X
+                  secretariat and are used only for delegate allocation and conference logistics.
+                </p>
+
+                <!-- Error summary. Sits at the top of the form and takes focus
+                     on failure, rather than announcing through a live region:
+                     focus both reads the problem out and puts the reader at
+                     it. Populated by register.js. -->
+                <div
+                  class="regform__summary"
+                  role="group"
+                  aria-labelledby="regform-summary-title"
+                  tabindex="-1"
+                  hidden
+                  data-register-summary
+                >
+                  <p class="regform__summary-title" id="regform-summary-title" data-register-summary-title></p>
+                  <p class="regform__summary-copy" data-register-summary-copy></p>
+                  <ul class="regform__summary-list" data-register-summary-list></ul>
+                </div>
+
+                <div class="regform__grid">
+                  <div class="regform__field regform__field--half" data-field="fullName">
+                    <label class="regform__label" for="regform-fullName">Full name</label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-fullName"
+                        name="fullName"
+                        type="text"
+                        required
+                        minlength="2"
+                        maxlength="120"
+                        autocomplete="name"
+                        aria-describedby="regform-error-fullName"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__error" id="regform-error-fullName" data-error-for="fullName"></p>
+                  </div>
+
+                  <div class="regform__field regform__field--half" data-field="email">
+                    <label class="regform__label" for="regform-email">Email</label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-email"
+                        name="email"
+                        type="email"
+                        inputmode="email"
+                        required
+                        maxlength="160"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                        aria-describedby="regform-hint-email regform-error-email"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-email">
+                      Allocations, the delegate handbook and the schedule are all sent here.
+                    </p>
+                    <p class="regform__error" id="regform-error-email" data-error-for="email"></p>
+                  </div>
+
+                  <div class="regform__field regform__field--half" data-field="phone">
+                    <label class="regform__label" for="regform-phone">Phone</label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-phone"
+                        name="phone"
+                        type="tel"
+                        inputmode="tel"
+                        required
+                        minlength="6"
+                        maxlength="24"
+                        autocomplete="tel"
+                        placeholder="+977 98XXXXXXXX"
+                        aria-describedby="regform-hint-phone regform-error-phone"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-phone">
+                      Reachable on conference days. Include the country code if you are outside
+                      Nepal.
+                    </p>
+                    <p class="regform__error" id="regform-error-phone" data-error-for="phone"></p>
+                  </div>
+
+                  <div class="regform__field regform__field--half" data-field="schoolName">
+                    <label class="regform__label" for="regform-schoolName">School</label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-schoolName"
+                        name="schoolName"
+                        type="text"
+                        required
+                        minlength="2"
+                        maxlength="160"
+                        autocomplete="organization"
+                        aria-describedby="regform-hint-schoolName regform-error-schoolName"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-schoolName">
+                      The full name of the institution you are representing.
+                    </p>
+                    <p class="regform__error" id="regform-error-schoolName" data-error-for="schoolName"></p>
+                  </div>
+
+                  <div class="regform__field regform__field--grade" data-field="grade">
+                    <label class="regform__label" for="regform-grade">Grade</label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-grade"
+                        name="grade"
+                        type="text"
+                        required
+                        maxlength="20"
+                        autocomplete="off"
+                        placeholder="Grade 11"
+                        aria-describedby="regform-hint-grade regform-error-grade"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-grade">
+                      As your school records it.
+                    </p>
+                    <p class="regform__error" id="regform-error-grade" data-error-for="grade"></p>
+                  </div>
+
+                  <div class="regform__field regform__field--committee" data-field="committeePreference">
+                    <label class="regform__label" for="regform-committeePreference">
+                      Committee preference
+                      <span class="regform__optional">(optional)</span>
+                    </label>
+                    <span class="regform__control">
+                      <input
+                        class="regform__input"
+                        id="regform-committeePreference"
+                        name="committeePreference"
+                        type="text"
+                        maxlength="160"
+                        list="regform-committees"
+                        autocomplete="off"
+                        aria-describedby="regform-hint-committeePreference regform-error-committeePreference"
+                      />
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-committeePreference">
+                      Six committees are running. This is a preference, not an allocation — the
+                      secretariat allocates once registration closes.
+                    </p>
+                    <p class="regform__error" id="regform-error-committeePreference" data-error-for="committeePreference"></p>
+                  </div>
+
+                  <div class="regform__field" data-field="dietaryNotes">
+                    <label class="regform__label" for="regform-dietaryNotes">
+                      Dietary notes
+                      <span class="regform__optional">(optional)</span>
+                    </label>
+                    <span class="regform__control">
+                      <textarea
+                        class="regform__input"
+                        id="regform-dietaryNotes"
+                        name="dietaryNotes"
+                        rows="3"
+                        maxlength="500"
+                        autocomplete="off"
+                        aria-describedby="regform-hint-dietaryNotes regform-error-dietaryNotes"
+                      ></textarea>
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-dietaryNotes">
+                      Allergies or requirements the catering team needs to plan around. Up to 500
+                      characters.
+                    </p>
+                    <p class="regform__error" id="regform-error-dietaryNotes" data-error-for="dietaryNotes"></p>
+                  </div>
+
+                  <div class="regform__field" data-field="accessibilityNotes">
+                    <label class="regform__label" for="regform-accessibilityNotes">
+                      Accessibility notes
+                      <span class="regform__optional">(optional)</span>
+                    </label>
+                    <span class="regform__control">
+                      <textarea
+                        class="regform__input"
+                        id="regform-accessibilityNotes"
+                        name="accessibilityNotes"
+                        rows="3"
+                        maxlength="500"
+                        autocomplete="off"
+                        aria-describedby="regform-hint-accessibilityNotes regform-error-accessibilityNotes"
+                      ></textarea>
+                      <span class="regform__mount" aria-hidden="true"></span>
+                    </span>
+                    <p class="regform__hint" id="regform-hint-accessibilityNotes">
+                      Anything the organising committee should arrange so you can take part fully —
+                      seating, mobility, hearing, or medical needs. Up to 500 characters.
+                    </p>
+                    <p class="regform__error" id="regform-error-accessibilityNotes" data-error-for="accessibilityNotes"></p>
+                  </div>
+                </div>
+
+                <!-- The six committees the rail above lists. A datalist
+                     suggests without constraining: free text is still accepted,
+                     because a preference is not an allocation. -->
+                <datalist id="regform-committees">
+                  <option value="United Nations Security Council (UNSC)"></option>
+                  <option value="Human Rights Council (UNHRC)"></option>
+                  <option value="Disarmament &amp; International Security (DISEC)"></option>
+                  <option value="Economic &amp; Social Council (ECOSOC)"></option>
+                  <option value="World Health Organization (WHO)"></option>
+                  <option value="Historical Crisis Committee (HCC)"></option>
+                </datalist>
+
+                <div class="regform__foot">
+                  <button
+                    class="btn btn--lg register__cta regform__submit"
+                    type="submit"
+                    data-register-submit
+                  >
+                    <span class="btn__label" data-register-submit-label
+                      ><span>Send my registration</span
+                      ><span aria-hidden="true">Send my registration</span></span
+                    >
+                    <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                      <path
+                        d="M2 8h11M9 4l4 4-4 4"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="square"
+                      />
+                    </svg>
+                    <span class="regform__progress" aria-hidden="true"></span>
+                    <span class="btn__mount" aria-hidden="true"></span>
+                  </button>
+                  <p class="regform__note label">
+                    <!-- PLACEHOLDER — replace with the real registration deadline. -->
+                    Deadline to be announced · Allocations released by email
+                  </p>
+                </div>
+
+                <noscript>
+                  <p class="regform__privacy">
+                    This form needs JavaScript to reach the secretariat. If it is switched off,
+                    email your name, school, grade, phone number and committee preference to the
+                    address in the footer below and you will be registered manually.
+                  </p>
+                </noscript>
+              </form>
+
+              <!-- Transient status only (sending, copied). The summary and the
+                   receipt announce themselves by taking focus. -->
+              <p class="u-visually-hidden" aria-live="polite" data-register-live></p>
+
+              <!-- The receipt. Replaces the form on 201 and on 200; its copy is
+                   written by register.js because there are two variants. -->
+              <div class="regform-receipt" tabindex="-1" hidden data-register-receipt>
+                <p class="label regform-receipt__eyebrow" data-receipt-eyebrow></p>
+                <h3 class="regform-receipt__title" data-receipt-title></h3>
+                <p class="regform-receipt__copy" data-receipt-copy></p>
+                <div class="regform-receipt__stamp" data-receipt-stamp hidden>
+                  <span class="label regform-receipt__stamp-label">Your reference</span>
+                  <span class="regform-receipt__reference" data-register-reference></span>
+                </div>
+                <div class="regform-receipt__actions">
+                  <button
+                    class="btn btn--sm btn--ghost regform-receipt__copy-btn"
+                    type="button"
+                    hidden
+                    data-register-copy
+                  >
+                    <span data-register-copy-label>Copy reference</span>
+                    <span class="btn__mount" aria-hidden="true"></span>
+                  </button>
+                </div>
+                <p class="regform-receipt__next" data-receipt-next></p>
+              </div>
             </div>
 
-            <dl class="register__facts">
+            <dl class="register__facts" data-reveal>
               <div class="register__fact">
                 <dt class="label">Delegate fee</dt>
                 <!-- PLACEHOLDER — replace with the real fee. -->

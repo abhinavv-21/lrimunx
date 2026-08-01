@@ -285,15 +285,30 @@ export const csvImportSchema = z.object({
  * no attendance status and no committee placement here, and there is no path
  * from this payload to a User — see the Registration model note.
  */
+/**
+ * An untouched optional field arrives from a browser form as "", never as
+ * absent — that is how HTML form serialisation works. Storing it verbatim
+ * would fill the column with empty strings that every reader then has to treat
+ * as "no answer" alongside null. Blank means blank; the CSV importer already
+ * makes the same conversion in `normaliseRow`.
+ */
+const blankToNull = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => (v === '' ? null : v))
+    .nullish()
+
 export const publicRegistrationSchema = z.object({
   fullName: trimmed(2, 120),
   email: z.string().trim().toLowerCase().email('Enter a valid email address').max(160),
   phone,
   schoolName: trimmed(2, 160),
   grade: trimmed(1, 20),
-  committeePreference: z.string().trim().max(160).nullish(),
-  dietaryNotes: z.string().trim().max(500).nullish(),
-  accessibilityNotes: z.string().trim().max(500).nullish(),
+  committeePreference: blankToNull(160),
+  dietaryNotes: blankToNull(500),
+  accessibilityNotes: blankToNull(500),
   /**
    * Honeypot. Hidden from humans on the website, so a real applicant always
    * leaves it empty — declared as "must be blank" rather than "must be absent"

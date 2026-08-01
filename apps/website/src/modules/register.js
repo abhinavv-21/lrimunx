@@ -18,7 +18,7 @@
  *      and aria-describedby.
  *
  * API contract (fixed — do not renegotiate here):
- *   POST ${API_BASE}/api/v1/public/register   Content-Type: application/json
+ *   POST ${API_BASE}/public/register          Content-Type: application/json
  *   201 { status: 'received',  reference: 'LMX-7Q4H2M' }
  *   200 { status: 'duplicate', reference: 'LMX-7Q4H2M' }
  *   422 { error, code: 422, details }
@@ -28,14 +28,21 @@
 /* -------------------------------------------------------------------------
    Endpoint.
 
-   VITE_API_BASE_URL defaults to '' — same origin — so a build with no env
-   configured at all works on the deployed domain. Never hardcode a host: the
-   page is built once and dropped into whatever the school is serving from.
-   A trailing slash is stripped so `https://api.example/` and
-   `https://api.example` cannot produce a double-slashed path.
+   VITE_API_BASE_URL is the API ROOT, /api/v1 included — the same meaning the
+   ops hub gives it, because Vercel builds both bundles in one pass from one
+   set of environment variables, and a name that meant two things there would
+   send one of them to /api/v1/api/v1.
+
+   It defaults to a same-origin '/api/v1', which is the deployed shape: site
+   and API on one domain. Never hardcode a host — the page is built once and
+   dropped into whatever the school is serving from. Locally the two are split
+   across ports, so .env.development points this at the dev API.
+
+   A trailing slash is stripped so `https://api.example/v1/` and
+   `https://api.example/v1` cannot produce a double-slashed path.
    ------------------------------------------------------------------------- */
-const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
-const ENDPOINT = `${API_BASE}/api/v1/public/register`
+const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/+$/, '')
+const ENDPOINT = `${API_BASE}/public/register`
 
 // A request with no ceiling is indistinguishable from a hung one. 20s, then it
 // is reported as a connection failure — which, from the reader's side, it is.
