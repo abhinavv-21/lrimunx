@@ -19,3 +19,6 @@ prisma/*.db-journal
 apps/.verify-website/
 .verify-*/
 *.tmp.mjs
+
+.vercel
+.env*
