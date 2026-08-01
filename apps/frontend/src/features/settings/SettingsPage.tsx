@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Check, Copy, ExternalLink, FileSpreadsheet } from 'lucide-react'
 import { useSaveSettings, useSettings } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
+import { DangerZone } from './DangerZone'
 import { BASE_URL, ApiError } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardHeader } from '@/components/ui/Card'
@@ -179,6 +180,9 @@ export function SettingsPage() {
               </p>
             </div>
           </Card>
+
+          {/* Last on the page on purpose: nothing below it to reach past. */}
+          <DangerZone />
         </div>
       )}
     </>

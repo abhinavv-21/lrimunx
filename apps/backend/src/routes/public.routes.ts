@@ -2,8 +2,10 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { randomInt } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import rateLimit from 'express-rate-limit'
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
+import { env } from '../config/env.js'
 import { prisma } from '../lib/prisma.js'
-import { ApiError } from '../lib/errors.js'
+import { ApiError, type ApiErrorBody } from '../lib/errors.js'
 import { runSerializable } from '../lib/transaction.js'
 import {
   LIVE_REGISTRATION_STATUSES,
@@ -87,6 +89,37 @@ const burstLimiter = rateLimit({ ...limiterOptions, windowMs: BURST_WINDOW_MS, l
 const sustainedLimiter = rateLimit({ ...limiterOptions, windowMs: SUSTAINED_WINDOW_MS, limit: SUSTAINED_LIMIT })
 
 /**
+ * Its own budget, because a token request is not a submission.
+ *
+ * Ten in a quarter of an hour sits above the five submissions the same window
+ * allows: one screenshot per application plus room to retry a photo that came
+ * out unreadable, or to change one's mind about which receipt to send. Any
+ * higher and this becomes free, anonymous file hosting on the conference's
+ * blob store.
+ */
+const BLOB_BURST_LIMIT = 10
+
+const blobLimiter = rateLimit({
+  ...limiterOptions,
+  windowMs: BURST_WINDOW_MS,
+  limit: BLOB_BURST_LIMIT,
+  message: { error: 'Too many upload attempts. Try again later.', code: 429 },
+  /*
+    The completion callback is Vercel Blob calling us, not a visitor uploading.
+    Every callback for the whole conference arrives from the blob service's own
+    addresses, so counting them against a per-IP budget would start rejecting
+    them during exactly the rush the limit exists for — and a rejected callback
+    is retried, not dropped, so the cost is repeated for nothing.
+
+    Skipping it is safe because that branch is not a way to obtain anything:
+    handleUpload verifies an HMAC over the body, computed with the store's
+    read-write token, before it will do any work at all. A forged callback is
+    refused, and the global 300/min limiter still covers the flood case.
+  */
+  skip: (req) => (req.body as { type?: unknown } | undefined)?.type === 'blob.upload-completed',
+})
+
+/**
  * Answers a filled honeypot with the success a real submission gets, including
  * a well-formed reference that matches nothing in the database.
  *
@@ -167,6 +200,11 @@ async function submitRegistration(
             schoolName: input.schoolName,
             grade: input.grade,
             committeePreference: input.committeePreference ?? null,
+            committeePreference2: input.committeePreference2 ?? null,
+            munsAttended: input.munsAttended ?? null,
+            awardsWon: input.awardsWon ?? null,
+            referralCode: input.referralCode ?? null,
+            paymentProofUrl: input.paymentProofUrl ?? null,
             dietaryNotes: input.dietaryNotes ?? null,
             accessibilityNotes: input.accessibilityNotes ?? null,
             submittedIp: meta.submittedIp,
@@ -231,5 +269,118 @@ publicRouter.post(
     */
     const body: PublicRegistrationAccepted = { status: 'received', reference: outcome.reference }
     res.status(201).json(body)
+  }),
+)
+
+/* ---------------------------- Payment screenshot -------------------------- */
+
+/**
+ * Image types a phone camera or a banking app actually produces. Anything
+ * outside this list — a PDF, an SVG with script in it, an executable renamed
+ * to .png — is refused by the blob store itself, because the content type is
+ * baked into the signed token rather than checked here.
+ */
+const ALLOWED_UPLOAD_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
+
+/** A screenshot of a payment confirmation. Generous for a photo, mean for a video. */
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+
+/** The two envelopes the Vercel Blob client protocol defines. */
+const BLOB_EVENT_TYPES: ReadonlySet<string> = new Set([
+  'blob.generate-client-token',
+  'blob.upload-completed',
+])
+
+/**
+ * BlobError carries no distinguishing class or `name` — it is a plain Error
+ * subclass — so its own prefix is the only thing separating "the caller sent
+ * nonsense" from "something under us broke".
+ */
+const BLOB_ERROR_PREFIX = 'Vercel Blob: '
+
+function isHandleUploadBody(body: unknown): body is HandleUploadBody {
+  const type = (body as { type?: unknown } | null | undefined)?.type
+  return typeof type === 'string' && BLOB_EVENT_TYPES.has(type)
+}
+
+/**
+ * POST /api/v1/public/blob-upload
+ *
+ * Issues a short-lived, single-purpose token so the browser can put the payment
+ * screenshot into Vercel Blob directly. The file never passes through this
+ * function, which is the point: a serverless function body caps at 4.5 MB, and
+ * a photo off a modern phone clears that on its own.
+ *
+ * That makes it an open upload endpoint on a public site, so everything it
+ * grants is bounded in the token — content type, size, and a random suffix so
+ * one visitor cannot overwrite another's file by guessing a path.
+ *
+ * Not audited, for the same reason /register is not: there is no actor.
+ */
+publicRouter.post(
+  '/blob-upload',
+  blobLimiter,
+  asyncHandler(async (req, res) => {
+    if (!env.blobUploadsEnabled) {
+      /*
+        Answered here rather than thrown, deliberately.
+
+        Local development has no blob store, and that is a supported state, not
+        a fault: the form still works, the applicant simply attaches nothing.
+        Sending it through the error handler would treat a 5xx as an
+        unanticipated exception — logging a stack on every attempt, and, on a
+        deployment that has opted into EXPOSE_ERROR_DETAILS, attaching that
+        stack to the response. Both would tell a member of the public that the
+        site is broken when nothing is wrong with it.
+      */
+      const unavailable: ApiErrorBody = {
+        error: 'Screenshot uploads are not available on this server',
+        code: 503,
+      }
+      res.status(503).json(unavailable)
+      return
+    }
+
+    const body: unknown = req.body
+    if (!isHandleUploadBody(body)) {
+      throw ApiError.badRequest('Unrecognised upload request')
+    }
+
+    try {
+      const result = await handleUpload({
+        request: req,
+        body,
+        token: env.BLOB_READ_WRITE_TOKEN,
+        onBeforeGenerateToken: async () => ({
+          allowedContentTypes: [...ALLOWED_UPLOAD_TYPES],
+          maximumSizeInBytes: MAX_UPLOAD_BYTES,
+          // Two applicants both uploading "payment.jpg" must not collide, and a
+          // guessable path would let anyone overwrite someone else's proof.
+          addRandomSuffix: true,
+        }),
+        /**
+         * Nothing to do: the URL reaches us on the registration payload, which
+         * is the only place it is meaningful. This exists to satisfy the
+         * protocol and, above all, to never throw — the blob service treats a
+         * failed callback as retryable and will keep calling back, so an
+         * exception over a payload we did not expect turns one odd upload into
+         * a repeating one.
+         */
+        onUploadCompleted: async () => {
+          /* deliberately empty */
+        },
+      })
+
+      res.json(result)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      // A refused signature or a malformed payload is the caller's problem and
+      // gets a 400. Anything else is ours, and is left to the error handler so
+      // it is logged as the 500 it is rather than disguised as bad input.
+      if (message.startsWith(BLOB_ERROR_PREFIX)) {
+        throw ApiError.badRequest('Upload request was rejected')
+      }
+      throw error
+    }
   }),
 )

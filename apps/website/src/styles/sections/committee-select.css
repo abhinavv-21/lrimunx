@@ -1,0 +1,270 @@
+/* ==========================================================================
+   committee-select.css — the committee preference listbox.
+   Module: src/modules/committee-select.js
+
+   The control wears .regfield__control, so its plate, its edge, its focus ring
+   and its Mount are the ones already declared in register-page.css §7–8 and
+   measured there. Nothing about colour is re-decided in this file; what is here
+   is the popup, which has no equivalent anywhere else on the site.
+
+   MEASURED (WCAG 2.1, on the paper ground)
+     list plate --color-paper on the ground ......... the same tone, held apart
+        by a 5.8:1 magenta edge rather than by a shadow — this page has none
+     text-primary on the list plate ......... 17.2:1  ✔ any text
+     option code, --color-primary, on the plate  5.8:1  ✔ any text
+     active option plate --color-primary-tint . text at 14.4:1  ✔ any text
+     unavailable option, on-ground-muted ...... 6.2:1  ✔ any text
+
+   The unavailable option is dimmed by WEIGHT and a strike, never by opacity
+   alone: a 40%-alpha option is unreadable, and "unreadable" is not a state this
+   control is allowed to put information into.
+   ========================================================================== */
+
+.cselect {
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   1. THE CONTROL — closed state.
+   -------------------------------------------------------------------------- */
+.cselect__control {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-block-size: 3.25rem; /* 52px, matching every text field on the page */
+  padding: 0.85rem 1rem;
+  font-family: var(--font-ui);
+  font-size: var(--fs-400);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--on-ground);
+  cursor: pointer;
+}
+
+.cselect__value {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  text-align: start;
+  /* Wraps rather than truncating. A committee whose name is cut off mid-word is
+     a committee the reader has to guess at, and the two long ones (Disarmament
+     & International Security, Economic & Social Council) are exactly the ones
+     an ellipsis would eat. */
+  overflow-wrap: anywhere;
+}
+
+/* The empty state is a real answer — "No preference" — not a prompt, so it is
+   set in the muted voice rather than the placeholder voice. */
+.cselect.is-empty .cselect__value {
+  font-weight: 400;
+  color: var(--on-ground-muted); /* 6.2:1 */
+}
+
+.cselect__chevron {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--accent-on-ground);
+  transition: transform var(--dur-base) var(--ease-expo);
+}
+
+.cselect.is-open .cselect__chevron {
+  transform: rotate(180deg);
+}
+
+/* --------------------------------------------------------------------------
+   2. THE POPUP
+
+   An opaque plate, held off the page by the same magenta edge the fields use
+   rather than by a drop shadow — the site has no shadows and a popup would be
+   the worst possible place to introduce the first one.
+   -------------------------------------------------------------------------- */
+.cselect__list {
+  position: absolute;
+  z-index: var(--z-raised);
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--sp-2));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-block-size: 19rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-none);
+}
+
+/* Opens upward when there is no room below — set from the module, which
+   measures once at open time. */
+.cselect.is-above .cselect__list {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--sp-2));
+}
+
+.cselect__list:focus {
+  outline: none; /* focus never leaves the combobox; the popup is not a stop */
+}
+
+/* --------------------------------------------------------------------------
+   3. OPTIONS
+   Two pieces of type per row — the code, which is what delegates actually say
+   out loud, and the full name, which is what it means. A native <select> cannot
+   hold both, and that is the whole reason this control exists.
+   -------------------------------------------------------------------------- */
+.cselect__option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.25rem 1fr;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  /* 48px floor, and comfortably past it once two lines wrap. */
+  min-block-size: 3rem;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-5);
+  cursor: pointer;
+  border-block-end: 1px solid var(--hairline);
+  transition: background-color 160ms var(--ease-house);
+}
+
+.cselect__option:last-child {
+  border-block-end: 0;
+}
+
+.cselect__option--empty {
+  grid-template-columns: 1fr;
+}
+
+.cselect__option-code {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--accent-on-ground); /* 5.8:1 */
+}
+
+.cselect__option-name {
+  font-size: var(--fs-300);
+  line-height: 1.4;
+  color: var(--on-ground);
+}
+
+.cselect__option--empty .cselect__option-name {
+  font-weight: 500;
+  color: var(--on-ground-muted);
+}
+
+.cselect__option-reason {
+  grid-column: 2;
+  font-size: var(--fs-200);
+  line-height: 1.4;
+  color: var(--on-ground-muted);
+}
+
+.cselect__option--empty .cselect__option-reason {
+  grid-column: 1;
+}
+
+/* The active option — where the arrow keys are. A plate, not a colour change on
+   the text, so it survives forced-colors and reads at a glance. The magenta bar
+   on the leading edge is the same device as the summary's border. */
+.cselect__option.is-active {
+  background-color: var(--color-primary-tint);
+}
+
+.cselect__option.is-active::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  background-color: var(--accent-on-ground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cselect__option:hover {
+    background-color: var(--color-blush);
+  }
+}
+
+/* The chosen one, marked in the reserved gutter the padding already holds open,
+   so selecting an option never shifts the row. */
+.cselect__option.is-selected::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 1.15rem;
+  inset-inline-start: var(--sp-3);
+  inline-size: 5px;
+  block-size: 5px;
+  background-color: var(--accent-on-ground);
+  transform: rotate(45deg);
+}
+
+/* --------------------------------------------------------------------------
+   4. UNAVAILABLE
+
+   The option stays in the list with the reason printed on it. Hiding it would
+   be tidier and worse: an option that vanishes when you choose its twin looks
+   like a bug, and the reader is left doubting what they saw a moment ago.
+
+   Struck through and set at the muted weight — never faded below AA, because
+   the reason underneath is the most important line in the row.
+   -------------------------------------------------------------------------- */
+.cselect__option.is-blocked {
+  cursor: not-allowed;
+}
+
+.cselect__option.is-blocked .cselect__option-code {
+  color: var(--on-ground-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.cselect__option.is-blocked .cselect__option-name {
+  color: var(--on-ground-muted);
+}
+
+.cselect__option.is-blocked.is-active {
+  background-color: var(--color-blush);
+}
+
+.cselect__option.is-blocked.is-active::before {
+  background-color: var(--on-ground-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5. STATES
+   -------------------------------------------------------------------------- */
+/* Read-only while the registration is in flight — aria-disabled, never
+   `disabled`, so focus is never thrown back to <body>. */
+.cselect__control[aria-disabled='true'] {
+  cursor: progress;
+}
+
+@media (forced-colors: active) {
+  .cselect__list {
+    border-color: CanvasText;
+  }
+
+  .cselect__option.is-active {
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .cselect__option.is-active .cselect__option-code,
+  .cselect__option.is-active .cselect__option-name,
+  .cselect__option.is-active .cselect__option-reason {
+    color: HighlightText;
+  }
+
+  .cselect__option.is-selected::after,
+  .cselect__option.is-active::before {
+    background-color: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cselect__chevron {
+    transition: none;
+  }
+}

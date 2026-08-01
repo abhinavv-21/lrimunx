@@ -3,7 +3,7 @@ import { apiFetch } from './api'
 import type {
   AttendanceSummary, AuditEntry, Award, AwardInput, Committee, CommitteeDetail, DashboardData,
   Delegate, DelegateInput, IngestResult, LogisticsRequest, Paginated, Registration,
-  RegistrationStats, Settings, AuthUser,
+  RegistrationStats, ResetPreview, ResetResult, Settings, AuthUser,
 } from '@/types/api'
 
 function qs(params: Record<string, string | number | boolean | undefined | null>): string {
@@ -364,5 +364,27 @@ export function useCsvImport() {
       void queryClient.invalidateQueries({ queryKey: ['delegates'] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
+  })
+}
+
+/* ------------------------------- Danger zone ------------------------------ */
+
+export function useResetPreview() {
+  return useQuery({
+    queryKey: ['danger', 'reset-preview'],
+    queryFn: () => apiFetch<ResetPreview>('/danger/reset/preview'),
+  })
+}
+
+/**
+ * Wipes the conference. Every cached list is now wrong, so the whole cache goes
+ * rather than a list of keys that would drift out of date as screens are added.
+ */
+export function useResetConference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (passphrase: string) =>
+      apiFetch<ResetResult>('/danger/reset', { method: 'POST', body: { passphrase } }),
+    onSuccess: () => queryClient.invalidateQueries(),
   })
 }

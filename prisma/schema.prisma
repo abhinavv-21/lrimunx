@@ -53,25 +53,35 @@ model User {
 }
 
 model Delegate {
-  id                  String           @id @default(uuid())
-  fullName            String
-  email               String           @unique
-  phone               String
-  schoolName          String
-  grade               String
+  id                   String           @id @default(uuid())
+  fullName             String
+  email                String           @unique
+  phone                String
+  schoolName           String
+  grade                String
   /// What the delegate asked for on the registration form, as they typed it.
   /// Free text rather than a Committee relation on purpose: a form answer is
   /// a wish, not a placement, and it frequently names a committee that does
   /// not exist or is spelled differently. Read only on the Allocations screen.
-  committeePreference String?
-  dietaryNotes        String?
-  accessibilityNotes  String?
-  attendanceStatus    AttendanceStatus @default(ABSENT)
-  assignment          Assignment?
-  awards              Award[]
-  registration        Registration?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  committeePreference  String?
+  /// The fallback the applicant named when their first choice is full. Same
+  /// free-text reasoning as above; it is what makes a reallocation a decision
+  /// rather than a guess.
+  committeePreference2 String?
+  /// Prior MUN experience, carried over from the registration form. The
+  /// secretariat weighs it when deciding which room a delegate goes into —
+  /// a first-timer in UNSC and a veteran in an unmoderated caucus are both
+  /// mistakes that are only visible if the numbers are on the screen.
+  munsAttended         Int?
+  awardsWon            Int?
+  dietaryNotes         String?
+  accessibilityNotes   String?
+  attendanceStatus     AttendanceStatus @default(ABSENT)
+  assignment           Assignment?
+  awards               Award[]
+  registration         Registration?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 }
 
 /// A registration submitted from the public conference site.
@@ -90,28 +100,40 @@ model Delegate {
 /// `submittedIp` and `userAgent` exist for abuse review after the fact, since
 /// the endpoint is unauthenticated and rate limiting only sees one instance.
 model Registration {
-  id                  String             @id @default(uuid())
+  id                   String             @id @default(uuid())
   /// Human-quotable handle an applicant can read down the phone. LMX-XXXXXX.
-  reference           String             @unique
-  fullName            String
-  email               String
-  phone               String
-  schoolName          String
-  grade               String
-  committeePreference String?
-  dietaryNotes        String?
-  accessibilityNotes  String?
-  status              RegistrationStatus @default(PENDING)
-  reviewedById        String?
-  reviewedAt          DateTime?
-  rejectionReason     String?
-  delegateId          String?            @unique
-  submittedIp         String?
-  userAgent           String?
-  reviewedBy          User?              @relation("ReviewedBy", fields: [reviewedById], references: [id])
-  delegate            Delegate?          @relation(fields: [delegateId], references: [id])
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  reference            String             @unique
+  fullName             String
+  email                String
+  phone                String
+  schoolName           String
+  grade                String
+  committeePreference  String?
+  committeePreference2 String?
+  munsAttended         Int?
+  awardsWon            Int?
+  /// Free text from the "who told you about LRI MUN X" question. Never a
+  /// relation: it is whatever the applicant typed, including a name nobody on
+  /// the OC recognises.
+  referralCode         String?
+  /// Where the applicant's payment screenshot landed on Vercel Blob. The file
+  /// goes browser → blob store directly, so this column is the only record the
+  /// API holds of it. Validated against the blob host on the way in — an
+  /// arbitrary URL here is a link an admin clicks from the review queue.
+  paymentProofUrl      String?
+  dietaryNotes         String?
+  accessibilityNotes   String?
+  status               RegistrationStatus @default(PENDING)
+  reviewedById         String?
+  reviewedAt           DateTime?
+  rejectionReason      String?
+  delegateId           String?            @unique
+  submittedIp          String?
+  userAgent            String?
+  reviewedBy           User?              @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  delegate             Delegate?          @relation(fields: [delegateId], references: [id])
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   @@index([status, createdAt])
   @@index([email])

@@ -4,7 +4,7 @@ import { Select, Input } from '@/components/ui/Field'
 import { SaveIndicator, type SaveState } from '@/components/ui/SaveIndicator'
 import { ApiError } from '@/lib/api'
 import { useUpdateDelegate } from '@/lib/hooks'
-import { cn } from '@/lib/utils'
+import { cn, munExperience } from '@/lib/utils'
 import type { Committee, Delegate } from '@/types/api'
 
 type RowState = SaveState
@@ -110,6 +110,19 @@ export function AllocationRow({
 
   const countryListId = `taken-${delegate.id}`
 
+  /**
+   * Both choices on one line — "DISEC, then UNHRC".
+   *
+   * The fallback only matters at the moment the first choice turns out to be
+   * full, which is the moment this row is being edited, so splitting it onto a
+   * line of its own would cost a row of height for something read together.
+   */
+  const askedFor = [delegate.committeePreference, delegate.committeePreference2]
+    .filter((choice): choice is string => Boolean(choice))
+    .join(', then ')
+
+  const experience = munExperience(delegate.munsAttended, delegate.awardsWon)
+
   return (
     <li
       className={cn(
@@ -120,10 +133,15 @@ export function AllocationRow({
       <div className="min-w-0 md:pt-2">
         <p className="truncate text-body font-medium text-ink">{delegate.fullName}</p>
         <p className="truncate text-body-sm text-ink-secondary">{delegate.schoolName}</p>
-        {delegate.committeePreference ? (
-          <p className="mt-1 truncate text-body-sm text-ink-secondary" title={delegate.committeePreference}>
+        {askedFor ? (
+          <p className="mt-1 truncate text-body-sm text-ink-secondary" title={askedFor}>
             <span className="text-ink-tertiary">Asked for:</span>{' '}
-            <span className="text-ink">{delegate.committeePreference}</span>
+            <span className="text-ink">{askedFor}</span>
+          </p>
+        ) : null}
+        {experience ? (
+          <p className="mt-1 truncate text-body-sm text-ink-secondary" title={experience}>
+            {experience}
           </p>
         ) : null}
         {error ? (

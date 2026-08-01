@@ -114,6 +114,11 @@ export interface Delegate {
    * Allocations screen — everywhere else, the placement is what matters.
    */
   committeePreference: string | null
+  /** The fallback they named, read when the first choice is full. */
+  committeePreference2: string | null
+  /** Prior experience, as answered on the form. Null means they did not say. */
+  munsAttended: number | null
+  awardsWon: number | null
   dietaryNotes: string | null
   accessibilityNotes: string | null
   attendanceStatus: AttendanceStatus
@@ -130,6 +135,9 @@ export interface DelegateInput {
   schoolName: string
   grade: string
   committeePreference: string | null
+  committeePreference2: string | null
+  munsAttended: number | null
+  awardsWon: number | null
   dietaryNotes: string | null
   accessibilityNotes: string | null
   committeeId: string | null
@@ -178,6 +186,16 @@ export interface Registration {
   schoolName: string
   grade: string
   committeePreference: string | null
+  committeePreference2: string | null
+  munsAttended: number | null
+  awardsWon: number | null
+  /** Free text — whoever or whatever the applicant said pointed them here. */
+  referralCode: string | null
+  /**
+   * The payment screenshot on Vercel Blob. Server-validated as a URL on the
+   * blob host, so it is safe to render as a link; null when none was attached.
+   */
+  paymentProofUrl: string | null
   dietaryNotes: string | null
   accessibilityNotes: string | null
   status: RegistrationStatus
@@ -266,4 +284,26 @@ export interface IngestResult {
 export interface Settings {
   googleFormUrl: string
   googleSheetUrl: string
+}
+
+/** What a conference reset removed, or would remove. Accounts are never included. */
+export interface ResetCounts {
+  awards: number
+  assignments: number
+  registrations: number
+  logisticsRequests: number
+  delegates: number
+  committees: number
+}
+
+export interface ResetPreview {
+  deleted: ResetCounts
+  total: number
+  /** False when the server has no passphrase set, which disables the feature. */
+  configured: boolean
+}
+
+export interface ResetResult {
+  deleted: ResetCounts
+  total: number
 }

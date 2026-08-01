@@ -71,9 +71,14 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     apiError = ApiError.internal()
   }
 
-  // 5xx means we did not anticipate this — log the original for diagnosis.
-  // 4xx is expected traffic and stays quiet.
-  if (apiError.code >= 500) {
+  /*
+    An `ApiError` we threw ourselves is a decision, not a surprise — "no blob
+    store is configured" is a 503 the code chose deliberately. Logging a stack
+    for it fills the log with noise during normal operation and buries the 500s
+    that do mean something. Only unanticipated failures are worth a trace.
+  */
+  const deliberate = err instanceof ApiError
+  if (apiError.code >= 500 && !deliberate) {
     console.error(`[error] ${req.method} ${req.originalUrl}`, err)
   }
 
@@ -88,7 +93,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     handing a stranger a map of the server.
   */
   const body = apiError.toBody()
-  if (env.EXPOSE_ERROR_DETAILS && apiError.code >= 500 && err instanceof Error) {
+  if (env.EXPOSE_ERROR_DETAILS && apiError.code >= 500 && !deliberate && err instanceof Error) {
     body.details = { message: err.message, stack: err.stack }
   }
 

@@ -32,6 +32,20 @@ export function pluralise(count: number, singular: string, plural = `${singular}
 }
 
 /**
+ * The delegate's stated MUN history as one short phrase — "2 MUNs · 1 award".
+ *
+ * Null when they answered neither question, so a caller can drop the line
+ * entirely rather than print an empty label. Zero is an answer and shows: "0
+ * MUNs" is exactly the fact an allocator wants before putting someone in UNSC.
+ */
+export function munExperience(munsAttended: number | null, awardsWon: number | null): string | null {
+  const parts: string[] = []
+  if (typeof munsAttended === 'number') parts.push(pluralise(munsAttended, 'MUN'))
+  if (typeof awardsWon === 'number') parts.push(pluralise(awardsWon, 'award'))
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
+/**
  * Resolves a file from `public/` against the app's base path.
  *
  * The hub is served under /admin, and Vite only rewrites absolute asset URLs it

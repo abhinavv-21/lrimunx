@@ -15,6 +15,7 @@ import { auditRouter } from './audit.routes.js'
 import { exportsRouter } from './exports.routes.js'
 import { pushRouter } from './push.routes.js'
 import { settingsRouter } from './settings.routes.js'
+import { dangerRouter } from './danger.routes.js'
 
 export const apiRouter = Router()
 
@@ -43,3 +44,5 @@ apiRouter.use('/audit-logs', auditRouter)
 apiRouter.use('/exports', exportsRouter)
 apiRouter.use('/push', pushRouter)
 apiRouter.use('/settings', settingsRouter)
+// Irreversible bulk operations. ADMIN plus a passphrase — see danger.routes.
+apiRouter.use('/danger', dangerRouter)

@@ -61,9 +61,30 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().default(''),
   VAPID_PRIVATE_KEY: z.string().default(''),
   VAPID_SUBJECT: z.string().default('mailto:ops@lrimunx.org'),
+
+  /**
+   * Read-write token for the Vercel Blob store that holds payment screenshots.
+   *
+   * Optional, and empty is a supported state rather than a misconfiguration:
+   * local development has no blob store, and the registration form is expected
+   * to work without one — the upload route answers 503 and the screenshot field
+   * is simply not filled in. Vercel injects this automatically once a store is
+   * linked to the project.
+   */
+  BLOB_READ_WRITE_TOKEN: z.string().default(''),
+
+  /**
+   * Passphrase that gates the bulk conference reset.
+   *
+   * Empty disables the feature entirely, which is the right default: a
+   * deployment that never sets it cannot have its conference erased through the
+   * API at all. Deliberately not a literal in the source — the repository is
+   * public, and a reset passphrase committed to it is a published key.
+   */
+  DANGER_RESET_PASSPHRASE: z.string().default(''),
 })
 
-export type Env = z.infer<typeof envSchema> & { pushEnabled: boolean }
+export type Env = z.infer<typeof envSchema> & { pushEnabled: boolean; blobUploadsEnabled: boolean }
 
 function loadEnv(): Env {
   const parsed = envSchema.safeParse(process.env)
@@ -81,7 +102,11 @@ function loadEnv(): Env {
     console.warn('[env] VAPID keys are not set — Web Push notifications are disabled. Generate them with: npx web-push generate-vapid-keys')
   }
 
-  return { ...parsed.data, pushEnabled }
+  // Not warned about. A machine with no blob store is the normal local case,
+  // and the upload route says so in its own response.
+  const blobUploadsEnabled = parsed.data.BLOB_READ_WRITE_TOKEN.length > 0
+
+  return { ...parsed.data, pushEnabled, blobUploadsEnabled }
 }
 
 export const env = loadEnv()

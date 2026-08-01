@@ -1,14 +1,69 @@
 import { formatDistanceToNow } from 'date-fns'
-import { Check, Mail, Phone, School, Trash2, X } from 'lucide-react'
+import { Check, ImageOff, Mail, Phone, School, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { cn } from '@/lib/utils'
+import { cn, munExperience } from '@/lib/utils'
 import type { Registration } from '@/types/api'
 
 function StatusBadge({ status }: { status: Registration['status'] }) {
   if (status === 'APPROVED') return <Badge tone="success" icon={Check}>Approved</Badge>
   if (status === 'REJECTED') return <Badge tone="neutral" icon={X}>Rejected</Badge>
   return <Badge tone="warning" icon={Mail}>Pending</Badge>
+}
+
+/** One answer from the form. Absent answers take no space in the grid. */
+function Detail({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null
+  return (
+    <div className="min-w-0">
+      <dt className="text-label uppercase text-ink-secondary">{label}</dt>
+      <dd className="mt-0.5 break-words text-body-sm text-ink">{value}</dd>
+    </div>
+  )
+}
+
+/**
+ * The payment screenshot, always shown — including when there is none.
+ *
+ * "No payment proof" is the single most decision-relevant thing on the card for
+ * a reviewer about to approve, and rendering nothing would leave that fact
+ * indistinguishable from a card that simply has not loaded its image yet.
+ *
+ * The thumbnail opens the original in a new tab rather than a lightbox: a
+ * reviewer needs to read an amount and a reference number off it, which means
+ * zooming, and the browser already does that better than we would.
+ */
+function PaymentProof({ url, applicantName }: { url: string | null; applicantName: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-label uppercase text-ink-secondary">Payment proof</dt>
+      <dd className="mt-0.5">
+        {/* Falsy rather than strictly null: an older cached response may omit
+            the field entirely, and <img src={undefined}> is a broken icon. */}
+        {!url ? (
+          <span className="flex items-center gap-1.5 text-body-sm text-ink-secondary">
+            <ImageOff size={14} className="shrink-0 text-ink-tertiary" aria-hidden />
+            No payment proof
+          </span>
+        ) : (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center gap-2 text-body-sm text-ink underline-offset-2 hover:underline"
+          >
+            <img
+              src={url}
+              alt={`Payment screenshot submitted by ${applicantName}`}
+              loading="lazy"
+              className="h-12 w-12 shrink-0 border border-edge object-cover"
+            />
+            Open full size
+          </a>
+        )}
+      </dd>
+    </div>
+  )
 }
 
 /**
@@ -95,30 +150,22 @@ export function RegistrationCard({
         <StatusBadge status={registration.status} />
       </div>
 
-      {registration.committeePreference ||
-      registration.dietaryNotes ||
-      registration.accessibilityNotes ? (
-        <dl className="mt-3 grid gap-2 border-t border-edge pt-3 sm:grid-cols-3">
-          {registration.committeePreference ? (
-            <div>
-              <dt className="text-label uppercase text-ink-secondary">Asked for</dt>
-              <dd className="mt-0.5 text-body-sm text-ink">{registration.committeePreference}</dd>
-            </div>
-          ) : null}
-          {registration.dietaryNotes ? (
-            <div>
-              <dt className="text-label uppercase text-ink-secondary">Dietary</dt>
-              <dd className="mt-0.5 text-body-sm text-ink">{registration.dietaryNotes}</dd>
-            </div>
-          ) : null}
-          {registration.accessibilityNotes ? (
-            <div>
-              <dt className="text-label uppercase text-ink-secondary">Accessibility</dt>
-              <dd className="mt-0.5 text-body-sm text-ink">{registration.accessibilityNotes}</dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
+      {/*
+        Always rendered, because the payment proof always has something to
+        report. One column at 390px, three from the small breakpoint up.
+      */}
+      <dl className="mt-3 grid gap-3 border-t border-edge pt-3 sm:grid-cols-3">
+        <Detail label="First choice" value={registration.committeePreference} />
+        <Detail label="Second choice" value={registration.committeePreference2} />
+        <Detail
+          label="Experience"
+          value={munExperience(registration.munsAttended, registration.awardsWon)}
+        />
+        <Detail label="Referred by" value={registration.referralCode} />
+        <Detail label="Dietary" value={registration.dietaryNotes} />
+        <Detail label="Accessibility" value={registration.accessibilityNotes} />
+        <PaymentProof url={registration.paymentProofUrl} applicantName={registration.fullName} />
+      </dl>
 
       {registration.status !== 'PENDING' ? (
         <p className="mt-3 border-t border-edge pt-3 text-body-sm text-ink-secondary">

@@ -41,6 +41,60 @@ const phone = z
   .max(24, 'Phone number is too long')
   .regex(/^[+0-9][0-9\s\-()]*$/, 'Phone number contains unsupported characters')
 
+/**
+ * A small count answered on a form — MUNs attended, awards won.
+ *
+ * A browser number input sends "" when untouched and a string of digits
+ * otherwise, so the coercion belongs here rather than at the column. Written as
+ * an explicit union instead of `z.coerce.number()` because coerce runs
+ * `Number()` over anything: `true` becomes 1 and `[]` becomes 0, which on an
+ * unauthenticated endpoint means a bot's junk lands in the table as a plausible
+ * looking figure.
+ */
+const countAnswer = (max: number) =>
+  z
+    .union([
+      z.number(),
+      z
+        .string()
+        .trim()
+        .regex(/^\d*$/, 'Enter a whole number')
+        .transform((v) => (v === '' ? null : Number(v))),
+    ])
+    .pipe(z.number().int().min(0).max(max).nullable())
+    .nullish()
+
+/** Nobody attends more than this many conferences before leaving school. */
+export const EXPERIENCE_MAX = 99
+
+/**
+ * The host Vercel Blob serves uploads from: `<store>.public.blob.vercel-storage.com`.
+ *
+ * The leading dot is load-bearing. Without it `evil-public.blob.vercel-storage.com`
+ * — or worse, a bare `public.blob.vercel-storage.com` — would satisfy the check.
+ */
+const BLOB_HOST_SUFFIX = '.public.blob.vercel-storage.com'
+
+/**
+ * Is this a URL on our blob store, rather than any URL at all?
+ *
+ * The field it guards is rendered in the review queue as a link an admin
+ * clicks, so accepting arbitrary URLs would turn a public, unauthenticated form
+ * into a way to put an attacker-chosen destination in front of the one account
+ * that can approve registrations and create users. Parsing with `URL` rather
+ * than matching the string is what stops
+ * `https://evil.example/x.png#.public.blob.vercel-storage.com` from passing.
+ */
+export function isBlobStorageUrl(value: string): boolean {
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    return false
+  }
+  return url.protocol === 'https:' && url.hostname.endsWith(BLOB_HOST_SUFFIX)
+}
+
 export const paginationQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
@@ -100,6 +154,15 @@ export const createDelegateSchema = z.object({
   grade: trimmed(1, 20),
   /** What they asked for on the form. Never a placement — see the schema note. */
   committeePreference: z.string().trim().max(160).nullish(),
+  committeePreference2: z.string().trim().max(160).nullish(),
+  /**
+   * Carried over from the registration rather than edited here, but accepted so
+   * that a delegate edit round-trips them instead of silently dropping what the
+   * applicant told us. The awards-vs-MUNs rule is enforced on the public form,
+   * where both numbers always arrive together; a PATCH may carry one of them.
+   */
+  munsAttended: countAnswer(EXPERIENCE_MAX),
+  awardsWon: countAnswer(EXPERIENCE_MAX),
   dietaryNotes: z.string().trim().max(500).nullish(),
   accessibilityNotes: z.string().trim().max(500).nullish(),
   attendanceStatus: z.nativeEnum(AttendanceStatus).optional(),
@@ -318,26 +381,67 @@ const blankToNull = (max: number) =>
     .transform((v) => (v === '' ? null : v))
     .nullish()
 
-export const publicRegistrationSchema = z.object({
-  fullName: trimmed(2, 120),
-  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(160),
-  phone,
-  schoolName: trimmed(2, 160),
-  grade: trimmed(1, 20),
-  committeePreference: blankToNull(160),
-  dietaryNotes: blankToNull(500),
-  accessibilityNotes: blankToNull(500),
-  /**
-   * Honeypot. Hidden from humans on the website, so a real applicant always
-   * leaves it empty — declared as "must be blank" rather than "must be absent"
-   * because a browser submits an empty hidden input.
-   *
-   * A filled one never reaches this schema: honeypotGate runs ahead of
-   * validation and answers with the same 201 a real submission gets, so a bot
-   * is never told which field caught it.
-   */
-  hp_website: z.literal('').optional(),
-})
+/**
+ * The payment screenshot, as a URL on our own blob store.
+ *
+ * The browser uploads the file straight to Vercel Blob and posts back only the
+ * resulting URL, so this string is the entire trace of the upload. It is
+ * checked against the blob host rather than merely parsed as a URL — see
+ * isBlobStorageUrl for why an open field here is an attack on the reviewer, not
+ * on the applicant.
+ */
+const paymentProofUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .transform((v) => (v === '' ? null : v))
+  .refine(
+    (v) => v === null || isBlobStorageUrl(v),
+    'Upload the payment screenshot through this form rather than pasting a link',
+  )
+  .nullish()
+
+export const publicRegistrationSchema = z
+  .object({
+    fullName: trimmed(2, 120),
+    email: z.string().trim().toLowerCase().email('Enter a valid email address').max(160),
+    phone,
+    schoolName: trimmed(2, 160),
+    grade: trimmed(1, 20),
+    committeePreference: blankToNull(160),
+    committeePreference2: blankToNull(160),
+    munsAttended: countAnswer(EXPERIENCE_MAX),
+    awardsWon: countAnswer(EXPERIENCE_MAX),
+    referralCode: blankToNull(40),
+    paymentProofUrl,
+    dietaryNotes: blankToNull(500),
+    accessibilityNotes: blankToNull(500),
+    /**
+     * Honeypot. Hidden from humans on the website, so a real applicant always
+     * leaves it empty — declared as "must be blank" rather than "must be absent"
+     * because a browser submits an empty hidden input.
+     *
+     * A filled one never reaches this schema: honeypotGate runs ahead of
+     * validation and answers with the same 201 a real submission gets, so a bot
+     * is never told which field caught it.
+     */
+    hp_website: z.literal('').optional(),
+  })
+  .superRefine((value, ctx) => {
+    // You cannot win an award at a conference you did not attend. Reported
+    // against awardsWon because that is the number the applicant should lower —
+    // the alternative reading, "they under-counted their MUNs", is not ours to
+    // guess at. Only checked when both are answered; either alone is legitimate.
+    const { munsAttended, awardsWon } = value
+    if (typeof munsAttended !== 'number' || typeof awardsWon !== 'number') return
+    if (awardsWon > munsAttended) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['awardsWon'],
+        message: `Awards won cannot exceed MUNs attended (${munsAttended})`,
+      })
+    }
+  })
 export type PublicRegistrationInput = z.infer<typeof publicRegistrationSchema>
 
 export const registrationQuery = paginationQuery.extend({

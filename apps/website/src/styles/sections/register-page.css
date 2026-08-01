@@ -1,0 +1,1134 @@
+/* ==========================================================================
+   register-page.css — the standalone delegate registration page.
+   Page: register.html · Modules: src/modules/register-page.js
+
+   GROUND SEQUENCE
+   plum → paper → plum. The head band is ground-ink, the form is ground-paper,
+   the footer is ground-ink. Hard cuts, no gradient bleeds, exactly as the
+   landing page cuts between its sections.
+
+   It is deliberately NOT the magenta ground. That ground is the site's one
+   saturated block and it is spent at the conversion point on the landing page;
+   repeating it here would turn a moment into a house style. There is a second,
+   more practical reason: the magenta panel held eight fields inside a single
+   flourish, and this page asks thirteen questions and an upload. A saturated
+   field under sustained reading and typing is a different job from a saturated
+   field under a headline.
+
+   WHAT IS CARRIED OVER FROM THE MAGENTA FORM
+   The method, re-measured. Fields are a PLATE a step off the ground rather than
+   eight white boxes; the plate is a brand tone (lotus pink, the token that
+   already exists) rather than an imported neutral grey; the boundary of every
+   control clears 3:1 on its own; error state is carried by four redundant
+   signals, none of them hue, because red is off-palette here as well.
+
+   What changes on a light ground is that a MUTED text colour is legal again.
+   On magenta every string had to be full-alpha text-inverse — anything less
+   dropped under 4.5:1 — so labels and hints were separated by weight and case
+   alone. Here --on-ground-muted is 6.2:1 and hints can simply be quieter.
+
+   MEASURED (WCAG 2.1, against the COMPOSITED colours — a translucent plate has
+   no ratio until it is composited)
+     ground   .ground-paper = --color-paper #FAF7F3 ......... L 0.9332
+     plate    --color-primary-tint #F7DCEE ................. L 0.7713
+     plate    primary @ 0.14 over paper → #F0D8E3 (focus/error) L 0.7313
+     plate    --color-blush #FDF4F9 (inert, while sending) .. L 0.9242
+
+     text-primary on the plate ...................... 14.4:1  ✔ any text
+     text-primary on the active plate ............... 13.7:1  ✔ any text
+     text-primary on the inert plate ................ 17.1:1  ✔ any text
+     hint, on-ground-muted, on the ground ............ 6.2:1  ✔ any text
+     placeholder, text-primary @ 0.62, on the plate .. 4.7:1  ✔ AA text
+     field edge, --color-primary, vs the ground ...... 5.8:1  ✔ SC 1.4.11
+     field edge, --color-primary, vs the plate ....... 4.8:1  ✔ SC 1.4.11
+     active edge, --color-primary-dark, vs ground .... 8.3:1  ✔
+     active edge, --color-primary-dark, vs the plate .. 6.9:1  ✔
+     focus ring, --focus-ring (primary), vs ground ... 5.8:1  ✔ SC 1.4.11
+     mount hairline, primary, vs ground / plate . 5.8 / 4.8:1  ✔
+     step rule, primary, vs the ground ............... 5.8:1  ✔ SC 1.4.11
+
+   Rule 2 of the contrast contract holds throughout: gold appears nowhere on the
+   paper ground — it is 2.1:1 there and decorative-only, and every mark on this
+   page carries information. The step numerals are therefore NOT `.numeral`.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. HEAD BAND — ground-ink.
+
+   Shorter than a hero and with none of its apparatus: no video, no seal, no
+   scroll cue. Someone who arrives here has already decided; the band exists to
+   say what page this is, what it will cost them in time, and what they need to
+   hand before they start.
+   -------------------------------------------------------------------------- */
+.regpage__head {
+  position: relative;
+  /* Clears the fixed bar, then breathes. Not --section-y: the landing page's
+     sections are compositions, this is a heading. */
+  padding-block: calc(var(--nav-h) + clamp(var(--sp-7), 6vw, var(--sp-10)))
+    clamp(var(--sp-8), 6vw, var(--sp-10));
+  overflow: hidden;
+  /* The same off-centre wash the registration panel carries, at half strength.
+     Enough to keep the band from reading as a flat plum rectangle, not enough
+     to compete with the form below it. */
+  background-image: radial-gradient(
+    70% 60% at 22% 18%,
+    rgb(var(--rgb-primary) / 0.3),
+    transparent 70%
+  );
+}
+
+.regpage__head-inner {
+  position: relative;
+  grid-column: 1 / -1;
+}
+
+/* A real way back, not a decorative breadcrumb. 48px tall including padding. */
+.regpage__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 3rem;
+  margin-block-end: var(--sp-6);
+  padding-block: var(--sp-2);
+  font-size: var(--fs-100);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgb(var(--rgb-text-inverse) / 0.72);
+  transition: color 200ms var(--ease-house);
+}
+
+.regpage__back svg {
+  inline-size: 0.9rem;
+  flex: none;
+  transition: transform 220ms var(--ease-expo);
+}
+
+.regpage__back:hover,
+.regpage__back:focus-visible {
+  color: var(--on-ground);
+}
+
+.regpage__back:hover svg,
+.regpage__back:focus-visible svg {
+  transform: translateX(-3px);
+}
+
+.regpage__eyebrow {
+  color: var(--on-ground-muted);
+}
+
+/* One step down from the landing page's h1. The hero's display size is a
+   masthead; this is a page title above a form, and 6.75rem of Fraunces over a
+   field labelled "Full name" is a joke at the reader's expense. */
+.regpage__title {
+  font-size: var(--fs-800);
+  line-height: var(--lh-display);
+  max-inline-size: 16ch;
+  color: var(--on-ground);
+}
+
+.regpage__lede {
+  margin-block-start: var(--sp-5);
+  color: var(--on-ground);
+}
+
+.regpage__facts {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-8));
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--hairline-on-ink);
+  max-inline-size: 46rem;
+}
+
+.regpage__fact dt {
+  margin-block-end: var(--sp-2);
+  color: var(--color-accent-gold); /* 8.0:1 on ink — gold IS legal as text here */
+}
+
+.regpage__fact dd {
+  margin: 0;
+  font-size: var(--fs-300);
+  color: var(--on-ground);
+}
+
+/* --------------------------------------------------------------------------
+   2. THE FORM SECTION — ground-paper.
+   -------------------------------------------------------------------------- */
+.regpage__body {
+  padding-block: clamp(var(--sp-8), 6vw, var(--sp-10)) var(--section-y);
+}
+
+.regpage__col {
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+}
+
+.regform {
+  position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   3. THE STEP INDICATOR
+
+   Not a row of circles joined by a line — that pattern says "wizard", and it
+   says it in the same visual language on every site that has ever shipped one.
+   This is the position readout the committees rail already uses (an index, a
+   rule, a state) laid out as two ruled columns, so the page's own way of saying
+   "you are here" is reused rather than a new one imported.
+
+   The rule above each step IS the progress bar. 1px hairline while untouched,
+   2px magenta once reached — which also means progress survives the rule being
+   the only thing you can see out of the corner of your eye.
+
+   Colour is never the only carrier: each step states "In progress" / "Complete"
+   / "Not started" in words, and the live one carries aria-current="step".
+   -------------------------------------------------------------------------- */
+.regsteps {
+  display: grid;
+  gap: var(--sp-5) var(--grid-gap);
+  margin: 0 0 clamp(var(--sp-7), 5vw, var(--sp-9));
+  padding: 0;
+  list-style: none;
+}
+
+.regsteps__item {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+  padding-block-start: var(--sp-4);
+  min-block-size: 3rem;
+}
+
+.regsteps__rule {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 1px;
+  background-color: var(--color-border);
+  transition: background-color var(--dur-base) var(--ease-house);
+}
+
+.regsteps__item.is-current .regsteps__rule,
+.regsteps__item.is-done .regsteps__rule {
+  block-size: 2px;
+  background-color: var(--accent-on-ground);
+}
+
+/* Display serif, at text colour. NOT `.numeral`: that class is gold, gold on
+   paper is 2.1:1, and this number is information rather than ornament. */
+.regsteps__index {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: 'opsz' 48, 'WONK' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: var(--fs-600);
+  line-height: 1;
+  color: var(--on-ground-muted);
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.regsteps__item.is-current .regsteps__index,
+.regsteps__item.is-done .regsteps__index {
+  color: var(--accent-on-ground);
+}
+
+.regsteps__label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-300);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--on-ground);
+}
+
+.regsteps__state {
+  margin-inline-start: auto;
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground-muted);
+}
+
+.regsteps__item.is-current .regsteps__state {
+  color: var(--accent-on-ground);
+}
+
+/* --------------------------------------------------------------------------
+   4. STEP PANELS
+   -------------------------------------------------------------------------- */
+.regstep {
+  /* A fieldset's default min-inline-size is min-content, which is the single
+     most reliable way to make a grid inside one overflow its column. */
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.regstep__legend {
+  display: block;
+  inline-size: 100%;
+  padding: 0;
+  margin-block-end: var(--sp-5);
+}
+
+/* Scripted focus for announcement only — never a pointer state. */
+.regstep__legend:focus {
+  outline: none;
+}
+
+.regstep__legend:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring);
+  outline-offset: 6px;
+}
+
+.regstep__legend-index {
+  display: block;
+  margin-block-end: var(--sp-3);
+  color: var(--accent-on-ground);
+}
+
+.regstep__legend-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-700);
+  font-variation-settings: 'opsz' 48, 'WONK' 1;
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-display);
+  color: var(--on-ground);
+}
+
+.regstep__intro {
+  max-inline-size: var(--measure);
+  margin-block-end: clamp(var(--sp-6), 4vw, var(--sp-8));
+  color: var(--on-ground-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5. THE FIELD GRID
+
+   Six columns, asymmetric — the same logic as the page's 12-column shell at
+   half scale. Deliberately NOT a uniform two-up: Grade and the two counts want
+   a third of the measure, the notes want all of it, and letting each field take
+   the width it actually needs is what stops the block reading as generated.
+   -------------------------------------------------------------------------- */
+.regform__grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(var(--sp-5), 3vw, var(--sp-6)) var(--grid-gap);
+}
+
+/* Single column below 720px. Every field is full width and nothing needs a
+   media query to undo — the spans are added, not removed. */
+.regfield {
+  grid-column: 1 / -1;
+  min-inline-size: 0; /* a grid item's min-content floor is what overflows */
+}
+
+/* --------------------------------------------------------------------------
+   6. LABEL, HINT, NOTICE
+   Real labels, above the control, always visible. No placeholder-as-label: the
+   placeholder disappears the moment someone starts typing, which is exactly
+   when they most need to know what they are answering.
+   -------------------------------------------------------------------------- */
+.regfield__label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-200);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground);
+}
+
+/* Lower case, lighter, no tracking — everything the label is not, so the two
+   never read as one string. */
+.regfield__optional {
+  font-size: var(--fs-100);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--on-ground-muted);
+}
+
+.regfield__hint {
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-200);
+  line-height: 1.5;
+  color: var(--on-ground-muted); /* 6.2:1 */
+  max-inline-size: 48ch;
+}
+
+/* Not an error and not a hint: something the page did on the reader's behalf
+   (a preselection, a cleared duplicate). Magenta rule, full-strength text. */
+.regfield__notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+  padding-inline-start: var(--sp-4);
+  border-inline-start: 2px solid var(--accent-on-ground);
+  font-size: var(--fs-200);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--on-ground);
+  max-inline-size: 48ch;
+}
+
+/* --------------------------------------------------------------------------
+   7. THE CONTROL
+
+   The plate is on a WRAPPER, not on the input. Three reasons, all load-bearing:
+     · Chrome paints its autofill background on the input itself. With the input
+       transparent, `-webkit-background-clip: text` clips that fill to the
+       glyphs and it disappears, while the wrapper's plate is untouched.
+     · <input> supports no ::before / ::after in any engine, so the Mount —
+       which needs four arms — is impossible without a wrapper.
+     · The focus ring can then be drawn OUTSIDE the plate at the same offsets
+       .btn uses, instead of inside its own padding box.
+
+   The combobox button in committee-select.js wears the same class, so the plate,
+   the Mount and the focus treatment are written once and both control types
+   inherit them.
+   -------------------------------------------------------------------------- */
+.regform {
+  /* Declared once, here, so the ratios in the header map one-to-one onto named
+     properties. Every value is an existing token or a composite of two. */
+  --field-plate: var(--color-primary-tint);
+  --field-plate-active: rgb(var(--rgb-primary) / 0.14);
+  --field-plate-inert: var(--color-blush);
+  --field-edge: var(--color-primary);
+  --field-edge-active: var(--color-primary-dark);
+  --field-mount: var(--accent-on-ground);
+}
+
+.regfield__control {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  background-color: var(--field-plate);
+  border: 1px solid var(--field-edge);
+  border-radius: var(--radius-none); /* hard corners, letterpress — as .btn */
+  text-align: start;
+  transition:
+    background-color var(--dur-base) var(--ease-house),
+    border-color var(--dur-base) var(--ease-house),
+    box-shadow var(--dur-base) var(--ease-house);
+}
+
+.regfield__input {
+  display: block;
+  inline-size: 100%;
+  /* 52px. The 48px touch minimum is a floor, not a target, and a 52px field is
+     the difference between hitting it and aiming at it on a phone. */
+  min-block-size: 3.25rem;
+  padding: 0.9rem 1rem;
+  background-color: transparent;
+  border: 0;
+  color: var(--on-ground);
+  font-family: var(--font-ui);
+  /* 1rem = 16px exactly. Anything smaller and iOS Safari zooms the viewport on
+     focus, which on this page drops the reader out of the form. */
+  font-size: var(--fs-400);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: var(--tracking-body);
+  caret-color: var(--color-primary);
+}
+
+textarea.regfield__input {
+  min-block-size: 7.5rem;
+  resize: vertical;
+  line-height: var(--lh-body);
+}
+
+.regfield__input::placeholder {
+  color: rgb(var(--rgb-text-primary) / 0.62); /* 4.7:1 on the plate */
+  opacity: 1; /* Firefox applies its own 0.54 on top of the colour */
+}
+
+/* The wrapper owns the visible focus, so the input must not draw its own inside
+   it. Restored under forced-colors at the foot of this file. */
+.regfield__input:focus,
+.regfield__input:focus-visible {
+  outline: none;
+}
+
+.regfield__control:focus-within {
+  background-color: var(--field-plate-active);
+  border-color: var(--field-edge-active);
+  /* Concentric with the Mount, at the same offsets .btn uses (mount -5px,
+     ring +8px). Two marks, one gesture — the hairline draws, the ring lands. */
+  outline: var(--focus-ring-w) solid var(--focus-ring);
+  outline-offset: 8px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .regfield__control:hover {
+    border-color: var(--field-edge-active);
+  }
+}
+
+/* Autofill. Left alone, Chrome paints a pale blue plate and near-black text
+   over the lotus pink — the one place the colour contract can be overridden by
+   the browser. */
+.regfield__input:-webkit-autofill,
+.regfield__input:-webkit-autofill:hover,
+.regfield__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  caret-color: var(--color-primary);
+  /* Chrome animates the autofill fill in; a 100000s delay never reaches it. */
+  transition: background-color 100000s ease-in-out 0s;
+}
+
+/* --------------------------------------------------------------------------
+   8. THE MOUNT, ON A FIELD
+
+   The same four-arm mechanism as base.css §6: four 1px lines, each scaled along
+   its OWN long axis so the hairline is never thinned, origins running
+   left → top → right → bottom so the frame draws clockwise.
+
+   Two deliberate differences from the button:
+     · The resting ticks are at ZERO opacity. On a ghost button the ticks are
+       the affordance — they are what tells you the thing is pressable. A field
+       already has a plate and a 5.8:1 edge saying "type here", so thirteen
+       fields × four corners of permanent ticks would be noise, not information.
+       Here the Mount is a STATE indicator and it earns its keep on focus.
+     · Magenta, not gold. On a light ground the Mount is the only state
+       indicator and must clear 3:1 — gold on paper is 2.1:1 and would fail.
+       This is base.css's own colour rule, followed rather than re-decided.
+   -------------------------------------------------------------------------- */
+.regfield__control {
+  --mount-offset: -5px;
+  --mount-rest: 0.14;
+}
+
+.regfield__control::before,
+.regfield__control::after,
+.regfield__mount::before,
+.regfield__mount::after {
+  content: '';
+  position: absolute;
+  background-color: var(--field-mount);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 200ms var(--ease-expo),
+    opacity 200ms linear;
+}
+
+/* top */
+.regfield__control::before {
+  inset: var(--mount-offset) var(--mount-offset) auto var(--mount-offset);
+  block-size: 1px;
+  transform-origin: left;
+  transform: scaleX(var(--mount-rest));
+}
+
+/* right */
+.regfield__mount::before {
+  inset: var(--mount-offset) var(--mount-offset) var(--mount-offset) auto;
+  inline-size: 1px;
+  transform-origin: top;
+  transform: scaleY(var(--mount-rest));
+}
+
+/* bottom */
+.regfield__mount::after {
+  inset: auto var(--mount-offset) var(--mount-offset) var(--mount-offset);
+  block-size: 1px;
+  transform-origin: right;
+  transform: scaleX(var(--mount-rest));
+}
+
+/* left */
+.regfield__control::after {
+  inset: var(--mount-offset) auto var(--mount-offset) var(--mount-offset);
+  inline-size: 1px;
+  transform-origin: bottom;
+  transform: scaleY(var(--mount-rest));
+}
+
+/* Draws on focus at every control type, and additionally on hover for pointers.
+   Unlike .btn this is NOT gated behind (hover: hover) alone — a touch user
+   tapping a field must see the frame close, because that is the confirmation
+   the tap landed in the right box. */
+.regfield__control:focus-within::before,
+.regfield__control:focus-within::after,
+.regfield__control:focus-within .regfield__mount::before,
+.regfield__control:focus-within .regfield__mount::after {
+  transform: scale(1);
+  opacity: 1;
+  transition-duration: 260ms, 200ms;
+}
+
+.regfield__control:focus-within::before {
+  transition-delay: 0ms;
+}
+.regfield__control:focus-within .regfield__mount::before {
+  transition-delay: 70ms;
+}
+.regfield__control:focus-within .regfield__mount::after {
+  transition-delay: 140ms;
+}
+.regfield__control:focus-within::after {
+  transition-delay: 210ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .regfield__control:hover::before,
+  .regfield__control:hover::after,
+  .regfield__control:hover .regfield__mount::before,
+  .regfield__control:hover .regfield__mount::after {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. ERROR STATE
+   Red is not available: it is off-palette, and no red that reads as an error
+   sits comfortably beside this magenta. So the error is carried by four
+   redundant signals, none of them hue — the edge steps to primary-dark, the
+   plate deepens, a magenta diamond marks the message, and the message states
+   the problem in words. aria-invalid + aria-describedby carry the same thing to
+   assistive tech, wired in register-page.js.
+   -------------------------------------------------------------------------- */
+.regfield.is-invalid .regfield__control,
+.regupload.is-invalid .regupload__plate {
+  background-color: var(--field-plate-active);
+  border-color: var(--field-edge-active);
+  /* An inset ring rather than border-width: 2px — the border box must not
+     change size, or every field below it reflows as you tab through. */
+  box-shadow: inset 0 0 0 1px var(--field-edge-active);
+}
+
+.regfield__error {
+  display: none;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+  font-size: var(--fs-200);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--on-ground); /* full strength — an error is not marginalia */
+  overflow-wrap: anywhere;
+  max-inline-size: 52ch;
+}
+
+.regfield.is-invalid .regfield__error,
+.regfield__error:not(:empty) {
+  display: flex;
+}
+
+/* The same rotated diamond the footer sitemap and the nav marker use — one
+   motif, reused, rather than a new icon for one state. */
+.regfield__error::before {
+  content: '';
+  flex: none;
+  inline-size: 4px;
+  block-size: 4px;
+  margin-block-start: 0.45em;
+  background-color: var(--accent-on-ground);
+  transform: rotate(45deg);
+}
+
+/* Preselected from ?committee= — a quiet magenta tick against the label, so the
+   reader can see at a glance that the page filled something in for them. */
+.regfield.is-preselected .regfield__label::after {
+  content: '';
+  inline-size: 5px;
+  block-size: 5px;
+  align-self: center;
+  background-color: var(--accent-on-ground);
+  transform: rotate(45deg);
+}
+
+/* --------------------------------------------------------------------------
+   10. THE SUMMARY
+   One block at the top of the form, for the errors that are not attached to a
+   single field and for the roll-up of the ones that are. It takes focus on
+   failure rather than announcing itself through a live region: focus moves the
+   reader to the problem AND reads it, where a live region only reads it and
+   leaves them where they were.
+   -------------------------------------------------------------------------- */
+.regform__summary {
+  margin-block-end: clamp(var(--sp-6), 4vw, var(--sp-7));
+  padding: var(--sp-5);
+  background-color: var(--field-plate);
+  border: 1px solid var(--field-edge-active);
+  border-inline-start-width: 3px;
+}
+
+.regform__summary:focus {
+  outline: none;
+}
+
+.regform__summary:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.regform__summary-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-600);
+  font-weight: 600;
+  font-variation-settings: 'opsz' 24;
+  line-height: var(--lh-heading);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-text-primary); /* 14.4:1 on the plate */
+}
+
+.regform__summary-copy {
+  margin-block-start: var(--sp-3);
+  font-size: var(--fs-300);
+  color: var(--color-text-primary);
+  max-inline-size: 58ch;
+}
+
+.regform__summary-list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A button, not an anchor. An in-page <a href="#field-id"> is intercepted by
+   the delegated anchor handler in register-main.js, which sets tabindex="-1" on
+   its target — on an <input> that silently removes the field from the tab
+   order. */
+.regform__summary-jump {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  /* 48px tall including the vertical padding: these are the first things a
+     thumb reaches for after a failed submit. */
+  min-block-size: 3rem;
+  padding-block: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-300);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: start;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--rgb-primary) / 0.55);
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color var(--dur-base) var(--ease-house);
+}
+
+.regform__summary-jump:hover,
+.regform__summary-jump:focus-visible {
+  text-decoration-color: var(--color-primary-dark);
+}
+
+.regform__summary-jump::before {
+  content: '';
+  flex: none;
+  align-self: center;
+  inline-size: 4px;
+  block-size: 4px;
+  background-color: var(--color-primary);
+  transform: rotate(45deg);
+}
+
+/* --------------------------------------------------------------------------
+   11. THE STEP FOOT — Back, Continue, Send.
+   -------------------------------------------------------------------------- */
+.regstep__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-5);
+  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-8));
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--hairline);
+}
+
+/* Full width on a phone. A 3.75rem button at 375px has nowhere useful to sit
+   but across the measure. */
+.regstep__next,
+.regstep__back,
+.regform__submit {
+  inline-size: 100%;
+}
+
+.regform__submit {
+  position: relative;
+  /* NOT overflow: hidden — .btn deliberately keeps overflow visible so the
+     Mount can sit outside the plate. The sweep is clipped by its own strip. */
+}
+
+.regstep__note {
+  flex: 1 1 14rem;
+  color: var(--on-ground-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  max-inline-size: 34ch;
+}
+
+.btn__arrow--back {
+  order: -1;
+}
+
+/* The blocked submit.
+   base.css turns an aria-disabled .btn transparent with a grey edge, which is
+   the visual language of "this control is over". That is the wrong statement:
+   nothing is over, one thing is outstanding, and the note beside the button
+   says which. So the plate holds and the state is carried by the frame going
+   quiet and the cursor — plus a click handler that focuses the upload rather
+   than doing nothing at all. */
+.regform__submit[aria-disabled='true'] {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  opacity: 0.72;
+  cursor: default;
+}
+
+.regform.is-ready .regform__submit[aria-disabled='true'] {
+  opacity: 1;
+}
+
+.regform.is-submitting .regform__submit[aria-disabled='true'] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* Progress. A determinate bar would be a lie — there is no progress event on a
+   JSON POST — so this is an indeterminate sweep across the button's foot.
+   Transform only, inside an overflow-hidden strip. */
+.regform__progress {
+  position: absolute;
+  inset: auto 0 0 0;
+  block-size: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--dur-fast) linear;
+  pointer-events: none;
+}
+
+.regform.is-submitting .regform__progress {
+  opacity: 1;
+}
+
+.regform__progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-gold-light);
+  transform: translateX(-100%);
+}
+
+.regform.is-submitting .regform__progress::after {
+  animation: regform-sweep 1.15s var(--ease-house) infinite;
+}
+
+@keyframes regform-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Fields go read-only rather than disabled while the request is in flight —
+   `disabled` drops focus to <body>, so a keyboard user who pressed Enter in the
+   last field would be silently returned to the top of the document. */
+.regfield__input[readonly] {
+  cursor: progress;
+}
+
+.regform.is-submitting .regfield__control {
+  background-color: var(--field-plate-inert);
+}
+
+/* --------------------------------------------------------------------------
+   12. THE HONEYPOT
+   Off-screen, NOT display:none and NOT visibility:hidden — a bot that respects
+   either simply skips the field and the trap catches nothing. A person can
+   never reach it: aria-hidden on the wrapper, tabindex="-1" on the input, no
+   pointer events. Absolutely positioned against .regform and clipped twice over
+   by the body's overflow-x: clip, so the -9999px cannot open a horizontal
+   scrollbar at any width.
+   -------------------------------------------------------------------------- */
+.regform__hp {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -9999px;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   13. THE THANK-YOU
+
+   Replaces the form and the step indicator outright. There is deliberately no
+   reference code on it: the API returns the same body for a first submission
+   and a repeat one, so a code on screen would raise a question the page cannot
+   answer, and the reader has nothing to do with it either way. What they need
+   is what happens next and roughly when — so that is the whole block.
+
+   Set as three numbered beats rather than a centred card with a tick in a
+   circle. The numerals are the same device as the step indicator, which is the
+   point: the page ends in the language it was working in.
+   -------------------------------------------------------------------------- */
+.regdone {
+  position: relative;
+  max-inline-size: 62rem;
+}
+
+.regdone:focus {
+  outline: none; /* scripted focus for announcement only */
+}
+
+.regdone:focus-visible {
+  outline: var(--focus-ring-w) solid var(--focus-ring);
+  outline-offset: 8px;
+}
+
+.regdone__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--accent-on-ground);
+}
+
+.regdone__eyebrow::before {
+  content: '';
+  flex: none;
+  inline-size: clamp(1.5rem, 3vw, 3rem);
+  block-size: 2px;
+  background-color: var(--accent-on-ground);
+}
+
+.regdone__title {
+  margin-block-start: var(--sp-4);
+  font-size: var(--fs-800);
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  line-height: var(--lh-display);
+  max-inline-size: 14ch;
+  color: var(--on-ground);
+}
+
+.regdone__copy {
+  margin-block-start: var(--sp-5);
+  font-size: var(--fs-500);
+  line-height: 1.52;
+  max-inline-size: var(--measure);
+  color: var(--on-ground);
+}
+
+.regdone__next {
+  display: grid;
+  gap: var(--sp-5);
+  margin: clamp(var(--sp-7), 5vw, var(--sp-8)) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regdone__next li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--hairline);
+}
+
+.regdone__next-index {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variation-settings: 'opsz' 48, 'WONK' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: var(--fs-600);
+  line-height: 1;
+  color: var(--accent-on-ground);
+}
+
+.regdone__next-body {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.regdone__next-title {
+  font-size: var(--fs-400);
+  font-weight: 600;
+  color: var(--on-ground);
+}
+
+.regdone__next-copy {
+  font-size: var(--fs-300);
+  line-height: 1.6;
+  color: var(--on-ground-muted);
+  max-inline-size: 56ch;
+}
+
+.regdone__foot {
+  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-8));
+  font-size: var(--fs-300);
+  line-height: 1.6;
+  color: var(--on-ground-muted);
+  max-inline-size: var(--measure);
+}
+
+.regdone__cta {
+  margin-block-start: var(--sp-6);
+}
+
+/* --------------------------------------------------------------------------
+   14. BREAKPOINTS
+   Below 620px everything is a single column at full width, which is the 375px
+   case and needs no rules of its own.
+   -------------------------------------------------------------------------- */
+@media (min-width: 620px) {
+  .regsteps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 720px) {
+  .regfield--half {
+    grid-column: span 3;
+  }
+
+  .regfield--third {
+    grid-column: span 2;
+  }
+
+  .regstep__next,
+  .regstep__back,
+  .regform__submit {
+    inline-size: auto;
+  }
+
+  /* Send sits at the far end of the row from Back: the two are opposites and
+     should not be adjacent enough to hit the wrong one. */
+  .regstep__foot--pay .regform__submit {
+    margin-inline-start: auto;
+    order: 3;
+  }
+
+  .regstep__foot--pay .regstep__note {
+    order: 2;
+    flex: 0 1 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .regpage__head-inner {
+    grid-column: 2 / 11;
+  }
+
+  .regpage__col {
+    /* The same deliberately empty right-hand column the landing page's sections
+       keep. A form allowed to run the full 1440px is a form nobody can read
+       across. */
+    grid-column: 2 / 11;
+  }
+
+  .regpage__facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --------------------------------------------------------------------------
+   15. FORCED COLORS
+   High-contrast mode paints backgrounds away, taking the plate, the Mount, the
+   step rules and the progress sweep with it. The boundaries and the focus state
+   are restored from system colours.
+   -------------------------------------------------------------------------- */
+@media (forced-colors: active) {
+  .regfield__control {
+    border-color: CanvasText;
+  }
+
+  .regfield__control::before,
+  .regfield__control::after,
+  .regfield__mount::before,
+  .regfield__mount::after,
+  .regfield__error::before,
+  .regform__summary-jump::before,
+  .regsteps__rule {
+    background-color: CanvasText;
+  }
+
+  .regsteps__item.is-current .regsteps__rule,
+  .regsteps__item.is-done .regsteps__rule {
+    background-color: Highlight;
+  }
+
+  .regfield__input:focus,
+  .regfield__input:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .regfield.is-invalid .regfield__control {
+    border-style: dashed;
+  }
+
+  .regform__progress::after {
+    background-color: Highlight;
+  }
+
+  .regform__submit[aria-disabled='true'] {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   16. REDUCED MOTION
+   The global rule in base.css collapses every duration to 1ms, which turns a
+   sequenced 470ms draw into a flicker. As with .btn, the reduced state is
+   specified outright: the frame is already closed, nothing sweeps, and no
+   transform ever animates.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .regfield__control::before,
+  .regfield__control::after,
+  .regfield__mount::before,
+  .regfield__mount::after {
+    transform: scale(1);
+    opacity: 0;
+    transition-delay: 0ms !important;
+  }
+
+  .regfield__control:focus-within::before,
+  .regfield__control:focus-within::after,
+  .regfield__control:focus-within .regfield__mount::before,
+  .regfield__control:focus-within .regfield__mount::after {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .regpage__back:hover svg,
+  .regpage__back:focus-visible svg {
+    transform: none;
+  }
+
+  .regform.is-submitting .regform__progress::after {
+    animation: none;
+    /* Static and full width: still visibly a "working" state, with no motion. */
+    transform: none;
+    opacity: 0.7;
+  }
+}

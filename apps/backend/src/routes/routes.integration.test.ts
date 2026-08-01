@@ -11,6 +11,7 @@ import {
   nsEmail,
   removeFixtures,
   seedFixtures,
+  sweepNamespace,
   type Fixtures,
   type TableCounts,
 } from '../test-support/fixtures.js'
@@ -52,6 +53,19 @@ const SYNTHETIC_UUID = '00000000-0000-4000-8000-000000000000'
 
 const PUSH_ENDPOINT = `${NS.pushEndpoint}contributor-device`
 
+/**
+ * A screenshot URL shaped exactly as Vercel Blob returns one. Nothing is ever
+ * fetched from it — only the host is load-bearing.
+ */
+const BLOB_URL = 'https://k3mq1zfwvbdxpnl8.public.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
+
+/**
+ * Whether this machine has a blob store. Local development does not, and the
+ * upload endpoint answers differently in the two cases by design, so the tests
+ * that pin one answer skip in the other.
+ */
+const blobConfigured = Boolean(process.env['BLOB_READ_WRITE_TOKEN'])
+
 /** A submission the public form would produce, with a namespaced address. */
 function submission(email: string): Record<string, unknown> {
   return {
@@ -61,6 +75,12 @@ function submission(email: string): Record<string, unknown> {
     schoolName: 'Ridge International School',
     grade: '11',
     committeePreference: 'DISEC',
+    committeePreference2: 'UNHRC',
+    // Strings, because that is what a browser number input posts.
+    munsAttended: '4',
+    awardsWon: '1',
+    referralCode: 'RIDGE-MUNSOC',
+    paymentProofUrl: BLOB_URL,
     dietaryNotes: 'Vegetarian meals only',
     // An untouched optional field arrives as "" from a browser, not as absent.
     accessibilityNotes: '',
@@ -79,6 +99,11 @@ async function pendingRegistration(local: string): Promise<{ id: string; email: 
       schoolName: 'Ridge International School',
       grade: '12',
       committeePreference: 'UNHRC',
+      committeePreference2: 'DISEC',
+      munsAttended: 6,
+      awardsWon: 2,
+      referralCode: 'RIDGE-MUNSOC',
+      paymentProofUrl: BLOB_URL,
     },
     select: { id: true, email: true },
   })
@@ -90,6 +115,11 @@ describe.skipIf(!boot.ready)('API integration', () => {
     if (!boot.ready) throw new Error('The suite should have been skipped')
     api = boot.api
     prisma = api.prisma
+
+    // Before the baseline, not after: a run that died mid-suite last time never
+    // reached afterAll, and its orphans would otherwise be counted as part of
+    // the conference's own data and then deleted out from under the census.
+    await sweepNamespace(prisma)
 
     baseline = await countAllTables(prisma)
     fixtures = await seedFixtures(prisma)
@@ -270,10 +300,21 @@ describe.skipIf(!boot.ready)('API integration', () => {
       expect(await prisma.assignment.count()).toBe(assignmentsBefore)
       expect(await prisma.user.count()).toBe(usersBefore)
 
+      // The fallback and the experience figures follow the person, because
+      // Allocations reads them when it decides which room they go into.
+      expect(delegate.committeePreference2).toBe('DISEC')
+      expect(delegate.munsAttended).toBe(6)
+      expect(delegate.awardsWon).toBe(2)
+
       const after = await prisma.registration.findUniqueOrThrow({ where: { id: registration.id } })
       expect(after.status).toBe(RegistrationStatus.APPROVED)
       expect(after.delegateId).toBe(delegate.id)
       expect(after.reviewedById).toBe(fixtures.adminId)
+      // Who referred them and what they paid with are facts about the
+      // application, not about the person, so they stay on the row that is
+      // still linked rather than being copied onto the roster.
+      expect(after.referralCode).toBe('RIDGE-MUNSOC')
+      expect(after.paymentProofUrl).toBe(BLOB_URL)
 
       // CLAUDE.md rule 2 — an admin write leaves a trail.
       const trail = await prisma.auditLog.findMany({ where: { userId: fixtures.adminId } })
@@ -640,6 +681,51 @@ describe.skipIf(!boot.ready)('API integration', () => {
       expect(await prisma.registration.count({ where: { email: nsEmail('oversized') } })).toBe(0)
     })
 
+    it('stores the second preference, the experience figures and the screenshot', async () => {
+      const email = nsEmail('twostep')
+
+      const response = await api.request('post', '/api/v1/public/register').send(submission(email))
+      expect(response.status).toBe(201)
+
+      const row = await prisma.registration.findFirstOrThrow({ where: { email } })
+      expect(row.committeePreference).toBe('DISEC')
+      expect(row.committeePreference2).toBe('UNHRC')
+      // Posted as strings by the form, stored as integers.
+      expect(row.munsAttended).toBe(4)
+      expect(row.awardsWon).toBe(1)
+      expect(row.referralCode).toBe('RIDGE-MUNSOC')
+      expect(row.paymentProofUrl).toBe(BLOB_URL)
+      // Blank still means blank, not an empty string nobody can query for.
+      expect(row.accessibilityNotes).toBeNull()
+    })
+
+    it('refuses a payment link that is not on the blob store', async () => {
+      // The reviewer clicks this link from the review queue. Accepting an
+      // arbitrary URL would let an unauthenticated stranger choose where the
+      // one account that can approve registrations gets sent.
+      const email = nsEmail('openredirect')
+
+      const response = await api
+        .request('post', '/api/v1/public/register')
+        .send({ ...submission(email), paymentProofUrl: 'https://evil.example/x.png' })
+
+      expect(response.status).toBe(422)
+      expect(JSON.stringify((response.body as ApiErrorBody).details)).toContain('paymentProofUrl')
+      expect(await prisma.registration.count({ where: { email } })).toBe(0)
+    })
+
+    it('refuses more awards than conferences attended, and names the field', async () => {
+      const email = nsEmail('overclaimed')
+
+      const response = await api
+        .request('post', '/api/v1/public/register')
+        .send({ ...submission(email), munsAttended: '1', awardsWon: '4' })
+
+      expect(response.status).toBe(422)
+      expect(JSON.stringify((response.body as ApiErrorBody).details)).toContain('awardsWon')
+      expect(await prisma.registration.count({ where: { email } })).toBe(0)
+    })
+
     it('names the field when a real field is wrong', async () => {
       // The counterpart to the honeypot's silence: a human who mistypes their
       // email is told which field to fix.
@@ -669,6 +755,68 @@ describe.skipIf(!boot.ready)('API integration', () => {
       expect(statuses.slice(0, 5)).toEqual([201, 201, 201, 201, 201])
       expect(statuses[5]).toBe(429)
       expect(await prisma.registration.count({ where: { email } })).toBe(1)
+    }, 30_000)
+  })
+
+  /* ======================================================================== */
+  /* 3b. The payment screenshot upload endpoint                               */
+  /* ======================================================================== */
+
+  /**
+   * The screenshot goes browser → Vercel Blob directly, so this route only
+   * hands out a token. It is unauthenticated and it grants write access to a
+   * bucket, which makes what it refuses more interesting than what it allows.
+   */
+  describe('the blob upload endpoint', () => {
+    it('is reachable without a token, like the rest of /public', async () => {
+      const response = await api.request('post', '/api/v1/public/blob-upload').send({})
+      // Whatever it answers, it never answers "who are you" — the whole point
+      // is that a member of the public can reach it.
+      expect(response.status).not.toBe(401)
+      expect(response.status).not.toBe(403)
+    })
+
+    it.runIf(!blobConfigured)('says the service is unavailable rather than crashing', async () => {
+      // No blob store locally, and that is a supported state. A 500 with a
+      // stack would tell an applicant the site is broken when it is not.
+      const response = await api.request('post', '/api/v1/public/blob-upload').send({
+        type: 'blob.generate-client-token',
+        payload: { pathname: 'payment-proof.png', callbackUrl: '', multipart: false, clientPayload: null },
+      })
+
+      expect(response.status).toBe(503)
+      const body = response.body as ApiErrorBody
+      expect(body.code).toBe(503)
+      expect(body.details).toBeUndefined()
+      expect(response.text).not.toMatch(/\bat .*\.(ts|js):\d+/)
+    })
+
+    it.runIf(blobConfigured)('refuses an envelope that is not part of the upload protocol', async () => {
+      const response = await api
+        .request('post', '/api/v1/public/blob-upload')
+        .send({ type: 'blob.please-just-give-me-a-token' })
+
+      expect(response.status).toBe(400)
+      expect((response.body as ApiErrorBody).code).toBe(400)
+      expect(response.text).not.toMatch(/\bat .*\.(ts|js):\d+/)
+    })
+
+    it('rate limits a flood of token requests from one address', async () => {
+      // Ten per quarter hour: one screenshot per application plus room to retry
+      // a photo that came out unreadable. Beyond that it is free file hosting.
+      const from = '198.51.100.63'
+
+      const statuses: number[] = []
+      for (let attempt = 0; attempt < 11; attempt++) {
+        const response = await api.request('post', '/api/v1/public/blob-upload', { from }).send({
+          type: 'blob.generate-client-token',
+          payload: { pathname: 'payment-proof.png', callbackUrl: '', multipart: false, clientPayload: null },
+        })
+        statuses.push(response.status)
+      }
+
+      expect(statuses.slice(0, 10).every((status) => status !== 429)).toBe(true)
+      expect(statuses[10]).toBe(429)
     }, 30_000)
   })
 

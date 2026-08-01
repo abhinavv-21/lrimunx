@@ -29,6 +29,11 @@ const registrationView = {
   schoolName: true,
   grade: true,
   committeePreference: true,
+  committeePreference2: true,
+  munsAttended: true,
+  awardsWon: true,
+  referralCode: true,
+  paymentProofUrl: true,
   dietaryNotes: true,
   accessibilityNotes: true,
   status: true,
@@ -185,6 +190,12 @@ registrationsRouter.post(
        * for; a placement is a decision the secretariat takes on the Allocations
        * screen, and inventing one at approval time would quietly consume a seat
        * nobody agreed to give away.
+       *
+       * Both preferences and the experience figures do come across, because
+       * they are what Allocations reads when it makes that decision. The
+       * referral answer and the payment screenshot stay on the Registration —
+       * they are facts about an application, not about a person, and the
+       * application remains linked for anyone who needs them.
        */
       const delegate = await tx.delegate.create({
         data: {
@@ -194,6 +205,9 @@ registrationsRouter.post(
           schoolName: before.schoolName,
           grade: before.grade,
           committeePreference: before.committeePreference,
+          committeePreference2: before.committeePreference2,
+          munsAttended: before.munsAttended,
+          awardsWon: before.awardsWon,
           dietaryNotes: before.dietaryNotes,
           accessibilityNotes: before.accessibilityNotes,
         },

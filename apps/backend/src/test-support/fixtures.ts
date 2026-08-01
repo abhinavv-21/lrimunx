@@ -130,27 +130,81 @@ export async function seedFixtures(prisma: PrismaClient): Promise<Fixtures> {
 }
 
 /**
- * Removes every namespaced record, by id where an id is known and by namespace
- * where the API allocated the id itself (a public submission, an approval's
- * delegate, an audit row).
+ * Removes everything carrying the namespace, whoever created it and whenever.
  *
- * Order follows the foreign keys: audit and logistics rows reference a User,
- * a Registration references a Delegate, an Assignment references all three.
+ * Written against the namespace rather than against this run's ids on purpose.
+ * A worker that dies mid-suite — which the vitest fork pool on Windows does
+ * every few runs, with or without a database involved — never reaches afterAll,
+ * and leaves two users, a committee, a logistics request and a handful of audit
+ * rows sitting in the conference's own database. Those orphans are then part of
+ * the *next* run's baseline census, so the census fails and the debris
+ * accumulates rather than being noticed and cleared.
+ *
+ * Running this before the baseline is taken makes a run self-healing: it starts
+ * from a database with no test residue in it, whatever happened last time.
+ *
+ * Nothing here can match a genuine record. Every filter is one of the prefixes
+ * declared in NS, which is exactly why they exist.
+ *
+ * Order follows the foreign keys: audit and logistics rows reference a User, a
+ * Registration references a Delegate, an Assignment references all three.
  */
-export async function removeFixtures(prisma: PrismaClient, fixtures: Fixtures): Promise<void> {
-  const userIds = [fixtures.adminId, fixtures.contributorId]
+export async function sweepNamespace(prisma: PrismaClient): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { username: { startsWith: NS.username } },
+    select: { id: true },
+  })
+  const committees = await prisma.committee.findMany({
+    where: { code: { startsWith: NS.committeeCode } },
+    select: { id: true },
+  })
+  const delegates = await prisma.delegate.findMany({
+    where: { email: { startsWith: NS.email } },
+    select: { id: true },
+  })
+
+  const userIds = users.map((row) => row.id)
+  const committeeIds = committees.map((row) => row.id)
+  const delegateIds = delegates.map((row) => row.id)
 
   await prisma.auditLog.deleteMany({ where: { userId: { in: userIds } } })
   await prisma.pushSub.deleteMany({ where: { endpoint: { startsWith: NS.pushEndpoint } } })
-  await prisma.logisticsReq.deleteMany({ where: { createdById: { in: userIds } } })
-  await prisma.logisticsReq.deleteMany({ where: { committeeId: fixtures.committeeId } })
+  await prisma.logisticsReq.deleteMany({
+    where: {
+      OR: [
+        { createdById: { in: userIds } },
+        { committeeId: { in: committeeIds } },
+        { title: { startsWith: NS.displayName } },
+      ],
+    },
+  })
   await prisma.registration.deleteMany({ where: { email: { startsWith: NS.email } } })
-  await prisma.award.deleteMany({ where: { committeeId: fixtures.committeeId } })
-  await prisma.assignment.deleteMany({ where: { committeeId: fixtures.committeeId } })
-  await prisma.assignment.deleteMany({ where: { assignedById: { in: userIds } } })
-  await prisma.delegate.deleteMany({ where: { email: { startsWith: NS.email } } })
-  await prisma.committee.deleteMany({ where: { id: fixtures.committeeId } })
+  await prisma.award.deleteMany({
+    where: { OR: [{ committeeId: { in: committeeIds } }, { delegateId: { in: delegateIds } }] },
+  })
+  await prisma.assignment.deleteMany({
+    where: {
+      OR: [
+        { committeeId: { in: committeeIds } },
+        { assignedById: { in: userIds } },
+        { delegateId: { in: delegateIds } },
+      ],
+    },
+  })
+  await prisma.delegate.deleteMany({ where: { id: { in: delegateIds } } })
+  await prisma.committee.deleteMany({ where: { id: { in: committeeIds } } })
   await prisma.user.deleteMany({ where: { id: { in: userIds } } })
+}
+
+/**
+ * Removes this run's records. Kept as a named step because that is what the
+ * suite means at the end of a run, but the work is the namespace sweep — the
+ * ids it holds are a subset of what carries the namespace, and the rows the API
+ * allocated ids for (a public submission, an approval's delegate, an audit row)
+ * were never in `fixtures` to begin with.
+ */
+export async function removeFixtures(prisma: PrismaClient, _fixtures: Fixtures): Promise<void> {
+  await sweepNamespace(prisma)
 }
 
 /* ------------------------------ Table counts ------------------------------ */

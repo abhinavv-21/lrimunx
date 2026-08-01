@@ -80,10 +80,13 @@ export function DelegateForm({
       phone: form.phone.trim(),
       email: form.email.trim(),
       grade: form.grade.trim(),
-      // Not editable here by design — it is a form answer, shown only in
+      // Not editable here by design — these are form answers, shown only in
       // Allocations. Passed through unchanged so editing a delegate never
-      // silently discards what they asked for.
+      // silently discards what they asked for or what they have done before.
       committeePreference: delegate?.committeePreference ?? null,
+      committeePreference2: delegate?.committeePreference2 ?? null,
+      munsAttended: delegate?.munsAttended ?? null,
+      awardsWon: delegate?.awardsWon ?? null,
       committeeId: form.committeeId === '' ? null : form.committeeId,
       country: form.committeeId === '' ? null : blankToNull(form.country),
       dietaryNotes: blankToNull(form.dietaryNotes),

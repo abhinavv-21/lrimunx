@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { publicRegistrationSchema, rejectRegistrationSchema } from './index.js'
+import { isBlobStorageUrl, publicRegistrationSchema, rejectRegistrationSchema } from './index.js'
+
+/** A screenshot as Vercel Blob hands it back after a client upload. */
+const BLOB_URL =
+  'https://k3mq1zfwvbdxpnl8.public.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
 
 /** A submission the conference website would actually send. */
 function validPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -10,10 +14,22 @@ function validPayload(overrides: Record<string, unknown> = {}): Record<string, u
     schoolName: 'Ridge International School',
     grade: '11',
     committeePreference: 'DISEC',
+    committeePreference2: 'UNHRC',
+    munsAttended: '4',
+    awardsWon: '1',
+    referralCode: 'RIDGE-MUNSOC',
+    paymentProofUrl: BLOB_URL,
     dietaryNotes: 'Vegetarian',
     accessibilityNotes: 'Needs a seat near the door',
     ...overrides,
   }
+}
+
+/** The field paths a failed parse blamed. */
+function failedPaths(payload: Record<string, unknown>): string[] {
+  const result = publicRegistrationSchema.safeParse(payload)
+  expect(result.success).toBe(false)
+  return result.success ? [] : result.error.issues.map((issue) => issue.path.join('.'))
 }
 
 describe('publicRegistrationSchema', () => {
@@ -49,6 +65,11 @@ describe('publicRegistrationSchema', () => {
     })
 
     expect(parsed.committeePreference).toBeUndefined()
+    expect(parsed.committeePreference2).toBeUndefined()
+    expect(parsed.munsAttended).toBeUndefined()
+    expect(parsed.awardsWon).toBeUndefined()
+    expect(parsed.referralCode).toBeUndefined()
+    expect(parsed.paymentProofUrl).toBeUndefined()
     expect(parsed.dietaryNotes).toBeUndefined()
     expect(parsed.accessibilityNotes).toBeUndefined()
     expect(parsed.hp_website).toBeUndefined()
@@ -77,6 +98,8 @@ describe('publicRegistrationSchema', () => {
     ['grade blank', { grade: '' }],
     ['grade too long', { grade: 'Senior Secondary Year Twelve' }],
     ['committeePreference too long', { committeePreference: 'D'.repeat(161) }],
+    ['committeePreference2 too long', { committeePreference2: 'U'.repeat(161) }],
+    ['referralCode too long', { referralCode: 'R'.repeat(41) }],
     ['dietaryNotes too long', { dietaryNotes: 'V'.repeat(501) }],
     ['accessibilityNotes too long', { accessibilityNotes: 'W'.repeat(501) }],
   ])('rejects %s', (_label, override) => {
@@ -109,6 +132,96 @@ describe('publicRegistrationSchema', () => {
     })
   })
 
+  /**
+   * A browser number input posts a string, and an untouched one posts "". Both
+   * have to land in an integer column without the applicant seeing a type
+   * error about something they never typed.
+   */
+  describe('MUN experience', () => {
+    it('reads the counts a number input actually posts', () => {
+      const parsed = publicRegistrationSchema.parse(validPayload({ munsAttended: '7', awardsWon: '2' }))
+      expect(parsed.munsAttended).toBe(7)
+      expect(parsed.awardsWon).toBe(2)
+    })
+
+    it('accepts them as JSON numbers too', () => {
+      const parsed = publicRegistrationSchema.parse(validPayload({ munsAttended: 7, awardsWon: 2 }))
+      expect(parsed.munsAttended).toBe(7)
+      expect(parsed.awardsWon).toBe(2)
+    })
+
+    it('treats an untouched field as no answer, but keeps a zero as an answer', () => {
+      const blank = publicRegistrationSchema.parse(validPayload({ munsAttended: '', awardsWon: '' }))
+      expect(blank.munsAttended).toBeNull()
+      expect(blank.awardsWon).toBeNull()
+
+      // "0 MUNs" is a first-timer declaring themselves, which is exactly the
+      // fact an allocator wants. It must not collapse into "did not say".
+      const firstTimer = publicRegistrationSchema.parse(validPayload({ munsAttended: '0', awardsWon: '0' }))
+      expect(firstTimer.munsAttended).toBe(0)
+      expect(firstTimer.awardsWon).toBe(0)
+    })
+
+    it.each([
+      ['a negative count', { munsAttended: '-3', awardsWon: '0' }],
+      ['a count past 99', { munsAttended: '100', awardsWon: '0' }],
+      ['a fractional count', { munsAttended: 2.5, awardsWon: 0 }],
+      ['words instead of a number', { munsAttended: 'a few', awardsWon: '0' }],
+      ['a boolean a bot might send', { munsAttended: true, awardsWon: '0' }],
+    ])('rejects %s', (_label, override) => {
+      expect(publicRegistrationSchema.safeParse(validPayload(override)).success).toBe(false)
+    })
+
+    it('refuses more awards than conferences attended, and says which field', () => {
+      // You cannot win an award at a conference you did not go to.
+      expect(failedPaths(validPayload({ munsAttended: '1', awardsWon: '3' }))).toContain('awardsWon')
+    })
+
+    it('allows an award at every conference attended', () => {
+      const parsed = publicRegistrationSchema.parse(validPayload({ munsAttended: '3', awardsWon: '3' }))
+      expect(parsed.awardsWon).toBe(3)
+    })
+
+    it('does not second-guess an applicant who answered only one of the two', () => {
+      expect(publicRegistrationSchema.safeParse(validPayload({ munsAttended: '', awardsWon: '2' })).success).toBe(
+        true,
+      )
+      expect(publicRegistrationSchema.safeParse(validPayload({ munsAttended: '5', awardsWon: '' })).success).toBe(
+        true,
+      )
+    })
+  })
+
+  /**
+   * The payment screenshot is a link an admin clicks from the review queue, so
+   * a field that accepts any URL is an attacker-chosen destination handed to
+   * the one account that can approve registrations and mint users.
+   */
+  describe('payment proof', () => {
+    it('accepts a URL on the blob store', () => {
+      expect(publicRegistrationSchema.parse(validPayload()).paymentProofUrl).toBe(BLOB_URL)
+    })
+
+    it('treats an unattached screenshot as no answer', () => {
+      expect(publicRegistrationSchema.parse(validPayload({ paymentProofUrl: '' })).paymentProofUrl).toBeNull()
+    })
+
+    it.each([
+      ['somebody else’s host', 'https://evil.example/x.png'],
+      ['the blob host as a path', 'https://evil.example/public.blob.vercel-storage.com/x.png'],
+      ['the blob host in a fragment', 'https://evil.example/x.png#.public.blob.vercel-storage.com'],
+      ['the blob host as userinfo', 'https://k3mq.public.blob.vercel-storage.com@evil.example/x.png'],
+      ['a lookalike host', 'https://evilpublic.blob.vercel-storage.com/x.png'],
+      ['the bare blob domain with no store', 'https://public.blob.vercel-storage.com/x.png'],
+      ['plain http', 'http://k3mq.public.blob.vercel-storage.com/x.png'],
+      ['a javascript URL', 'javascript:alert(1)'],
+      ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
+      ['not a URL at all', 'payment.png'],
+    ])('rejects %s', (_label, url) => {
+      expect(failedPaths(validPayload({ paymentProofUrl: url }))).toContain('paymentProofUrl')
+    })
+  })
+
   it('strips fields the applicant is not allowed to decide for themselves', () => {
     const parsed = publicRegistrationSchema.parse(
       validPayload({ role: 'ADMIN', status: 'APPROVED', username: 'aarav', committeeId: 'UNSC' }),
@@ -119,6 +232,20 @@ describe('publicRegistrationSchema', () => {
     expect(parsed['status']).toBeUndefined()
     expect(parsed['username']).toBeUndefined()
     expect(parsed['committeeId']).toBeUndefined()
+  })
+})
+
+describe('isBlobStorageUrl', () => {
+  it('accepts any store on the blob host', () => {
+    expect(isBlobStorageUrl(BLOB_URL)).toBe(true)
+    expect(isBlobStorageUrl('https://abc.public.blob.vercel-storage.com/a/b/c.webp')).toBe(true)
+  })
+
+  it('does not throw on input that is not a URL', () => {
+    // It runs on unauthenticated input, so a thrown TypeError here would be a
+    // 500 on the public form rather than a 422 on the field.
+    expect(isBlobStorageUrl('')).toBe(false)
+    expect(isBlobStorageUrl('://')).toBe(false)
   })
 })
 
