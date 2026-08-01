@@ -22,15 +22,17 @@ import { publicRegistrationSchema, type PublicRegistrationInput } from '../schem
  */
 export const publicRouter = Router()
 
-/** 201 body, returned to a genuine submission and to a caught bot alike. */
+/**
+ * The only body this route returns — to a genuine submission, to a repeat
+ * submission, and to a caught bot alike.
+ *
+ * There is deliberately no second shape. A `200 {status:'duplicate'}` used to
+ * exist here, and it answered "has this person applied to LRI MUN X?" for
+ * anyone holding a school email list. Reintroducing a distinguishable response
+ * reintroduces that leak, so the type system offers nowhere to put one.
+ */
 export interface PublicRegistrationAccepted {
   status: 'received'
-  reference: string
-}
-
-/** 200 body when this email already has a live application. */
-export interface PublicRegistrationDuplicate {
-  status: 'duplicate'
   reference: string
 }
 
