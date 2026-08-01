@@ -57,6 +57,7 @@ Set these in Vercel → Project → Settings → Environment Variables. Everythi
 | `JWT_SECRET` | a fresh 48-byte random string — not the one from your laptop |
 | `JWT_REFRESH_SECRET` | a different fresh 48-byte random string |
 | `NODE_ENV` | `production` |
+| `TRUST_PROXY` | `1` — Vercel is one hop. Without it the rate limiter keys on the wrong address; with it set too high, a caller can forge their own |
 | `CORS_ORIGIN` | `https://lrimun.lrischool.edu.np` |
 | `VITE_API_BASE_URL` | `/api/v1` — same origin, so no host is baked into the bundle |
 | `GOOGLE_SHEETS_WEBHOOK_SECRET` | a fresh random string |
@@ -126,14 +127,10 @@ npm run dev:website    # public     localhost:5174
 Note the ops hub now lives under `/admin` in dev too, so its base path matches
 production and the difference never surprises you at deploy time.
 
-For the website to reach the API in development, `apps/website/.env.local`
-needs:
-
-```
-VITE_API_BASE_URL=http://localhost:4000/api/v1
-```
-
-and the API needs the website's origin in `CORS_ORIGIN`.
+The website already ships `apps/website/.env.development` pointing at the dev
+API, and `CORS_ORIGIN` defaults to both front-end ports, so this works with no
+setup. Note that the API reads `.env` at startup only — after changing it,
+restart the backend; `tsx watch` reloads on `.ts` changes, not on `.env`.
 
 ---
 

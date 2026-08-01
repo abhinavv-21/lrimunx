@@ -63,6 +63,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Not published. The hub is noindex'd but reachable by anyone who knows the
+    // path, and shipping .js.map hands a stranger the readable source of the
+    // app that runs the conference. Turn it on locally when you need to debug a
+    // production build.
+    sourcemap: false,
   },
 })

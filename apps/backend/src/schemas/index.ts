@@ -13,7 +13,25 @@ import {
 
 export const uuidParam = z.object({ id: z.string().uuid('Expected a UUID') })
 
-const trimmed = (min: number, max: number) => z.string().trim().min(min).max(max)
+/**
+ * C0/C1 control characters, minus the whitespace `.trim()` already handles.
+ *
+ * Postgres rejects U+0000 in a `text` column outright (SQLSTATE 22021), so a
+ * name pasted from a mangled export used to surface as a 500 — the applicant
+ * was told the server had broken and their registration silently did not
+ * happen. The rest are stripped rather than rejected because they are almost
+ * always invisible passengers from a copy-paste, not something a person typed
+ * and would want to be told about.
+ */
+const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g
+
+const cleaned = z.string().transform((v) => v.replace(CONTROL_CHARS, '').trim())
+
+const trimmed = (min: number, max: number) => cleaned.pipe(z.string().min(min).max(max))
+
+/** As `trimmed`, for the fields that also constrain their shape. */
+const trimmedMatching = (min: number, max: number, pattern: RegExp, message: string) =>
+  cleaned.pipe(z.string().min(min).max(max).regex(pattern, message))
 
 /** Permissive enough for international numbers, strict enough to reject junk. */
 const phone = z
@@ -50,7 +68,7 @@ export const refreshSchema = z.object({
 /* -------------------------------------------------------------------------- */
 
 export const createUserSchema = z.object({
-  username: trimmed(3, 64).regex(/^[a-zA-Z0-9._-]+$/, 'Use letters, numbers, dot, underscore or hyphen only'),
+  username: trimmedMatching(3, 64, /^[a-zA-Z0-9._-]+$/, 'Use letters, numbers, dot, underscore or hyphen only'),
   password: z.string().min(10, 'Password must be at least 10 characters').max(200),
   fullName: trimmed(2, 120),
   role: z.nativeEnum(Role).default(Role.CONTRIBUTOR),

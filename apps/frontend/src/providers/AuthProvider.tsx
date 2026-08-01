@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiFetch, setSessionExpiredHandler, tokens } from '@/lib/api'
+import { clearCachedData } from '@/lib/offline'
 import type { AuthUser, LoginResponse, Role } from '@/types/api'
 
 interface AuthContextValue {
@@ -74,6 +75,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Signing out must succeed locally even if the network call does not.
     }
     tokens.clear()
+
+    /*
+      Clearing the tokens is not the same as clearing the data.
+
+      The service worker caches delegate, committee and attendance responses
+      for six hours so the hub keeps working in a venue with no signal. Those
+      responses carry names, emails, phone numbers, dietary and accessibility
+      notes, and they outlive the session that fetched them — on the shared
+      laptop at a registration desk, the next person to sign in could read the
+      previous one's roster straight out of Cache Storage, offline.
+
+      Best-effort on purpose: a failure here must not strand someone signed in.
+    */
+    await clearCachedData()
+
     setUser(null)
     setStatus('anonymous')
   }, [])

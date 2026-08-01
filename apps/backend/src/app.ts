@@ -11,7 +11,8 @@ export function createApp(): Express {
   const app = express()
 
   app.disable('x-powered-by')
-  app.set('trust proxy', 1)
+  // Zero unless a proxy is actually configured — see TRUST_PROXY in config/env.
+  app.set('trust proxy', env.TRUST_PROXY)
 
   app.use(helmet())
   app.use(

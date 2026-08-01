@@ -140,3 +140,33 @@ export async function drainQueue(): Promise<DrainResult> {
 
   return { synced, failed, remaining: await queueCount() }
 }
+
+/**
+ * Caches holding delegate data, cleared when a session ends.
+ *
+ * Font and shell caches are deliberately absent: they are not personal and
+ * dropping them only costs the next sign-in a slower first paint.
+ */
+const PERSONAL_DATA_CACHES = ['api-reference']
+
+/**
+ * Removes cached delegate data from this device.
+ *
+ * The offline queue is left alone on purpose. It holds work the person did —
+ * a logistics request raised in a corridor with no signal — and discarding it
+ * because they signed out would silently throw away something they were told
+ * had been saved. It drains on the next authenticated session.
+ */
+export async function clearCachedData(): Promise<void> {
+  if (typeof caches === 'undefined') return
+
+  await Promise.all(
+    PERSONAL_DATA_CACHES.map((name) =>
+      caches.delete(name).catch((error) => {
+        // Never block a sign-out on cache eviction.
+        console.warn('[offline] could not clear cache', name, error)
+        return false
+      }),
+    ),
+  )
+}

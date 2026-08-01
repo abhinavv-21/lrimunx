@@ -13,6 +13,29 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   /**
+   * Attaches the exception message and stack to 5xx responses.
+   *
+   * Opt-in rather than derived from NODE_ENV, which defaults to 'development':
+   * one unset variable on a public deployment would otherwise turn every
+   * unhandled error into a disclosure of file paths and driver internals. You
+   * have to ask for diagnostics; you cannot get them by forgetting something.
+   */
+  EXPOSE_ERROR_DETAILS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+  /**
+   * How many reverse proxies sit in front of this process.
+   *
+   * 0 means none, and X-Forwarded-For is then ignored entirely. That is the
+   * safe default: trusting the header when nothing upstream rewrites it lets a
+   * caller pick their own identity, which resets the registration rate limiter
+   * on every request and forges the IP recorded for abuse review. Set it to 1
+   * on Vercel or behind a single nginx; raise it only for each additional hop
+   * you actually control.
+   */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+  /**
    * Comma-separated allow-list. Two origins by default because two front ends
    * call this API: the ops hub on 5173 and the public conference website on
    * 5174, which posts the registration form. Production adds the deployed

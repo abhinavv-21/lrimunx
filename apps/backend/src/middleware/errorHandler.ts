@@ -1,7 +1,15 @@
 import type { NextFunction, Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
 import { ApiError, type ApiErrorBody } from '../lib/errors.js'
-import { isProduction } from '../config/env.js'
+import { env } from '../config/env.js'
+
+/**
+ * body-parser rejects a request before any of our code runs, and its errors
+ * carry a `type` discriminator rather than a class we can instanceof.
+ */
+function isBodyParserError(err: unknown, type: string): boolean {
+  return typeof err === 'object' && err !== null && (err as { type?: unknown }).type === type
+}
 
 function fieldsOf(error: Prisma.PrismaClientKnownRequestError): string[] {
   const target = error.meta?.['target']
@@ -50,6 +58,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     apiError = ApiError.badRequest('Invalid query for the current schema')
   } else if (err instanceof SyntaxError && 'body' in err) {
     apiError = ApiError.badRequest('Request body is not valid JSON')
+  } else if (isBodyParserError(err, 'entity.too.large')) {
+    // body-parser's own error, not ours. Without this branch an oversized body
+    // fell through to a 500 — reporting our fault for the caller's mistake, and
+    // on a misconfigured deployment attaching a stack trace to say so.
+    apiError = new ApiError(413, 'That request is too large')
+  } else if (isBodyParserError(err, 'entity.parse.failed')) {
+    apiError = ApiError.badRequest('Request body could not be parsed')
+  } else if (isBodyParserError(err, 'encoding.unsupported')) {
+    apiError = ApiError.badRequest('Unsupported content encoding')
   } else {
     apiError = ApiError.internal()
   }
@@ -60,8 +77,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     console.error(`[error] ${req.method} ${req.originalUrl}`, err)
   }
 
+  /*
+    Diagnostics are opt-in, not opt-out.
+
+    This used to attach the stack whenever NODE_ENV was anything other than
+    'production' — and NODE_ENV defaults to 'development' in config/env.ts, so a
+    single unset variable on a public deployment turned every 500 into a
+    disclosure of file paths, driver internals and Postgres error codes. Failing
+    closed means a forgotten variable costs you debugging output rather than
+    handing a stranger a map of the server.
+  */
   const body = apiError.toBody()
-  if (!isProduction && apiError.code >= 500 && err instanceof Error) {
+  if (env.EXPOSE_ERROR_DETAILS && apiError.code >= 500 && err instanceof Error) {
     body.details = { message: err.message, stack: err.stack }
   }
 

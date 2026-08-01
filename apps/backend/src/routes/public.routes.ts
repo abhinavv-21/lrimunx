@@ -1,4 +1,5 @@
 import { Router, type NextFunction, type Request, type Response } from 'express'
+import { randomInt } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import rateLimit from 'express-rate-limit'
 import { prisma } from '../lib/prisma.js'
@@ -55,9 +56,28 @@ const SUSTAINED_LIMIT = 20
  * as friction rather than as a hard cap — the honeypot and the duplicate check
  * are what actually keep the table clean.
  */
+/** Roughly the cost of the real path, so the trap is not faster than a submission. */
+const HONEYPOT_DELAY_MS = 8
+const HONEYPOT_JITTER_MS = 6
+
+/**
+ * The client address, preferring the one the platform vouches for.
+ *
+ * `req.ip` derives from X-Forwarded-For under `trust proxy`, and that header is
+ * attacker-supplied: rotating it gives a flood a fresh rate-limit bucket every
+ * request and writes a forged value into `submittedIp`, which is the field the
+ * hub shows an admin for abuse review. Vercel sets `x-vercel-forwarded-for`
+ * itself and a client cannot override it, so it wins where it exists.
+ */
+function clientAddress(req: Request): string {
+  const vouched = req.header('x-vercel-forwarded-for')
+  return (vouched?.split(',')[0] ?? '').trim() || req.ip || 'unknown'
+}
+
 const limiterOptions = {
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  keyGenerator: clientAddress,
   message: { error: 'Too many registration attempts. Try again later.', code: 429 },
 } as const
 
@@ -72,14 +92,25 @@ const sustainedLimiter = rateLimit({ ...limiterOptions, windowMs: SUSTAINED_WIND
  * two responses a scripted submitter can distinguish are "accepted" and "rate
  * limited", and neither of them says why.
  */
-function honeypotGate(req: Request, res: Response, next: NextFunction): void {
+async function honeypotGate(req: Request, res: Response, next: NextFunction): Promise<void> {
   const body = req.body as Record<string, unknown> | undefined
   const trap = body?.['hp_website']
 
-  if (!isHoneypotTripped(typeof trap === 'string' ? trap : null)) {
+  // Absent or an empty string is a human. Anything else — including a number
+  // or an object, which previously fell through to a 422 that named the field
+  // by name — is the trap being touched.
+  const tripped = trap !== undefined && (typeof trap !== 'string' || isHoneypotTripped(trap))
+
+  if (!tripped) {
     next()
     return
   }
+
+  // The gate answers before touching the database, which made it measurably
+  // faster than a genuine submission — a few milliseconds, consistently, which
+  // is all a script needs to tell the two apart. Sleep for roughly what the
+  // real path costs, jittered so the delay itself is not a signature.
+  await new Promise((resolve) => setTimeout(resolve, HONEYPOT_DELAY_MS + randomInt(0, HONEYPOT_JITTER_MS)))
 
   const accepted: PublicRegistrationAccepted = { status: 'received', reference: generateReference() }
   res.status(201).json(accepted)
@@ -173,21 +204,29 @@ publicRouter.post(
     const input = req.body as PublicRegistrationInput
 
     const outcome = await submitRegistration(input, {
-      // `trust proxy` is set on the app, so req.ip is the client address rather
-      // than the load balancer's.
-      submittedIp: req.ip ?? null,
+      // Same address the rate limiter keys on — see clientAddress. Storing
+      // req.ip here would record whatever the submitter put in X-Forwarded-For,
+      // which is the opposite of useful on a field labelled "for abuse review".
+      submittedIp: clientAddress(req),
       userAgent: req.header('user-agent')?.slice(0, USER_AGENT_MAX) ?? null,
     })
 
-    if (outcome.kind === 'duplicate') {
-      // Only their own reference comes back. Nothing else about the existing
-      // application is disclosed to an unauthenticated caller — not the name on
-      // it, not its status, not who reviewed it.
-      const body: PublicRegistrationDuplicate = { status: 'duplicate', reference: outcome.reference }
-      res.status(200).json(body)
-      return
-    }
+    /*
+      One response for both outcomes, deliberately.
 
+      A 201/200 split answered "has this person applied to LRI MUN X?" for
+      anyone holding a school email list — the caller had proven nothing and
+      the status code alone was the oracle. Now a duplicate is indistinguishable
+      from a first submission: submit a stranger's address twice and you get the
+      same reference back both times whether or not it was already there, so the
+      response tells you nothing you did not already supply.
+
+      The reference still comes back because it is the only way an applicant
+      receives it — there is no outbound email — and a genuine re-submitter gets
+      the code that is actually on their row rather than a fabricated one.
+      Nothing else about an existing application is disclosed: not the name on
+      it, not its status, not who reviewed it.
+    */
     const body: PublicRegistrationAccepted = { status: 'received', reference: outcome.reference }
     res.status(201).json(body)
   }),
