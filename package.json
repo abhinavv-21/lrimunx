@@ -1,0 +1,39 @@
+{
+  "name": "lri-mun-x-operations-hub",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Operations hub for the LRI MUN X conference — delegates, committees, assignments, logistics and attendance.",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace apps/frontend",
+    "dev:backend": "npm run dev --workspace apps/backend",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "build": "npm run build --workspace apps/backend && npm run build --workspace apps/frontend",
+    "typecheck": "npm run typecheck --workspace apps/backend && npm run typecheck --workspace apps/frontend",
+    "lint": "eslint apps --ext .ts,.tsx",
+    "test": "npm run test --workspace apps/backend",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:validate": "prisma validate",
+    "prisma:studio": "prisma studio",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

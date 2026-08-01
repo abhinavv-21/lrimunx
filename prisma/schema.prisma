@@ -1,0 +1,164 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  CONTRIBUTOR
+}
+
+enum AttendanceStatus {
+  ABSENT
+  CHECKED_IN
+}
+
+enum RequestCategory {
+  PLACARD
+  STATIONERY
+  AWARDS
+  LOGISTICS
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  passwordHash  String
+  fullName      String
+  role          Role           @default(CONTRIBUTOR)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  assignments   Assignment[]   @relation("AssignedBy")
+  createdReqs   LogisticsReq[] @relation("CreatedBy")
+  resolvedReqs  LogisticsReq[] @relation("ResolvedBy")
+  auditLogs     AuditLog[]
+  subscriptions PushSub[]
+}
+
+model Delegate {
+  id                  String           @id @default(uuid())
+  fullName            String
+  email               String           @unique
+  phone               String
+  schoolName          String
+  grade               String
+  /// What the delegate asked for on the registration form, as they typed it.
+  /// Free text rather than a Committee relation on purpose: a form answer is
+  /// a wish, not a placement, and it frequently names a committee that does
+  /// not exist or is spelled differently. Read only on the Allocations screen.
+  committeePreference String?
+  dietaryNotes        String?
+  accessibilityNotes  String?
+  attendanceStatus    AttendanceStatus @default(ABSENT)
+  assignment          Assignment?
+  awards              Award[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model Committee {
+  id          String         @id @default(uuid())
+  name        String         @unique // e.g. UNSC, DISEC, UNHRC
+  totalSeats  Int
+  code        String         @unique
+  assignments Assignment[]
+  requests    LogisticsReq[]
+  awards      Award[]
+}
+
+model Assignment {
+  id           String    @id @default(uuid())
+  delegateId   String    @unique
+  committeeId  String
+  country      String
+  assignedById String
+  delegate     Delegate  @relation(fields: [delegateId], references: [id], onDelete: Cascade)
+  committee    Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  assignedBy   User      @relation("AssignedBy", fields: [assignedById], references: [id])
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([committeeId, country])
+}
+
+model LogisticsReq {
+  id           String          @id @default(uuid())
+  title        String
+  category     RequestCategory
+  description  String
+  committeeId  String?
+  status       RequestStatus   @default(OPEN)
+  createdById  String
+  resolvedById String?
+  committee    Committee?      @relation(fields: [committeeId], references: [id])
+  createdBy    User            @relation("CreatedBy", fields: [createdById], references: [id])
+  resolvedBy   User?           @relation("ResolvedBy", fields: [resolvedById], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+/// One award slot in one committee's ceremony.
+///
+/// `delegateId` is nullable on purpose: the secretariat decides which awards a
+/// committee will give long before it knows who wins them, so an award exists
+/// as an unfilled slot first. Postgres treats NULLs as distinct in a unique
+/// index, so any number of slots can sit unassigned while the composite unique
+/// still stops one delegate collecting two awards in the same committee.
+///
+/// `rank` drives ceremony order — announced last to first — and is derived
+/// server-side from the title. Unrecognised (conference-specific) titles fall
+/// to the end rather than being rejected.
+model Award {
+  id          String    @id @default(uuid())
+  committeeId String
+  title       String
+  rank        Int       @default(90)
+  delegateId  String?
+  note        String?
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  delegate    Delegate? @relation(fields: [delegateId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([committeeId, delegateId])
+  @@index([committeeId])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String
+  action        String
+  entityType    String
+  entityId      String
+  payloadBefore Json?
+  payloadAfter  Json?
+  timestamp     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+/// Small key/value store for conference-level configuration entered in the
+/// app — currently the registration form link.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model PushSub {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  keysP256  String
+  keysAuth  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
