@@ -10,14 +10,14 @@ import { UpdatePrompt } from './UpdatePrompt'
 import { Button } from '@/components/ui/Button'
 import { RoleBadge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { cn, initialsOf } from '@/lib/utils'
+import { asset, cn, initialsOf } from '@/lib/utils'
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       {/* The crest is transparent, so it sits directly on the plum chrome. */}
       <img
-        src="/logo.png"
+        src={asset("logo.png")}
         alt=""
         aria-hidden
         width={36}

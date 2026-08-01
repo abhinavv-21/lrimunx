@@ -4,6 +4,7 @@ import { useAuth } from '@/providers/AuthProvider'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { ApiError } from '@/lib/api'
+import { asset } from '@/lib/utils'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -35,7 +36,7 @@ export function LoginPage() {
       {/* Brand panel — desktop only, so the form owns the whole phone screen. */}
       <aside className="relative hidden flex-col justify-between bg-surface-inverted p-12 lg:flex">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="" aria-hidden width={48} height={48} className="size-12 object-contain" />
+          <img src={asset("logo.png")} alt="" aria-hidden width={48} height={48} className="size-12 object-contain" />
           <span>
             <span className="block font-heading text-h2 text-ink-inverted">LRI MUN X</span>
             <span className="block text-label uppercase text-ink-tertiary">Operations Hub</span>

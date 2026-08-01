@@ -30,3 +30,17 @@ export function initialsOf(fullName: string): string {
 export function pluralise(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`
 }
+
+/**
+ * Resolves a file from `public/` against the app's base path.
+ *
+ * The hub is served under /admin, and Vite only rewrites absolute asset URLs it
+ * can see — those in index.html and in imported modules. A bare "/logo.png" in
+ * JSX is just a string, so it survives the build untouched and then resolves
+ * against the domain root, where the public conference site lives and the file
+ * does not exist. That is why the crest 404'd in production but looked fine in
+ * a root-served dev build.
+ */
+export function asset(path: string): string {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`
+}
