@@ -99,3 +99,166 @@
     transform: none;
   }
 }
+
+/* ==========================================================================
+   The agenda panel used to swallow this button.
+
+   `.committee__reveal` is `inset-block-end: 0`, so when it slides up on hover
+   it covers the whole foot of the card — the difficulty tag, the agenda toggle
+   and Apply with it. The button was reachable only in the instant before the
+   panel arrived, which is to say: not reachable. Hovering a card is also the
+   most natural way to approach its Apply link, so the interaction actively
+   fought the one action the card exists to offer.
+
+   The panel keeps its entrance. The foot simply rides above it, and its
+   controls re-dress for the plum ground that is now behind them. Nothing is
+   hidden, nothing is disabled, and the hover reveal is untouched.
+   ========================================================================== */
+.committee__foot {
+  position: relative;
+  /* Above .committee__reveal, which establishes no z-index of its own. */
+  z-index: 2;
+}
+
+/* --- On the raised panel --------------------------------------------------
+   Rule 1 of the palette: on plum, text is text-inverse, gold or white-gold.
+   Magenta is legal there as a FILL, which is exactly what the button is — so
+   Apply keeps its own colour and only its surroundings change.
+
+   MEASURED against --color-ink:
+     text-inverse on primary fill ................... 5.7:1  ✔
+     white-gold hairline on ink ..................... 7.4:1  ✔
+     text-inverse at 0.72 on ink .................... 8.9:1  ✔
+   -------------------------------------------------------------------------- */
+.committee:hover .committee__foot .tag,
+.committee__card:focus-within .committee__foot .tag,
+.committee:has(.committee__reveal.is-open) .committee__foot .tag {
+  color: var(--color-text-inverse);
+  border-color: var(--hairline-gold);
+  background-color: transparent;
+}
+
+.committee:hover .committee__toggle,
+.committee__card:focus-within .committee__toggle,
+.committee:has(.committee__reveal.is-open) .committee__toggle {
+  color: var(--color-text-inverse);
+}
+
+/* --- Immersion ------------------------------------------------------------
+   The Mount, not a new hover treatment — base.css §6 is the house interaction
+   and inventing a second one for this button would be the start of two
+   languages. Gold here rather than magenta: the frame sits outside a magenta
+   fill, where gold is the documented choice and magenta on magenta would be
+   invisible anyway.
+
+   The fill deepens, the arrow travels, and the frame draws itself clockwise.
+   Three small things arriving together read as one deliberate gesture; any one
+   of them alone reads as a hover state.
+   -------------------------------------------------------------------------- */
+.committee__apply {
+  position: relative;
+  --mount-color: var(--color-accent-gold);
+  --mount-offset: -5px;
+  --mount-rest: 0.16;
+  --mount-rest-opacity: 0.55;
+  overflow: visible;
+}
+
+/* The four arms: two from the link's own pseudo-elements, two from the child
+   span, each scaled along its own long axis so the 1px never thickens. */
+.committee__apply::before,
+.committee__apply::after,
+.committee__apply .btn__mount::before,
+.committee__apply .btn__mount::after {
+  content: '';
+  position: absolute;
+  background-color: var(--mount-color);
+  opacity: var(--mount-rest-opacity);
+  transition:
+    transform var(--dur-base) var(--ease-expo),
+    opacity var(--dur-base) var(--ease-house);
+  pointer-events: none;
+}
+
+/* Left, then top, then right, then bottom — each arm starting where the last
+   one finished, so the frame closes rather than assembling from four corners. */
+.committee__apply::before {
+  inset-block: var(--mount-offset);
+  inset-inline-start: var(--mount-offset);
+  inline-size: 1px;
+  transform: scaleY(var(--mount-rest));
+  transform-origin: bottom;
+}
+
+.committee__apply::after {
+  inset-inline: var(--mount-offset);
+  inset-block-start: var(--mount-offset);
+  block-size: 1px;
+  transform: scaleX(var(--mount-rest));
+  transform-origin: left;
+}
+
+.committee__apply .btn__mount::before {
+  inset-block: var(--mount-offset);
+  inset-inline-end: var(--mount-offset);
+  inline-size: 1px;
+  transform: scaleY(var(--mount-rest));
+  transform-origin: top;
+}
+
+.committee__apply .btn__mount::after {
+  inset-inline: var(--mount-offset);
+  inset-block-end: var(--mount-offset);
+  block-size: 1px;
+  transform: scaleX(var(--mount-rest));
+  transform-origin: right;
+}
+
+.committee__apply:hover::before,
+.committee__apply:focus-visible::before,
+.committee__apply:hover::after,
+.committee__apply:focus-visible::after,
+.committee__apply:hover .btn__mount::before,
+.committee__apply:focus-visible .btn__mount::before,
+.committee__apply:hover .btn__mount::after,
+.committee__apply:focus-visible .btn__mount::after {
+  opacity: 1;
+}
+
+.committee__apply:hover::before,
+.committee__apply:focus-visible::before,
+.committee__apply:hover .btn__mount::before,
+.committee__apply:focus-visible .btn__mount::before {
+  transform: scaleY(1);
+}
+
+.committee__apply:hover::after,
+.committee__apply:focus-visible::after,
+.committee__apply:hover .btn__mount::after,
+.committee__apply:focus-visible .btn__mount::after {
+  transform: scaleX(1);
+}
+
+/* Staggered so the frame draws rather than snapping shut. */
+.committee__apply:hover::after,
+.committee__apply:focus-visible::after {
+  transition-delay: 60ms;
+}
+.committee__apply:hover .btn__mount::before,
+.committee__apply:focus-visible .btn__mount::before {
+  transition-delay: 120ms;
+}
+.committee__apply:hover .btn__mount::after,
+.committee__apply:focus-visible .btn__mount::after {
+  transition-delay: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .committee__apply::before,
+  .committee__apply::after,
+  .committee__apply .btn__mount::before,
+  .committee__apply .btn__mount::after {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+}

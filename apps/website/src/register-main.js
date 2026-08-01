@@ -165,7 +165,37 @@ function initReveals() {
         },
       }),
   })
+  /*
+    Catch-up pass.
+
+    ScrollTrigger.batch does not reliably deliver onEnter to elements that are
+    already inside the viewport when the batch is created — and with `once`
+    those elements then never fire at all. They keep the CSS start state,
+    opacity 0, with their space still reserved, which reads as a void where a
+    heading or a button should be. The registration panel and this page's head
+    band both landed exactly there.
+
+    So: once the page has settled, anything on screen and still invisible is
+    shown outright. Elements further down keep their scroll-triggered entrance.
+    Losing an animation is a far smaller failure than losing the content.
+  */
+  const catchUp = () => {
+    ScrollTrigger.refresh()
+    targets.forEach((el) => {
+      const box = el.getBoundingClientRect()
+      const onScreen = box.top < window.innerHeight && box.bottom > 0
+      if (onScreen && Number(getComputedStyle(el).opacity) === 0) {
+        gsap.set(el, { clearProps: 'transform,opacity' })
+      }
+    })
+  }
+
+  // Twice: once when layout has settled, and again after the preloader has
+  // lifted, because positions measured behind the curtain can be stale.
+  window.addEventListener('load', catchUp, { once: true })
+  window.setTimeout(catchUp, 1400)
 }
+
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', boot, { once: true })
