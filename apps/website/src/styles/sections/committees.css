@@ -160,13 +160,27 @@
 /* No lift and no shadow: a card that jumps on hover is the "uniform card grid"
    tell the art direction bans. The state change is carried by the frame, the
    icon and the index numeral instead. */
+/*
+   `:has(:focus-visible)`, not `:focus-within`.
+
+   Closing the dialog returns focus to the Details button it was opened from,
+   which is right — a keyboard reader must not be dropped back on <body>. But
+   `:focus-within` matches for as long as that button holds focus, so the card
+   stayed open after the dialog closed, and hovering the next one left TWO
+   panels up at once.
+
+   `:focus-visible` is only set when the focus came from the keyboard, which is
+   exactly the case the reveal needs to serve. A mouse click never triggers it,
+   so a pointer user gets hover and nothing else — and the programmatic focus
+   on close inherits the last input's modality, so it stays quiet after a click
+   and still opens after a Tab. */
 .committee:hover .committee__card,
-.committee__card:focus-within {
+.committee__card:has(:focus-visible) {
   border-color: rgb(var(--rgb-primary) / 0.55);
 }
 
 .committee:hover .committee__index,
-.committee__card:focus-within .committee__index {
+.committee__card:has(:focus-visible) .committee__index {
   opacity: 0.16;
   transform: translateY(-2px);
 }
@@ -289,9 +303,28 @@
 }
 
 .committee:hover .committee__reveal,
-.committee__card:focus-within .committee__reveal,
+.committee__card:has(:focus-visible) .committee__reveal,
 .committee__reveal.is-open {
   transform: translate3d(0, 0, 0);
+}
+
+/* An engine without :has() drops those rules entirely, and the agenda would
+   then be unreachable by keyboard — SC 2.1.1, on content delegates need. The
+   old selector stands in; it costs those browsers the stuck-open panel, which
+   is the lesser failure by a wide margin. */
+@supports not selector(:has(*)) {
+  .committee__card:focus-within {
+    border-color: rgb(var(--rgb-primary) / 0.55);
+  }
+
+  .committee__card:focus-within .committee__index {
+    opacity: 0.16;
+    transform: translateY(-2px);
+  }
+
+  .committee__card:focus-within .committee__reveal {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .committee__reveal-label {
@@ -387,7 +420,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .committee:hover .committee__index,
-  .committee__card:focus-within .committee__index {
+  .committee__card:has(:focus-visible) .committee__index {
     transform: none;
   }
 
