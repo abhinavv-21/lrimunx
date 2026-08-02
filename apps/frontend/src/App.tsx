@@ -71,9 +71,11 @@ export function App() {
           element={<AdminOnly what="Allocating delegates"><AllocationsPage /></AdminOnly>}
         />
         <Route
-          path="integrations"
-          element={<AdminOnly what="Integration settings"><SettingsPage /></AdminOnly>}
+          path="settings"
+          element={<AdminOnly what="Conference settings"><SettingsPage /></AdminOnly>}
         />
+        {/* Integrations became Settings when registration moved onto the site. */}
+        <Route path="integrations" element={<Navigate to="/settings" replace />} />
         {/* The old assignments screen is now Allocations. */}
         <Route path="assignments" element={<Navigate to="/allocations" replace />} />
         <Route path="users" element={<AdminOnly what="User administration"><UsersPage /></AdminOnly>} />

@@ -1,5 +1,5 @@
 import {
-  ClipboardList, FileClock, Inbox, LayoutDashboard, Landmark, PackageSearch, Plug, UserCheck,
+  ClipboardList, FileClock, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings, UserCheck,
   Users, UsersRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -26,7 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/registrations', label: 'Registrations', icon: Inbox, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/allocations', label: 'Allocations', icon: ClipboardList, roles: ['ADMIN'] },
   { to: '/committees', label: 'Committees', icon: Landmark, roles: ['ADMIN', 'CONTRIBUTOR'] },
-  { to: '/integrations', label: 'Integrations', icon: Plug, roles: ['ADMIN'] },
+  { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'] },
   { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'] },
   { to: '/audit', label: 'Audit log', icon: FileClock, roles: ['ADMIN'] },
 ]

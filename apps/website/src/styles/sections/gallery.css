@@ -78,6 +78,14 @@
 }
 
 .gallery__filter {
+  /* Ten pills of an 11px label came out between 27×30 and 48×30 — the narrow
+     ones ("50", "OC") were a third of a fingertip. Centred inside a 48px box
+     instead: the label keeps its size, the target does not. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
   padding: 0.45em 0.9em;
   font-size: var(--fs-100);
   font-weight: 600;

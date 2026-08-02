@@ -116,6 +116,14 @@
   align-items: center;
   gap: var(--sp-3);
   text-decoration: none;
+  /* A 28px crest is a 28px target, and on a phone the wordmark beside it is
+     hidden — so this was 31×26, well under the 48px floor. The padding grows
+     the box the finger lands on and the negative margin keeps the crest
+     optically where it was, against the shell edge. */
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
+  padding-inline: var(--sp-2);
+  margin-inline-start: calc(var(--sp-2) * -1);
 }
 
 .nav__emblem {
@@ -263,7 +271,11 @@
   display: none;
   align-items: center;
   gap: var(--sp-3);
+  /* The one control that only exists on phones, and it was 34px tall. */
+  min-block-size: 3rem;
   padding-block: var(--sp-2);
+  padding-inline: var(--sp-2);
+  margin-inline-end: calc(var(--sp-2) * -1);
   color: var(--nav-fg);
 }
 

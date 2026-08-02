@@ -246,6 +246,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
+  /* 48px, because on a phone this is how the committee is opened. The card is
+     tappable anywhere, but a control that LOOKS like a button has to be one. */
+  min-block-size: 3rem;
   padding: var(--sp-2) 0;
   font-size: var(--fs-100);
   font-weight: 600;

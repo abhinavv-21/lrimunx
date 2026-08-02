@@ -236,7 +236,9 @@
 
 .footer__list {
   display: grid;
-  gap: var(--sp-3);
+  /* Each row now stands 44px tall on its own, so the old 12px gap would read
+     as a wall of buttons. The rows supply the rhythm; the gap only separates. */
+  gap: var(--sp-1);
   margin: 0;
 }
 
@@ -246,7 +248,13 @@
    as belonging to a different design. */
 .footer__list a {
   position: relative;
-  display: inline-block;
+  /* inline-flex with a height floor rather than inline-block: the sitemap is
+     eight 18px-tall links stacked 12px apart, which on a phone is eight
+     chances to hit the wrong one. The label does not move — the box around it
+     grows to 44px and the list's own gap absorbs the difference. */
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
   padding-inline-start: 0.85rem;
   font-size: var(--fs-100);
   font-weight: 500;
@@ -287,7 +295,12 @@
   transform: rotate(45deg) scale(1);
 }
 
+/* The address block's mail and phone links: 17px tall, and the two most
+   likely things on the page to be tapped in a hurry. */
 .footer__address a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
   font-size: var(--fs-300);
   color: rgb(var(--rgb-text-inverse) / 0.78);
   text-decoration: none;
@@ -311,6 +324,7 @@
   align-items: center;
   gap: var(--sp-3);
   margin-block-start: var(--sp-5);
+  min-block-size: 3rem;
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--fs-100);
   font-weight: 600;
