@@ -94,10 +94,15 @@
     <!-- ====================================================================
          NAVIGATION — the same bar as the landing page, with three differences:
 
-         1. Every section link is cross-document (./index.html#…), so none of
-            them carries `data-nav-link`. nav.js resolves that attribute with
-            querySelector, and "./index.html#committees" is not a valid
-            selector — it would throw and take the whole bar down with it.
+         1. Every section link is cross-document, so none of them carries
+            `data-nav-link`. nav.js resolves that attribute with querySelector,
+            and "./#committees" is not a valid selector — it would throw and
+            take the whole bar down with it.
+
+            The filename is deliberately absent from all of them. "./" and
+            "./index.html" are the same page, but the second puts a filename in
+            the address bar — and on the lockup, whose whole meaning is "back
+            to the start", it put a filename AND a fragment there.
          2. The Register CTA is gone. On the registration page a button that
             links to the registration page is noise; the destination is
             expressed on the Register link instead.
@@ -110,7 +115,7 @@
          ==================================================================== -->
     <header class="nav" data-nav>
       <div class="nav__inner shell">
-        <a class="nav__lockup" href="./index.html#top">
+        <a class="nav__lockup" href="./">
           <img
             class="nav__emblem"
             src="/assets/lri-mun-logo.png"
@@ -146,9 +151,9 @@
 
         <nav class="nav__links" aria-label="Section navigation">
           <ul class="nav__list">
-            <li><a class="nav__link" href="./index.html#committees">Committees</a></li>
-            <li><a class="nav__link" href="./index.html#secretariat">Secretariat</a></li>
-            <li><a class="nav__link" href="./index.html#editions">Past Editions</a></li>
+            <li><a class="nav__link" href="./#committees">Committees</a></li>
+            <li><a class="nav__link" href="./#secretariat">Secretariat</a></li>
+            <li><a class="nav__link" href="./#editions">Past Editions</a></li>
             <li><a class="nav__link" href="./register" aria-current="true">Register</a></li>
           </ul>
         </nav>
@@ -184,19 +189,19 @@
         <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
         <ul class="nav-overlay__list">
           <li>
-            <a href="./index.html#committees" data-nav-overlay-link
+            <a href="./#committees" data-nav-overlay-link
               ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
               >Committees</a
             >
           </li>
           <li>
-            <a href="./index.html#secretariat" data-nav-overlay-link
+            <a href="./#secretariat" data-nav-overlay-link
               ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
               >Secretariat</a
             >
           </li>
           <li>
-            <a href="./index.html#editions" data-nav-overlay-link
+            <a href="./#editions" data-nav-overlay-link
               ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
               Editions</a
             >
@@ -223,7 +228,7 @@
             >
             <!-- Not "Register now": you are on it. The overlay's one action is
                  the way back out to the rest of the conference. -->
-            <a class="btn nav-overlay__cta" href="./index.html#committees" data-nav-overlay-link
+            <a class="btn nav-overlay__cta" href="./#committees" data-nav-overlay-link
               >See the committees<span class="btn__mount" aria-hidden="true"></span></a
             >
           </div>
@@ -250,7 +255,7 @@
       <section class="regpage__head ground-ink" id="top" aria-labelledby="regpage-title">
         <div class="shell grid">
           <div class="regpage__head-inner">
-            <a class="regpage__back" href="./index.html#register">
+            <a class="regpage__back" href="./#register">
               <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                 <path
                   d="M14 8H3M7 4L3 8l4 4"
@@ -1207,7 +1212,7 @@
                   nothing is entered twice.
                 </p>
 
-                <a class="btn btn--ghost-dark regdone__cta" href="./index.html#committees">
+                <a class="btn btn--ghost-dark regdone__cta" href="./#committees">
                   Back to the conference site
                   <span class="btn__mount" aria-hidden="true"></span>
                 </a>
@@ -1268,10 +1273,10 @@
         <nav class="footer__nav" aria-label="Footer navigation">
           <h2 class="label footer__heading">Sections</h2>
           <ul class="footer__list">
-            <li><a href="./index.html#top">Home</a></li>
-            <li><a href="./index.html#committees">Committees</a></li>
-            <li><a href="./index.html#secretariat">Secretariat</a></li>
-            <li><a href="./index.html#editions">Past editions</a></li>
+            <li><a href="./">Home</a></li>
+            <li><a href="./#committees">Committees</a></li>
+            <li><a href="./#secretariat">Secretariat</a></li>
+            <li><a href="./#editions">Past editions</a></li>
             <li><a href="./register" aria-current="true">Register</a></li>
           </ul>
         </nav>
