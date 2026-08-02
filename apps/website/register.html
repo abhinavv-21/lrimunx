@@ -167,60 +167,69 @@
           </button>
         </div>
       </div>
+    </header>
 
-      <!-- Full-screen overlay (not a slide-in drawer). -->
-      <div class="nav-overlay" id="nav-overlay" data-nav-overlay hidden>
-        <div class="nav-overlay__inner shell">
-          <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
-          <ul class="nav-overlay__list">
-            <li>
-              <a href="./index.html#committees" data-nav-overlay-link
-                ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
-                >Committees</a
-              >
-            </li>
-            <li>
-              <a href="./index.html#secretariat" data-nav-overlay-link
-                ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
-                >Secretariat</a
-              >
-            </li>
-            <li>
-              <a href="./index.html#editions" data-nav-overlay-link
-                ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
-                Editions</a
-              >
-            </li>
-            <li>
-              <a href="./register" aria-current="true" data-nav-overlay-link
-                ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Register</a
-              >
-            </li>
-          </ul>
-          <div class="nav-overlay__foot">
-            <p class="body-copy nav-overlay__contact">
-              <!-- PLACEHOLDER — replace with real contact details. -->
-              LRI School, Kalanki, Kathmandu<br />
-              <a href="mailto:placeholder@example.org">placeholder@example.org</a>
-            </p>
-            <div class="nav-overlay__actions">
-              <a
-                class="nav-overlay__school"
-                href="https://www.lrischool.edu.np/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Visit the school site ↗</a
-              >
-              <!-- Not "Register now": you are on it. The overlay's one action is
-                   the way back out to the rest of the conference. -->
-              <a class="btn nav-overlay__cta" href="./index.html#committees" data-nav-overlay-link
-                >See the committees<span class="btn__mount" aria-hidden="true"></span></a
-              >
-            </div>
+    <!-- Full-screen overlay (not a slide-in drawer).
+
+         OUTSIDE <header>, and it has to stay outside. `.nav` is promoted with
+         `transform: translate3d(0, 0, 0)`, and a transformed ancestor becomes
+         the containing block for any `position: fixed` descendant — so in
+         there, this element's `inset: 0` resolved against the 73px bar instead
+         of the viewport. The plum backdrop covered the top of the screen only
+         and the menu items painted below it, over the page, unbacked. Every
+         nav.js lookup is document-scoped, so nothing else cares where it
+         lives. -->
+    <div class="nav-overlay" id="nav-overlay" data-nav-overlay hidden>
+      <div class="nav-overlay__inner shell">
+        <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
+        <ul class="nav-overlay__list">
+          <li>
+            <a href="./index.html#committees" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
+              >Committees</a
+            >
+          </li>
+          <li>
+            <a href="./index.html#secretariat" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
+              >Secretariat</a
+            >
+          </li>
+          <li>
+            <a href="./index.html#editions" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
+              Editions</a
+            >
+          </li>
+          <li>
+            <a href="./register" aria-current="true" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Register</a
+            >
+          </li>
+        </ul>
+        <div class="nav-overlay__foot">
+          <p class="body-copy nav-overlay__contact">
+            <!-- PLACEHOLDER — replace with real contact details. -->
+            LRI School, Kalanki, Kathmandu<br />
+            <a href="mailto:placeholder@example.org">placeholder@example.org</a>
+          </p>
+          <div class="nav-overlay__actions">
+            <a
+              class="nav-overlay__school"
+              href="https://www.lrischool.edu.np/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Visit the school site ↗</a
+            >
+            <!-- Not "Register now": you are on it. The overlay's one action is
+                 the way back out to the rest of the conference. -->
+            <a class="btn nav-overlay__cta" href="./index.html#committees" data-nav-overlay-link
+              >See the committees<span class="btn__mount" aria-hidden="true"></span></a
+            >
           </div>
         </div>
       </div>
-    </header>
+    </div>
 
     <main id="main">
       <!-- ==================================================================

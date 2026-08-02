@@ -172,9 +172,20 @@ function revealApp() {
 
     const loader = document.querySelector('[data-loader]')
     if (!loader) return
+
     const drop = () => loader.remove()
-    if (reduced) drop()
-    else loader.addEventListener('transitionend', drop, { once: true })
+    if (reduced) {
+      drop()
+      return
+    }
+
+    // transitionend, with a timer behind it. The curtain is a fixed element
+    // covering the whole viewport, and the only thing keeping it out of the
+    // way is `pointer-events: none` on a class further up the tree — so a
+    // transition that never fires (a backgrounded tab, an interrupted paint)
+    // must not be able to leave it in the document indefinitely.
+    loader.addEventListener('transitionend', drop, { once: true })
+    window.setTimeout(drop, 1500)
   }, wait)
 }
 

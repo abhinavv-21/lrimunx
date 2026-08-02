@@ -139,11 +139,26 @@ export function AllocationRow({
             <span className="text-ink">{askedFor}</span>
           </p>
         ) : null}
-        {experience ? (
-          <p className="mt-1 truncate text-body-sm text-ink-secondary" title={experience}>
-            {experience}
-          </p>
-        ) : null}
+        {/*
+          Always rendered, including when there is no answer.
+
+          It used to vanish when both numbers were null, which made "we never
+          asked this person" look identical to "this feature does not exist" —
+          and every delegate added by hand was null, so on most rows it simply
+          was not there. An allocator about to put somebody in UNSC needs to
+          see the difference between a first-timer, a veteran, and an unknown.
+        */}
+        <p
+          className="mt-1 truncate text-body-sm text-ink-secondary"
+          title={experience ?? 'No MUN experience recorded'}
+        >
+          <span className="text-ink-tertiary">Experience:</span>{' '}
+          {experience ? (
+            <span className="text-ink">{experience}</span>
+          ) : (
+            <span className="text-ink-tertiary">not stated</span>
+          )}
+        </p>
         {error ? (
           <p className="mt-1 flex items-start gap-1.5 text-body-sm text-danger">
             <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />

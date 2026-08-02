@@ -405,6 +405,14 @@
   color: rgb(var(--rgb-text-inverse) / 0.7);
 }
 
+/* The mail link inside it was a 17px-tall target on the one screen that only
+   exists on phones. The address around it stays where it is; the link grows. */
+.nav-overlay__contact a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+}
+
 .nav-overlay__actions {
   display: flex;
   flex-direction: column;
@@ -413,6 +421,9 @@
 }
 
 .nav-overlay__school {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
   font-size: var(--fs-200);
   font-weight: 600;
   letter-spacing: var(--tracking-label);

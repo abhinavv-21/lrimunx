@@ -13,6 +13,8 @@ type FormState = {
   phone: string
   email: string
   grade: string
+  munsAttended: string
+  awardsWon: string
   committeeId: string
   country: string
   dietaryNotes: string
@@ -21,6 +23,7 @@ type FormState = {
 
 const BLANK: FormState = {
   fullName: '', schoolName: '', phone: '', email: '', grade: '',
+  munsAttended: '', awardsWon: '',
   committeeId: '', country: '',
   dietaryNotes: '', accessibilityNotes: '',
 }
@@ -32,6 +35,10 @@ function toFormState(delegate: Delegate): FormState {
     phone: delegate.phone,
     email: delegate.email,
     grade: delegate.grade,
+    // Empty string, not "0" — a delegate who never answered must not be shown
+    // as having answered zero. The two mean different things to an allocator.
+    munsAttended: delegate.munsAttended === null ? '' : String(delegate.munsAttended),
+    awardsWon: delegate.awardsWon === null ? '' : String(delegate.awardsWon),
     committeeId: delegate.assignment?.committee.id ?? '',
     country: delegate.assignment?.country ?? '',
     dietaryNotes: delegate.dietaryNotes ?? '',
@@ -68,6 +75,14 @@ export function DelegateForm({
 
   const blankToNull = (value: string) => (value.trim() === '' ? null : value.trim())
 
+  /** Unanswered stays null; anything else goes as a number for the server to check. */
+  const blankToCount = (value: string) => {
+    const trimmed = value.trim()
+    if (trimmed === '') return null
+    const n = Number(trimmed)
+    return Number.isFinite(n) ? n : null
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
@@ -80,13 +95,17 @@ export function DelegateForm({
       phone: form.phone.trim(),
       email: form.email.trim(),
       grade: form.grade.trim(),
-      // Not editable here by design — these are form answers, shown only in
-      // Allocations. Passed through unchanged so editing a delegate never
-      // silently discards what they asked for or what they have done before.
+      // Preferences are the applicant's own answer and are not ours to edit;
+      // passed through unchanged so saving a delegate never silently discards
+      // what they asked for.
       committeePreference: delegate?.committeePreference ?? null,
       committeePreference2: delegate?.committeePreference2 ?? null,
-      munsAttended: delegate?.munsAttended ?? null,
-      awardsWon: delegate?.awardsWon ?? null,
+      // Experience IS editable. It arrives filled in from a public
+      // registration, but a delegate added by hand here has no other way to
+      // get it — and until this existed, every such delegate was permanently
+      // blank in Allocations with no way to correct it.
+      munsAttended: blankToCount(form.munsAttended),
+      awardsWon: blankToCount(form.awardsWon),
       committeeId: form.committeeId === '' ? null : form.committeeId,
       country: form.committeeId === '' ? null : blankToNull(form.country),
       dietaryNotes: blankToNull(form.dietaryNotes),
@@ -144,6 +163,33 @@ export function DelegateForm({
           </Field>
           <Field label="Academic level" required>
             {({ id }) => <Input id={id} value={form.grade} onChange={(e) => set('grade', e.target.value)} required />}
+          </Field>
+        </div>
+
+        {/* Shown to the allocator on every row. Left blank it reads "not
+            stated" there, which is a different fact from "0 MUNs". */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="MUNs attended" hint="Conferences before this one. Leave blank if unknown.">
+            {({ id }) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                value={form.munsAttended}
+                onChange={(e) => set('munsAttended', e.target.value)}
+                placeholder="—"
+              />
+            )}
+          </Field>
+          <Field label="Awards won" hint="Anything gavelled at those conferences.">
+            {({ id }) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                value={form.awardsWon}
+                onChange={(e) => set('awardsWon', e.target.value)}
+                placeholder="—"
+              />
+            )}
           </Field>
         </div>
 
