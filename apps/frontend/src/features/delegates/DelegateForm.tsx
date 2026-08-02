@@ -142,7 +142,7 @@ export function DelegateForm({
               <Input id={id} type="tel" value={form.phone} onChange={(e) => set('phone', e.target.value)} required />
             )}
           </Field>
-          <Field label="Grade" required>
+          <Field label="Academic level" required>
             {({ id }) => <Input id={id} value={form.grade} onChange={(e) => set('grade', e.target.value)} required />}
           </Field>
         </div>

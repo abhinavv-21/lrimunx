@@ -1,5 +1,9 @@
 /**
- * committee-select.js — the committee preference listbox.
+ * committee-select.js — the registration form's listbox.
+ *
+ * Built for the committee preferences and since generalised: it now also backs
+ * the academic level. The two option lists it serves are exported below; the
+ * control itself knows nothing about either.
  *
  * WHY THIS EXISTS
  * The preference used to be a text <input> with a <datalist>. That pairing has
@@ -45,16 +49,49 @@ export const COMMITTEES = [
   { code: 'HCC', name: 'Historical Crisis Committee' },
 ].map((committee) => ({ ...committee, value: `${committee.name} (${committee.code})` }))
 
+/**
+ * Academic level — what used to be a free-text "Grade" box.
+ *
+ * Free text produced "11", "Grade 11", "XI", "A2", "1st year" and "11 'B'" for
+ * what is one of three answers, and the secretariat then had to normalise a
+ * column by hand before it could count anything. Three options, and the counts
+ * are correct the moment registration closes.
+ *
+ * `value` is what is submitted and what the ops hub stores, so it is kept short
+ * and stable — the bracketed range is presentation, not data. It rides the
+ * existing `grade` field on the wire: the column, the CSV header and every
+ * import path already speak that name, and renaming it would have bought a
+ * migration and nothing else.
+ */
+export const ACADEMIC_LEVELS = [
+  { code: 'MS', name: 'Middle School (7–8)', value: 'Middle School' },
+  { code: 'HS', name: 'High School (9–12)', value: 'High School' },
+  { code: 'UG', name: "Undergraduate (Bachelor's)", value: 'Undergraduate' },
+]
+
 const TYPEAHEAD_RESET_MS = 700
 
 /**
  * Upgrade one `[data-cselect]` block into a listbox.
  *
  * @param {HTMLElement} root
- * @param {{ announce?: (message: string) => void, onSelect?: (code: string) => void }} options
+ * @param {object} [config]
+ * @param {(message: string) => void} [config.announce]
+ * @param {(code: string) => void} [config.onSelect]
+ * @param {Array<{code: string, name: string, value: string}>} [config.options]
+ *        The list to offer. Defaults to the six committees.
+ * @param {boolean} [config.allowEmpty]
+ *        Whether "no answer" is one of the choices. False for a required field.
+ * @param {boolean} [config.showCodes]
+ *        Whether each option leads with its short code. True for committees,
+ *        where UNSC is how delegates refer to the thing; false for academic
+ *        level, where "HS" is an abbreviation nobody asked for.
  * @returns {object|null} a controller, or null if the markup is not there
  */
-export function initCommitteeSelect(root, { announce, onSelect } = {}) {
+export function initListbox(
+  root,
+  { announce, onSelect, options = COMMITTEES, allowEmpty = true, showCodes = true } = {}
+) {
   if (!root) return null
 
   const button = root.querySelector('[data-cselect-button]')
@@ -74,8 +111,14 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
      "No preference" is a normal answer here — most delegates have not read six
      rules of procedure before applying — so it has to be something you can
      choose, and something you can choose AGAIN after choosing wrongly.
+
+     A required field has no such option: there, the placeholder is a prompt
+     ("Choose one"), not a selectable answer, and `is-empty` styles it as the
+     unfilled state it is.
      -------------------------------------------------------------------- */
-  const items = [{ code: '', name: emptyLabel, value: '', empty: true }, ...COMMITTEES]
+  const items = allowEmpty
+    ? [{ code: '', name: emptyLabel, value: '', empty: true }, ...options]
+    : [...options]
 
   const nodes = items.map((item, index) => {
     const li = document.createElement('li')
@@ -87,11 +130,15 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
 
     if (item.empty) {
       li.classList.add('cselect__option--empty')
-    } else {
+    } else if (showCodes) {
       const code = document.createElement('span')
       code.className = 'cselect__option-code'
       code.textContent = item.code
       li.append(code)
+    } else {
+      // No code means no code column. Without this the name is laid into the
+      // 5.25rem gutter the code would have occupied and wraps a word per line.
+      li.classList.add('cselect__option--plain')
     }
 
     const name = document.createElement('span')
@@ -112,7 +159,12 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
   })
 
   let open = false
-  let selectedIndex = 0
+  // -1 is "nothing chosen yet", and it only exists on a required field. Landing
+  // on index 0 there would answer the question on the reader's behalf, and an
+  // answer nobody gave is worse than a blank one — it is indistinguishable from
+  // a deliberate one on the other side.
+  const NONE = -1
+  let selectedIndex = allowEmpty ? 0 : NONE
   let activeIndex = 0
   let typed = ''
   let typedTimer = null
@@ -133,10 +185,11 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
       node.classList.toggle('is-selected', index === selectedIndex)
     })
 
-    const item = items[selectedIndex]
-    valueEl.textContent = item.empty ? emptyLabel : `${item.code} — ${item.name}`
-    root.classList.toggle('is-empty', Boolean(item.empty))
-    input.value = item.value
+    const item = selectedIndex === NONE ? null : items[selectedIndex]
+    const blank = !item || item.empty
+    valueEl.textContent = blank ? emptyLabel : showCodes ? `${item.code} — ${item.name}` : item.name
+    root.classList.toggle('is-empty', blank)
+    input.value = item ? item.value : ''
   }
 
   function paintActive() {
@@ -167,6 +220,7 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
      -------------------------------------------------------------------- */
   function openList(startIndex = selectedIndex) {
     if (open || isLocked()) return
+    if (startIndex === NONE) startIndex = 0
     open = true
     list.hidden = false
     button.setAttribute('aria-expanded', 'true')
@@ -214,12 +268,15 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
     hideNotice()
     paintSelection()
 
-    if (changed && !silent && typeof onSelect === 'function') onSelect(items[index].code)
+    if (changed && !silent && typeof onSelect === 'function') {
+      onSelect(index === NONE ? '' : items[index].code)
+    }
     return true
   }
 
   function indexOfCode(code) {
-    if (!code) return 0
+    // On a required list there is no index 0 meaning "none" to fall back to.
+    if (!code) return allowEmpty ? 0 : NONE
     const wanted = String(code).trim().toUpperCase()
     return items.findIndex((item) => item.code && item.code === wanted)
   }
@@ -409,21 +466,21 @@ export function initCommitteeSelect(root, { announce, onSelect } = {}) {
     name: input.name,
     button,
     get code() {
-      return items[selectedIndex].code
+      return selectedIndex === NONE ? '' : items[selectedIndex].code
     },
     get value() {
-      return items[selectedIndex].value
+      return selectedIndex === NONE ? '' : items[selectedIndex].value
     },
 
-    /** Select by committee code. Returns false for an unknown code. */
+    /** Select by option code. Returns false for an unknown or empty code. */
     selectByCode(code, { silent = false } = {}) {
       const index = indexOfCode(code)
-      if (index === -1) return false
+      if (index === NONE) return false
       return commit(index, { silent })
     },
 
     clear({ reason = '' } = {}) {
-      commit(0, { silent: true })
+      commit(allowEmpty ? 0 : NONE, { silent: true })
       if (reason) {
         showNotice(reason)
         say(reason)

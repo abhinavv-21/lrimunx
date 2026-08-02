@@ -494,24 +494,72 @@
                       ></p>
                     </div>
 
+                    <!-- ---------------------------------------------------
+                         ACADEMIC LEVEL.
+
+                         Was a free-text "Grade" box, which came back as "11",
+                         "Grade 11", "XI", "A2" and "1st year" for what is one
+                         of three answers. The same listbox the committee
+                         preferences use, built from ACADEMIC_LEVELS.
+
+                         The submitted name is still `grade` — the column, the
+                         CSV header and every import path already speak it.
+                         --------------------------------------------------- -->
                     <div class="regfield regfield--third" data-field="grade">
-                      <label class="regfield__label" for="rp-grade">Grade</label>
-                      <span class="regfield__control">
-                        <input
-                          class="regfield__input"
-                          id="rp-grade"
-                          name="grade"
-                          type="text"
-                          required
-                          maxlength="20"
-                          autocomplete="off"
-                          placeholder="Grade 11"
+                      <span class="regfield__label" id="cs-grade-label">Academic level</span>
+                      <div
+                        class="cselect"
+                        data-cselect
+                        data-cselect-id="cs-grade"
+                        data-cselect-empty="Choose one"
+                      >
+                        <button
+                          class="regfield__control cselect__control"
+                          type="button"
+                          id="cs-grade-button"
+                          role="combobox"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          aria-controls="cs-grade-list"
+                          aria-labelledby="cs-grade-label cs-grade-value"
                           aria-describedby="rp-hint-grade rp-error-grade"
-                        />
-                        <span class="regfield__mount" aria-hidden="true"></span>
-                      </span>
+                          data-cselect-button
+                        >
+                          <span class="cselect__value" id="cs-grade-value" data-cselect-value
+                            >Choose one</span
+                          >
+                          <svg
+                            class="cselect__chevron"
+                            viewBox="0 0 16 16"
+                            aria-hidden="true"
+                            focusable="false"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                          <span class="regfield__mount" aria-hidden="true"></span>
+                        </button>
+                        <ul
+                          class="cselect__list"
+                          id="cs-grade-list"
+                          role="listbox"
+                          aria-labelledby="cs-grade-label"
+                          tabindex="-1"
+                          hidden
+                          data-cselect-list
+                          data-lenis-prevent
+                        ></ul>
+                        <input type="hidden" name="grade" value="" data-cselect-input />
+                      </div>
+                      <p class="regfield__notice" hidden data-cselect-notice></p>
                       <p class="regfield__hint" id="rp-hint-grade">
-                        However your school words it — "Grade 11", "A-Levels Year 1".
+                        Where you are studying now, not the year you finish.
                       </p>
                       <p class="regfield__error" id="rp-error-grade" data-error-for="grade"></p>
                     </div>
@@ -1084,7 +1132,7 @@
                   <p class="regstep__intro">
                     This form needs JavaScript — the payment screenshot is uploaded straight from
                     your browser, and there is no way to do that without it. If JavaScript is
-                    switched off, email your name, school, grade, phone number, committee
+                    switched off, email your name, school, academic level, phone number, committee
                     preference and the payment screenshot to the address in the footer below and
                     the secretariat will register you by hand.
                   </p>

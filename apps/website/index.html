@@ -247,11 +247,15 @@
         </nav>
 
         <div class="nav__actions">
-          <!-- Registration is on this page now, so this is an anchor, not an
-               outbound link. Dropping target/rel is the point: sending someone
-               to a new tab to fill in a form that is already below them was
-               the old Google Form's constraint, not a design decision. -->
-          <a class="btn btn--sm nav__cta" href="#register">
+          <!-- Straight to the form, not to the panel that introduces it. This
+               is the page's primary call to action; a reader who presses it has
+               already decided, and landing them on a pitch they have to scroll
+               past to reach the fields is a step charged for nothing.
+
+               Same-tab, so no target/rel: sending someone to a new tab to fill
+               in a form was the old Google Form's constraint, not a design
+               decision. -->
+          <a class="btn btn--sm nav__cta" href="./register.html">
             Register
             <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
               <path
@@ -322,7 +326,7 @@
                 rel="noopener noreferrer"
                 >Visit the school site ↗</a
               >
-              <a class="btn nav-overlay__cta" href="#register" data-nav-overlay-link
+              <a class="btn nav-overlay__cta" href="./register.html" data-nav-overlay-link
                 >Register now<span class="btn__mount" aria-hidden="true"></span></a
               >
             </div>
@@ -445,7 +449,7 @@
             </dl>
 
             <div class="hero__actions" data-reveal>
-              <a class="btn btn--lg hero__cta" href="#register">
+              <a class="btn btn--lg hero__cta" href="./register.html">
                 <span class="btn__label"
                   ><span>Register now</span><span aria-hidden="true">Register now</span></span
                 >
@@ -576,7 +580,13 @@
             aria-label="Committees — scrollable list, use left and right arrow keys"
           >
             <!-- COMMITTEE 1 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="UNSC"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card">
                 <span class="numeral committee__index" aria-hidden="true">01</span>
                 <img
@@ -596,8 +606,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--advanced">Advanced</span>
-                  <a class="committee__apply" href="./register.html?committee=UNSC">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -605,27 +620,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for the United Nations Security Council</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-1"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -643,7 +637,13 @@
             </li>
 
             <!-- COMMITTEE 2 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="UNHRC"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card">
                 <span class="numeral committee__index" aria-hidden="true">02</span>
                 <img
@@ -663,8 +663,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--intermediate">Intermediate</span>
-                  <a class="committee__apply" href="./register.html?committee=UNHRC">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -672,27 +677,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for the Human Rights Council</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-2"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -709,7 +693,13 @@
             </li>
 
             <!-- COMMITTEE 3 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="DISEC"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card">
                 <span class="numeral committee__index" aria-hidden="true">03</span>
                 <img
@@ -729,8 +719,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--beginner">Beginner</span>
-                  <a class="committee__apply" href="./register.html?committee=DISEC">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -738,27 +733,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for Disarmament &amp; International Security</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-3"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -775,7 +749,13 @@
             </li>
 
             <!-- COMMITTEE 4 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="ECOSOC"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card">
                 <span class="numeral committee__index" aria-hidden="true">04</span>
                 <img
@@ -795,8 +775,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--intermediate">Intermediate</span>
-                  <a class="committee__apply" href="./register.html?committee=ECOSOC">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -804,27 +789,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for the Economic &amp; Social Council</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-4"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -841,7 +805,13 @@
             </li>
 
             <!-- COMMITTEE 5 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="WHO"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card">
                 <span class="numeral committee__index" aria-hidden="true">05</span>
                 <img
@@ -861,8 +831,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--beginner">Beginner</span>
-                  <a class="committee__apply" href="./register.html?committee=WHO">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -870,27 +845,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for the World Health Organization</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-5"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -907,7 +861,13 @@
             </li>
 
             <!-- COMMITTEE 6 -->
-            <li class="committee" data-committee>
+            <li
+              class="committee"
+              data-committee
+              data-code="HCC"
+              data-chair="To be announced"
+              data-vice-chair="To be announced"
+            >
               <article class="committee__card committee__card--feature">
                 <span class="numeral committee__index" aria-hidden="true">06</span>
                 <img
@@ -927,8 +887,13 @@
                 </p>
                 <footer class="committee__foot">
                   <span class="tag tag--advanced">Advanced</span>
-                  <a class="committee__apply" href="./register.html?committee=HCC">
-                    Apply
+                  <button
+                    class="committee__toggle"
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-committee-open
+                  >
+                    <span>Details</span>
                     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
                       <path
                         d="M2 8h11M9 4l4 4-4 4"
@@ -936,27 +901,6 @@
                         stroke="currentColor"
                         stroke-width="1.5"
                         stroke-linecap="square"
-                      />
-                    </svg>
-                    <span class="btn__mount" aria-hidden="true"></span>
-                    <span class="u-visually-hidden">for the Historical Crisis Committee</span>
-                  </a>
-                  <button
-                    class="committee__toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="committee-agenda-6"
-                    data-committee-toggle
-                  >
-                    <span>Agenda</span>
-                    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                      <path
-                        d="M4 6l4 4 4-4"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -982,6 +926,93 @@
               Scroll, drag or use <kbd>←</kbd> <kbd>→</kbd>
             </p>
           </div>
+
+        <!-- ------------------------------------------------------------------
+             The committee dialog.
+
+             One dialog, filled from whichever card was opened — six copies of
+             this markup would be six places for the agenda to drift. Everything
+             except the chairs is read out of the card itself; see
+             src/modules/committee-dialog.js.
+
+             A real <dialog> opened with showModal(), so Escape, the focus trap,
+             the inert background and the backdrop are the platform's job and
+             not ours to reimplement badly.
+             ------------------------------------------------------------------ -->
+        <dialog
+          class="cdlg"
+          data-committee-dialog
+          aria-labelledby="cdlg-name"
+          data-lenis-prevent
+        >
+          <article class="cdlg__panel ground-ink">
+            <header class="cdlg__head">
+              <div class="cdlg__ident">
+                <img class="cdlg__icon" alt="" width="28" height="28" hidden data-cdlg-icon />
+                <p class="label cdlg__code" data-cdlg-code></p>
+              </div>
+              <button
+                class="cdlg__close"
+                type="button"
+                data-committee-dialog-close
+                aria-label="Close committee details"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </button>
+            </header>
+
+            <h2 class="cdlg__name" id="cdlg-name"></h2>
+            <p class="cdlg__blurb" data-cdlg-blurb></p>
+
+            <div class="cdlg__body">
+              <div class="cdlg__block cdlg__block--agenda">
+                <p class="label cdlg__block-label">Agenda</p>
+                <p class="cdlg__agenda" data-cdlg-agenda></p>
+              </div>
+
+              <div class="cdlg__block">
+                <p class="label cdlg__block-label">The dais</p>
+                <dl class="cdlg__dais">
+                  <div class="cdlg__dais-row">
+                    <dt>Chair</dt>
+                    <dd data-cdlg-chair></dd>
+                  </div>
+                  <div class="cdlg__dais-row">
+                    <dt>Vice Chair</dt>
+                    <dd data-cdlg-vice></dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <p class="cdlg__note" data-cdlg-note></p>
+
+            <footer class="cdlg__foot">
+              <span class="cdlg__level" data-cdlg-level></span>
+              <a class="btn cdlg__apply" href="./register.html" data-cdlg-apply>
+                Apply<span class="u-visually-hidden cdlg__apply-for"></span>
+                <svg class="btn__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M2 8h11M9 4l4 4-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+                <span class="btn__mount" aria-hidden="true"></span>
+              </a>
+            </footer>
+          </article>
+        </dialog>
         </div>
       </section>
 

@@ -12,6 +12,8 @@
  *   · prev/next buttons, a position readout and a progress bar
  *   · a tap affordance for the reveal panel on touch devices
  *
+ * The card's detail dialog is a separate module — committee-dialog.js.
+ *
  * Keyboard contract:
  *   ← / →       previous / next committee (rail focused OR pointer inside)
  *   Home / End  first / last
@@ -228,33 +230,18 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
   /* --------------------------------------------------------------------
      The agenda panel.
 
-     Each card now carries a real <button> that owns its panel via
-     aria-controls/aria-expanded. Before this, nothing inside .committee__card
-     was focusable — it was an <article> of headings and paragraphs — so
-     `:focus-within` could never fire and the agenda, seat count and procedure
-     notes were reachable by mouse (hover) and by touch (tap) but NOT by
+     The panel itself is pure CSS — hover, and `:focus-within` for the keyboard.
+     Each card carries a real <button> so that `:focus-within` has something to
+     fire on: before it existed, nothing inside .committee__card was focusable —
+     it was an <article> of headings and paragraphs — and the agenda, seat count
+     and procedure notes were reachable by mouse and by touch but NOT by
      keyboard at all. That is SC 2.1.1, on content the conference actually needs
      delegates to read.
 
-     The button also makes the interaction consistent across inputs: hover
-     previews it, focus opens it, click/Enter/Space pins it open.
+     That button no longer expands the panel in place; it opens the committee
+     dialog, which is where the full detail and the Apply control now live. See
+     src/modules/committee-dialog.js for why they moved.
      -------------------------------------------------------------------- */
-  const toggles = Array.from(rail.querySelectorAll('[data-committee-toggle]'))
-
-  function setOpen(button, open) {
-    const panel = document.getElementById(button.getAttribute('aria-controls'))
-    if (!panel) return
-    button.setAttribute('aria-expanded', String(open))
-    panel.classList.toggle('is-open', open)
-  }
-
-  toggles.forEach((button) => {
-    button.addEventListener('click', () => {
-      const isOpen = button.getAttribute('aria-expanded') === 'true'
-      toggles.forEach((other) => other !== button && setOpen(other, false))
-      setOpen(button, !isOpen)
-    })
-  })
 
   /* --------------------------------------------------------------------
      Entrance. One batched trigger for the whole rail rather than six.

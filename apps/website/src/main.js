@@ -21,7 +21,7 @@ import './styles/base.css'
 import './styles/sections/nav.css'
 import './styles/sections/hero.css'
 import './styles/sections/committees.css'
-import './styles/sections/committees-apply.css'
+import './styles/sections/committee-dialog.css'
 import './styles/sections/oc.css'
 import './styles/sections/gallery.css'
 import './styles/sections/footer.css'
@@ -29,6 +29,7 @@ import './styles/sections/footer.css'
 import { initNav } from './modules/nav.js'
 import { initHero } from './modules/hero.js'
 import { initCommittees } from './modules/committees.js'
+import { initCommitteeDialog } from './modules/committee-dialog.js'
 import { initOc } from './modules/oc.js'
 import { initGallery } from './modules/gallery.js'
 import { initFooter } from './modules/footer.js'
@@ -124,6 +125,7 @@ function boot() {
   initHero(ctx)
   initNav(ctx)
   initCommittees(ctx)
+  initCommitteeDialog(ctx)
   initOc(ctx)
   initGallery(ctx)
   initFooter(ctx)

@@ -25,7 +25,7 @@
  *   429 { error, code: 429 }
  */
 
-import { initCommitteeSelect } from './committee-select.js'
+import { ACADEMIC_LEVELS, initListbox } from './committee-select.js'
 import { initPaymentUpload } from './payment-upload.js'
 
 /* -------------------------------------------------------------------------
@@ -130,14 +130,17 @@ const FIELDS = [
     },
   },
   {
+    /* Academic level. Still `grade` on the wire — see ACADEMIC_LEVELS in
+       committee-select.js for why the field name did not change with the
+       label. */
     name: 'grade',
-    label: 'Grade',
+    label: 'Academic level',
     step: 1,
     required: true,
-    min: 1,
     max: 20,
+    focus: '#cs-grade-button',
     messages: {
-      required: 'Enter your grade or year.',
+      required: 'Choose your academic level.',
       long: 'That is longer than 20 characters.',
     },
   },
@@ -343,14 +346,27 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   const errorEl = (name) => form.querySelector(`[data-error-for="${name}"]`)
 
   /* --------------------------------------------------------------------
-     The committee listboxes, and the rule that they cannot agree.
+     The listboxes.
+
+     Addressed by id rather than by position in the document. They were read as
+     selectRoots[0] and [1] until the academic level became a third one, and an
+     index into "every listbox on the page" is a wire that comes loose the next
+     time markup is added above it.
      -------------------------------------------------------------------- */
-  const selectRoots = Array.from(form.querySelectorAll('[data-cselect]'))
-  const primary = initCommitteeSelect(selectRoots[0], {
+  const selectRoot = (id) => form.querySelector(`[data-cselect][data-cselect-id="${id}"]`)
+
+  initListbox(selectRoot('cs-grade'), {
+    announce,
+    options: ACADEMIC_LEVELS,
+    allowEmpty: false,
+    showCodes: false,
+  })
+
+  const primary = initListbox(selectRoot('cs-committeePreference'), {
     announce,
     onSelect: () => syncPreferences(),
   })
-  const second = initCommitteeSelect(selectRoots[1], {
+  const second = initListbox(selectRoot('cs-committeePreference2'), {
     announce,
     onSelect: () => syncPreferences(),
   })

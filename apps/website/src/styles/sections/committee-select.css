@@ -129,8 +129,15 @@
   border-block-end: 0;
 }
 
-.cselect__option--empty {
+/* One column: the prompt row, and any list whose options have no short code
+   (academic level — "MS" is an abbreviation nobody asked for). */
+.cselect__option--empty,
+.cselect__option--plain {
   grid-template-columns: 1fr;
+}
+
+.cselect__option--plain .cselect__option-reason {
+  grid-column: 1;
 }
 
 .cselect__option-code {

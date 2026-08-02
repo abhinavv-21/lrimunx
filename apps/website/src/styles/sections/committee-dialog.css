@@ -1,0 +1,323 @@
+/* ==========================================================================
+   committee-dialog.css — the committee detail dialog.
+   Module: src/modules/committee-dialog.js
+   Markup: index.html §2 COMMITTEES, after the rail
+
+   The panel is a PLUM block, deliberately. Hovering a card slides an ink strip
+   up from its foot; opening the card is that same strip taken to full size. One
+   material, two scales — so the click reads as the continuation of the hover
+   rather than as a second, unrelated surface.
+
+   Colour, per the four rules in tokens.css: the panel carries `.ground-ink`, so
+   the level chip and the block labels are GOLD (7.99:1) and body copy is
+   text-inverse. Magenta appears here only as the Apply button's fill.
+   ========================================================================== */
+
+/* --- The element ---------------------------------------------------------
+   A native <dialog> is `display: none` until opened, and the UA sheet gives it
+   a border, a white background and a centring margin — all of which are
+   replaced here. Layout is grid rather than the UA's auto margins so the panel
+   can be pinned to the bottom on a phone and centred on a desktop from the same
+   two properties. */
+.cdlg {
+  /* `dialog:modal` is already fixed and inset in the UA sheet; stated here so
+     the rule does not depend on a sheet we do not control. */
+  position: fixed;
+  inset: 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: 100%;
+  max-block-size: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.cdlg:not([open]) {
+  display: none;
+}
+
+/* The wash, not a shadow. The page bans drop shadows, and a modal over a paper
+   ground needs its background pushed back rather than the panel lifted. */
+.cdlg::backdrop {
+  background-color: rgb(var(--rgb-ink) / 0.62);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-house);
+}
+
+.cdlg.is-open::backdrop {
+  opacity: 1;
+}
+
+/* --- Panel ---------------------------------------------------------------
+   Phone first: a sheet pinned to the bottom edge, thumb-reachable, rising from
+   below. It becomes a centred card at 640px. */
+.cdlg__panel {
+  grid-row: 2;
+  position: relative;
+  inline-size: 100%;
+  max-block-size: min(90dvh, 46rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-6) var(--sp-5) var(--sp-6);
+  border-start-start-radius: var(--radius-sm);
+  border-start-end-radius: var(--radius-sm);
+  /* The gold hairline is the same edge the hover reveal draws, at the same
+     weight — the two surfaces are visibly the same object. */
+  border-block-start: 1px solid var(--hairline-gold);
+  transform: translate3d(0, 3%, 0);
+  opacity: 0;
+  transition:
+    transform var(--dur-slow) var(--ease-expo),
+    opacity var(--dur-base) var(--ease-house);
+}
+
+.cdlg.is-open .cdlg__panel {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+
+/* --- Head ----------------------------------------------------------------- */
+.cdlg__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+.cdlg__ident {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.cdlg__icon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  flex: 0 0 auto;
+  /* The committee icons are line art drawn for a paper ground; inverted they
+     read as the same mark rather than as a dark smudge on plum. */
+  filter: invert(1) brightness(1.6);
+  opacity: 0.85;
+}
+
+.cdlg__code {
+  color: var(--accent-on-ground);
+}
+
+/* 48px, per the touch-target floor, without looking like a 48px button: the
+   plate is transparent until it is reached for. */
+.cdlg__close {
+  flex: 0 0 auto;
+  inline-size: 3rem;
+  block-size: 3rem;
+  margin: calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0 0;
+  display: grid;
+  place-items: center;
+  color: var(--on-ground-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  transition:
+    color var(--dur-base) var(--ease-house),
+    border-color var(--dur-base) var(--ease-house),
+    background-color var(--dur-base) var(--ease-house);
+}
+
+.cdlg__close svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.cdlg__close:hover,
+.cdlg__close:focus-visible {
+  color: var(--on-ground);
+  border-color: var(--border-interactive);
+  background-color: var(--surface-ink-raised);
+}
+
+/* --- Identity ------------------------------------------------------------- */
+.cdlg__name {
+  font-size: var(--fs-700);
+  font-variation-settings: 'opsz' 40, 'WONK' 1;
+  line-height: var(--lh-heading);
+  max-inline-size: 22ch;
+  margin-block-end: var(--sp-3);
+}
+
+.cdlg__blurb {
+  font-size: var(--fs-400);
+  line-height: var(--lh-body);
+  color: var(--on-ground-muted);
+  max-inline-size: var(--measure);
+}
+
+/* --- Body ----------------------------------------------------------------
+   Agenda and dais sit side by side once there is room. The agenda is the wider
+   of the two because it is the one that grows: today it says "To be announced",
+   and by October it is a sentence. */
+.cdlg__body {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block: var(--sp-6) var(--sp-5);
+  padding-block: var(--sp-5);
+  border-block: 1px solid var(--hairline);
+}
+
+.cdlg__block-label {
+  color: var(--accent-on-ground);
+  margin-block-end: var(--sp-3);
+}
+
+.cdlg__agenda {
+  font-family: var(--font-display);
+  font-size: var(--fs-500);
+  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  line-height: 1.34;
+  max-inline-size: var(--measure-tight);
+}
+
+.cdlg__dais {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* dt and dd on one row, the label held to a fixed column so the two names line
+   up with each other rather than each hanging off its own word. */
+.cdlg__dais-row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.cdlg__dais-row dt {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground-muted);
+}
+
+.cdlg__dais-row dd {
+  margin: 0;
+  font-size: var(--fs-400);
+  line-height: 1.4;
+}
+
+.cdlg__note {
+  font-size: var(--fs-200);
+  line-height: 1.55;
+  color: var(--on-ground-muted);
+}
+
+/* --- Foot ----------------------------------------------------------------
+   Apply gets a row of its own. Nothing is positioned over it, nothing slides
+   across it, and it is the widest thing in the panel — the opposite of the
+   footer button it replaced. */
+.cdlg__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.cdlg__level {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--accent-on-ground);
+  padding: 0.35em 0.75em;
+  border: 1px solid var(--border-interactive);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.cdlg__apply {
+  flex: 1 1 14rem;
+}
+
+/* --- The card is now the control ------------------------------------------
+   The whole card opens the dialog, so it has to say so. The pointer is the
+   affordance on a mouse; on touch the reveal panel's nudged-up edge already
+   does the same job. */
+.committee__card {
+  cursor: pointer;
+}
+
+/* --- Page state -----------------------------------------------------------
+   showModal() makes the background inert but does not stop it scrolling, and
+   under Lenis the page keeps gliding behind the panel. The padding replaces the
+   scrollbar the overflow removes; without it the whole page shifts sideways at
+   the moment the dialog opens. */
+html.has-dialog {
+  overflow: hidden;
+  padding-inline-end: var(--scrollbar-gap, 0);
+}
+
+/* --- Breakpoints ---------------------------------------------------------- */
+@media (min-width: 640px) {
+  .cdlg {
+    grid-template-rows: 1fr;
+    place-items: center;
+    padding: var(--gutter);
+  }
+
+  .cdlg__panel {
+    grid-row: 1;
+    max-inline-size: 44rem;
+    /* The grid area is already inset by the dialog's own gutter, so the cap is
+       against what is left rather than against the viewport — 90dvh inside a
+       padded box overflows by twice the gutter. */
+    max-block-size: min(100%, 46rem);
+    padding: var(--sp-7);
+    border: 1px solid var(--hairline-gold);
+    border-radius: var(--radius-sm);
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+
+  .cdlg.is-open .cdlg__panel {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (min-width: 860px) {
+  .cdlg__body {
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--sp-7);
+  }
+
+  .cdlg__foot {
+    flex-wrap: nowrap;
+  }
+
+  .cdlg__apply {
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdlg__panel,
+  .cdlg::backdrop {
+    transition: none;
+  }
+
+  .cdlg__panel {
+    transform: none;
+    opacity: 1;
+  }
+
+  .cdlg::backdrop {
+    opacity: 1;
+  }
+}

@@ -27,6 +27,7 @@ const HEADER_ALIASES: Record<string, keyof IngestRow> = {
   'phone number': 'phone', phone: 'phone', mobile: 'phone', contact: 'phone',
   school: 'schoolName', 'school name': 'schoolName', institution: 'schoolName',
   grade: 'grade', class: 'grade', year: 'grade',
+  'academic level': 'grade', level: 'grade',
   'committee preference': 'committeePreference', preference: 'committeePreference',
   'preferred committee': 'committeePreference', 'committee choice': 'committeePreference',
   'first preference': 'committeePreference', 'committee preference 1': 'committeePreference',

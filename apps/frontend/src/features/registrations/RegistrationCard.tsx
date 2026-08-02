@@ -113,8 +113,12 @@ export function RegistrationCard({
               <dd className="text-ink">{registration.schoolName}</dd>
             </div>
             <div className="flex items-center gap-1.5">
-              <dt className="sr-only">Grade</dt>
-              <dd>Grade {registration.grade}</dd>
+              {/* The public form now submits an academic level — "High School",
+                  not "11" — so the old "Grade {value}" prefix read as
+                  "Grade High School". Rows imported from older sheets still
+                  carry a bare number and stand on their own here. */}
+              <dt className="sr-only">Academic level</dt>
+              <dd>{registration.grade}</dd>
             </div>
             <div className="flex items-center gap-1.5">
               <dt className="sr-only">Submitted</dt>
