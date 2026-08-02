@@ -1,9 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isBlobStorageUrl, publicRegistrationSchema, rejectRegistrationSchema } from './index.js'
 
-/** A screenshot as Vercel Blob hands it back after a client upload. */
+/**
+ * A screenshot as Vercel Blob hands it back after a client upload.
+ *
+ * PRIVATE, because the store is: a payment screenshot is a transaction record
+ * and is not readable by anyone holding the URL. The two access levels serve
+ * from different hosts, and `BLOB_ACCESS` — which defaults to private — is what
+ * decides which one this accepts.
+ */
 const BLOB_URL =
-  'https://k3mq1zfwvbdxpnl8.public.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
+  'https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
 
 /** A submission the conference website would actually send. */
 function validPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -208,12 +215,13 @@ describe('publicRegistrationSchema', () => {
 
     it.each([
       ['somebody else’s host', 'https://evil.example/x.png'],
-      ['the blob host as a path', 'https://evil.example/public.blob.vercel-storage.com/x.png'],
-      ['the blob host in a fragment', 'https://evil.example/x.png#.public.blob.vercel-storage.com'],
-      ['the blob host as userinfo', 'https://k3mq.public.blob.vercel-storage.com@evil.example/x.png'],
-      ['a lookalike host', 'https://evilpublic.blob.vercel-storage.com/x.png'],
-      ['the bare blob domain with no store', 'https://public.blob.vercel-storage.com/x.png'],
-      ['plain http', 'http://k3mq.public.blob.vercel-storage.com/x.png'],
+      ['the blob host as a path', 'https://evil.example/private.blob.vercel-storage.com/x.png'],
+      ['the blob host in a fragment', 'https://evil.example/x.png#.private.blob.vercel-storage.com'],
+      ['the blob host as userinfo', 'https://k3mq.private.blob.vercel-storage.com@evil.example/x.png'],
+      ['a lookalike host', 'https://evilprivate.blob.vercel-storage.com/x.png'],
+      ['the bare blob domain with no store', 'https://private.blob.vercel-storage.com/x.png'],
+      ['plain http', 'http://k3mq.private.blob.vercel-storage.com/x.png'],
+      ['the public host, on a private store', 'https://k3mq.public.blob.vercel-storage.com/x.png'],
       ['a javascript URL', 'javascript:alert(1)'],
       ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
       ['not a URL at all', 'payment.png'],
@@ -236,9 +244,9 @@ describe('publicRegistrationSchema', () => {
 })
 
 describe('isBlobStorageUrl', () => {
-  it('accepts any store on the blob host', () => {
+  it('accepts any store on the blob host when none is configured', () => {
     expect(isBlobStorageUrl(BLOB_URL)).toBe(true)
-    expect(isBlobStorageUrl('https://abc.public.blob.vercel-storage.com/a/b/c.webp')).toBe(true)
+    expect(isBlobStorageUrl('https://abc.private.blob.vercel-storage.com/a/b/c.webp')).toBe(true)
   })
 
   it('does not throw on input that is not a URL', () => {
@@ -246,6 +254,47 @@ describe('isBlobStorageUrl', () => {
     // 500 on the public form rather than a 422 on the field.
     expect(isBlobStorageUrl('')).toBe(false)
     expect(isBlobStorageUrl('://')).toBe(false)
+  })
+})
+
+/**
+ * With a store id configured the check pins to that one store, not to the host.
+ *
+ * This is the difference that matters in production. Anybody can create a
+ * Vercel Blob store in under a minute, and without the pin a URL on THEIR store
+ * satisfies the host check — so the field would still accept an attacker-hosted
+ * image, which is the whole thing the check exists to prevent.
+ *
+ * `env` is read at module load, so each case re-imports the module under a
+ * different environment rather than mutating one that has already been parsed.
+ */
+describe('isBlobStorageUrl, pinned to a configured store', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  async function withStore(storeId: string, access = 'private') {
+    vi.resetModules()
+    vi.stubEnv('BLOB_STORE_ID', storeId)
+    vi.stubEnv('BLOB_ACCESS', access)
+    return (await import('./index.js')).isBlobStorageUrl
+  }
+
+  it('accepts the configured store and refuses every other one', async () => {
+    const check = await withStore('store_9mlCqNa8wYTM')
+
+    // The host is the id lowercased with the prefix dropped.
+    expect(check('https://9mlcqna8wytm.private.blob.vercel-storage.com/proof.png')).toBe(true)
+    expect(check('https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/proof.png')).toBe(false)
+    expect(check('https://9mlcqna8wytm.public.blob.vercel-storage.com/proof.png')).toBe(false)
+  })
+
+  it('follows BLOB_ACCESS to the right host', async () => {
+    const check = await withStore('store_9mlCqNa8wYTM', 'public')
+
+    expect(check('https://9mlcqna8wytm.public.blob.vercel-storage.com/proof.png')).toBe(true)
+    expect(check('https://9mlcqna8wytm.private.blob.vercel-storage.com/proof.png')).toBe(false)
   })
 })
 

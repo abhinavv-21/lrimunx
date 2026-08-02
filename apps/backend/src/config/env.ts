@@ -62,16 +62,47 @@ const envSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().default(''),
   VAPID_SUBJECT: z.string().default('mailto:ops@lrimunx.org'),
 
-  /**
-   * Read-write token for the Vercel Blob store that holds payment screenshots.
-   *
-   * Optional, and empty is a supported state rather than a misconfiguration:
-   * local development has no blob store, and the registration form is expected
-   * to work without one — the upload route answers 503 and the screenshot field
-   * is simply not filled in. Vercel injects this automatically once a store is
-   * linked to the project.
-   */
+  /*
+    ---------------------------------------------------------------------------
+    Vercel Blob — the store that holds payment screenshots.
+
+    Empty is a supported state rather than a misconfiguration: local development
+    has no blob store, and the registration form is expected to work without
+    one — the upload route answers 503 and the screenshot field is simply not
+    filled in.
+
+    Two ways to authenticate, and Vercel picks for you when the store is
+    created:
+
+      · BLOB_STORE_ID + the runtime's VERCEL_OIDC_TOKEN — what a store created
+        today gets. Nothing long-lived is stored anywhere.
+      · BLOB_READ_WRITE_TOKEN — the older static credential.
+
+    The SDK resolves whichever is present; both reach the same store. The store
+    linked to this project is OIDC, so BLOB_READ_WRITE_TOKEN is normally empty.
+    ---------------------------------------------------------------------------
+  */
   BLOB_READ_WRITE_TOKEN: z.string().default(''),
+  BLOB_STORE_ID: z.string().default(''),
+
+  /**
+   * Public key the blob service signs its upload-completed callbacks with.
+   * Injected alongside BLOB_STORE_ID. The SDK reads it from process.env on its
+   * own; it is declared here so a deployment missing it is visible in one place
+   * rather than as a runtime throw inside the upload route.
+   */
+  BLOB_WEBHOOK_PUBLIC_KEY: z.string().default(''),
+
+  /**
+   * Whether the store serves its objects to anyone holding the URL.
+   *
+   * Payment screenshots are transaction records, so the store is PRIVATE and
+   * that is the default: objects live on `<store>.private.blob.vercel-storage.com`
+   * and are unreadable without a short-lived signed URL, which only the ops hub
+   * can ask for. Set to `public` only against a store actually created public —
+   * the two serve from different hosts and the URL check keys off this value.
+   */
+  BLOB_ACCESS: z.enum(['public', 'private']).default('private'),
 
   /**
    * Passphrase that gates the bulk conference reset.
@@ -103,8 +134,10 @@ function loadEnv(): Env {
   }
 
   // Not warned about. A machine with no blob store is the normal local case,
-  // and the upload route says so in its own response.
-  const blobUploadsEnabled = parsed.data.BLOB_READ_WRITE_TOKEN.length > 0
+  // and the upload route says so in its own response. Either credential is
+  // enough; a store created today supplies the store id and nothing else.
+  const blobUploadsEnabled =
+    parsed.data.BLOB_READ_WRITE_TOKEN.length > 0 || parsed.data.BLOB_STORE_ID.length > 0
 
   return { ...parsed.data, pushEnabled, blobUploadsEnabled }
 }

@@ -49,6 +49,8 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
 
   let opener = null
   let closing = false
+  /** True while OUR history entry is the current one. See the Back section. */
+  let historyPushed = false
 
   const text = (el) => (el ? el.textContent.trim().replace(/\s+/g, ' ') : '')
 
@@ -142,6 +144,14 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     dialog.showModal()
     lockScroll()
 
+    // An open panel is a place you can go Back from. Nothing about a modal says
+    // so to the browser — showModal() is not navigation — so a history entry is
+    // pushed to stand for it. Without one, Back leaves the panel sitting there
+    // and takes you off the page underneath instead, which is the opposite of
+    // what pressing Back over an open panel means.
+    history.pushState({ committeeDialog: true }, '')
+    historyPushed = true
+
     // The class drives the entrance. `@starting-style` would be tidier but is
     // not in this project's Safari floor, and an entrance that only plays on
     // newer browsers is not an entrance.
@@ -165,6 +175,20 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
 
   function close() {
     if (!dialog.open || closing) return
+
+    /*
+      Give the history entry back before anything else.
+
+      `history.back()` dispatches popstate as a later task, by which point
+      `closing` is already true and the popstate handler returns without doing
+      the work twice. Skipped when the entry is already gone — which is exactly
+      the case when Back is what got us here.
+    */
+    if (historyPushed) {
+      historyPushed = false
+      history.back()
+    }
+
     closing = true
     dialog.classList.remove('is-open')
 
@@ -210,6 +234,32 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
   // the press landed outside the panel, so no geometry is needed.
   dialog.addEventListener('pointerdown', (event) => {
     if (event.target === dialog) close()
+  })
+
+  /* --------------------------------------------------------------------
+     Back.
+     -------------------------------------------------------------------- */
+  window.addEventListener('popstate', () => {
+    // Whatever just happened, our entry is no longer the current one.
+    historyPushed = false
+    if (dialog.open) close()
+  })
+
+  /*
+    Coming back to this page from the register form.
+
+    A bfcached document is restored exactly as it was left — including an open
+    dialog and the scroll lock on <html>. Nothing re-runs, so nothing would ever
+    take it down again, and the reader lands on a panel over a page that will
+    not scroll. Snapped shut rather than animated: as far as they are concerned
+    it was never open on this visit.
+  */
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return
+    historyPushed = false
+    closing = false
+    dialog.classList.remove('is-open')
+    finishClose()
   })
 
   /* --------------------------------------------------------------------

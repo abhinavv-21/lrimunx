@@ -2,7 +2,9 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { randomInt } from 'node:crypto'
 import { Prisma } from '@prisma/client'
 import rateLimit from 'express-rate-limit'
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
+import { handleUploadPresigned, type HandleUploadPresignedBody } from '@vercel/blob/client'
+import { issueSignedToken } from '@vercel/blob'
+import { blobAuth, isBlobError } from '../lib/blob.js'
 import { env } from '../config/env.js'
 import { prisma } from '../lib/prisma.js'
 import { ApiError, type ApiErrorBody } from '../lib/errors.js'
@@ -285,20 +287,16 @@ const ALLOWED_UPLOAD_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
 /** A screenshot of a payment confirmation. Generous for a photo, mean for a video. */
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 
-/** The two envelopes the Vercel Blob client protocol defines. */
+/** The two envelopes the Vercel Blob presigned-upload protocol defines. */
 const BLOB_EVENT_TYPES: ReadonlySet<string> = new Set([
-  'blob.generate-client-token',
+  'blob.generate-presigned-url',
   'blob.upload-completed',
 ])
 
-/**
- * BlobError carries no distinguishing class or `name` — it is a plain Error
- * subclass — so its own prefix is the only thing separating "the caller sent
- * nonsense" from "something under us broke".
- */
-const BLOB_ERROR_PREFIX = 'Vercel Blob: '
+/** How long the browser has to finish putting the file, from the moment it asks. */
+const UPLOAD_WINDOW_MS = 30 * 60 * 1000
 
-function isHandleUploadBody(body: unknown): body is HandleUploadBody {
+function isHandleUploadBody(body: unknown): body is HandleUploadPresignedBody {
   const type = (body as { type?: unknown } | null | undefined)?.type
   return typeof type === 'string' && BLOB_EVENT_TYPES.has(type)
 }
@@ -347,16 +345,40 @@ publicRouter.post(
     }
 
     try {
-      const result = await handleUpload({
+      const result = await handleUploadPresigned({
         request: req,
         body,
-        token: env.BLOB_READ_WRITE_TOKEN,
-        onBeforeGenerateToken: async () => ({
-          allowedContentTypes: [...ALLOWED_UPLOAD_TYPES],
-          maximumSizeInBytes: MAX_UPLOAD_BYTES,
-          // Two applicants both uploading "payment.jpg" must not collide, and a
-          // guessable path would let anyone overwrite someone else's proof.
-          addRandomSuffix: true,
+        /*
+          Every bound is set TWICE, and both matter.
+
+          The delegation token is what the store checks: it is scoped to this
+          one pathname, to `put` alone, to these content types, to this size,
+          and it dies in half an hour. A token that leaked out of the browser
+          buys the holder the right to write one file that was going to be
+          written anyway.
+
+          The url options are what the presigned URL itself carries. Repeating
+          the limits there is not belt-and-braces for its own sake — the URL is
+          the thing the browser actually PUTs to, and a URL that permitted more
+          than its delegation would simply be refused at the far end, which
+          reads to the applicant as "the upload failed" with no reason given.
+        */
+        getSignedToken: async (pathname) => ({
+          token: await issueSignedToken({
+            ...blobAuth(),
+            pathname,
+            operations: ['put'],
+            allowedContentTypes: [...ALLOWED_UPLOAD_TYPES],
+            maximumSizeInBytes: MAX_UPLOAD_BYTES,
+            validUntil: Date.now() + UPLOAD_WINDOW_MS,
+          }),
+          urlOptions: {
+            allowedContentTypes: [...ALLOWED_UPLOAD_TYPES],
+            maximumSizeInBytes: MAX_UPLOAD_BYTES,
+            // Two applicants both uploading "payment.jpg" must not collide, and
+            // a guessable path would let anyone overwrite someone else's proof.
+            addRandomSuffix: true,
+          },
         }),
         /**
          * Nothing to do: the URL reaches us on the registration payload, which
@@ -373,11 +395,10 @@ publicRouter.post(
 
       res.json(result)
     } catch (error) {
-      const message = error instanceof Error ? error.message : ''
       // A refused signature or a malformed payload is the caller's problem and
       // gets a 400. Anything else is ours, and is left to the error handler so
       // it is logged as the 500 it is rather than disguised as bad input.
-      if (message.startsWith(BLOB_ERROR_PREFIX)) {
+      if (isBlobError(error)) {
         throw ApiError.badRequest('Upload request was rejected')
       }
       throw error

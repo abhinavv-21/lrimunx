@@ -57,14 +57,16 @@ const PUSH_ENDPOINT = `${NS.pushEndpoint}contributor-device`
  * A screenshot URL shaped exactly as Vercel Blob returns one. Nothing is ever
  * fetched from it — only the host is load-bearing.
  */
-const BLOB_URL = 'https://k3mq1zfwvbdxpnl8.public.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
+const BLOB_URL = 'https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
 
 /**
  * Whether this machine has a blob store. Local development does not, and the
  * upload endpoint answers differently in the two cases by design, so the tests
  * that pin one answer skip in the other.
  */
-const blobConfigured = Boolean(process.env['BLOB_READ_WRITE_TOKEN'])
+const blobConfigured = Boolean(
+  process.env['BLOB_READ_WRITE_TOKEN'] || process.env['BLOB_STORE_ID'],
+)
 
 /** A submission the public form would produce, with a namespaced address. */
 function submission(email: string): Record<string, unknown> {
@@ -780,8 +782,8 @@ describe.skipIf(!boot.ready)('API integration', () => {
       // No blob store locally, and that is a supported state. A 500 with a
       // stack would tell an applicant the site is broken when it is not.
       const response = await api.request('post', '/api/v1/public/blob-upload').send({
-        type: 'blob.generate-client-token',
-        payload: { pathname: 'payment-proof.png', callbackUrl: '', multipart: false, clientPayload: null },
+        type: 'blob.generate-presigned-url',
+        payload: { pathname: 'payment-proof.png', multipart: false, clientPayload: null },
       })
 
       expect(response.status).toBe(503)

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Check, ImageOff, Mail, Phone, School, Trash2, X } from 'lucide-react'
+import { Check, Eye, ImageOff, Mail, Phone, School, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { apiFetch } from '@/lib/api'
 import { Badge } from '@/components/ui/Badge'
 import { cn, munExperience } from '@/lib/utils'
 import type { Registration } from '@/types/api'
@@ -29,23 +31,55 @@ function Detail({ label, value }: { label: string; value: string | null }) {
  * a reviewer about to approve, and rendering nothing would leave that fact
  * indistinguishable from a card that simply has not loaded its image yet.
  *
- * The thumbnail opens the original in a new tab rather than a lightbox: a
- * reviewer needs to read an amount and a reference number off it, which means
- * zooming, and the browser already does that better than we would.
+ * WHY IT IS NOT JUST AN <img src={url}>
+ * The blob store is private, so the stored URL is a name, not a link: loading it
+ * returns 401. A viewable URL has to be signed, it is signed only for somebody
+ * authenticated, and it stops working ten minutes later. So the reviewer asks
+ * for it — one click, one fetch, and the image appears.
+ *
+ * Asked for on demand rather than eagerly for every card: a queue of forty
+ * pending registrations would otherwise mint forty signed URLs on load, most of
+ * which nobody ever looks at, and each of which is a live credential for the
+ * duration.
+ *
+ * The full-size link opens in a new tab rather than a lightbox: a reviewer needs
+ * to read an amount and a reference number off it, which means zooming, and the
+ * browser already does that better than we would.
  */
-function PaymentProof({ url, applicantName }: { url: string | null; applicantName: string }) {
+function PaymentProof({
+  registrationId,
+  hasProof,
+  applicantName,
+}: {
+  registrationId: string
+  hasProof: boolean
+  applicantName: string
+}) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [state, setState] = useState<'idle' | 'loading' | 'failed'>('idle')
+
+  async function reveal() {
+    if (state === 'loading') return
+    setState('loading')
+    try {
+      const res = await apiFetch<{ url: string }>(`/registrations/${registrationId}/payment-proof`)
+      setUrl(res.url)
+      setState('idle')
+    } catch {
+      setState('failed')
+    }
+  }
+
   return (
     <div className="min-w-0">
       <dt className="text-label uppercase text-ink-secondary">Payment proof</dt>
       <dd className="mt-0.5">
-        {/* Falsy rather than strictly null: an older cached response may omit
-            the field entirely, and <img src={undefined}> is a broken icon. */}
-        {!url ? (
+        {!hasProof ? (
           <span className="flex items-center gap-1.5 text-body-sm text-ink-secondary">
             <ImageOff size={14} className="shrink-0 text-ink-tertiary" aria-hidden />
             No payment proof
           </span>
-        ) : (
+        ) : url ? (
           <a
             href={url}
             target="_blank"
@@ -55,11 +89,22 @@ function PaymentProof({ url, applicantName }: { url: string | null; applicantNam
             <img
               src={url}
               alt={`Payment screenshot submitted by ${applicantName}`}
-              loading="lazy"
               className="h-12 w-12 shrink-0 border border-edge object-cover"
             />
             Open full size
           </a>
+        ) : (
+          <div className="flex flex-col items-start gap-1">
+            <Button variant="ghost" size="sm" onClick={reveal} disabled={state === 'loading'}>
+              <Eye size={14} aria-hidden />
+              {state === 'loading' ? 'Opening…' : 'View screenshot'}
+            </Button>
+            {state === 'failed' && (
+              <span className="text-body-sm text-danger">
+                Could not load it. The link is signed and short-lived — try again.
+              </span>
+            )}
+          </div>
         )}
       </dd>
     </div>
@@ -168,7 +213,11 @@ export function RegistrationCard({
         <Detail label="Referred by" value={registration.referralCode} />
         <Detail label="Dietary" value={registration.dietaryNotes} />
         <Detail label="Accessibility" value={registration.accessibilityNotes} />
-        <PaymentProof url={registration.paymentProofUrl} applicantName={registration.fullName} />
+        <PaymentProof
+          registrationId={registration.id}
+          hasProof={Boolean(registration.paymentProofUrl)}
+          applicantName={registration.fullName}
+        />
       </dl>
 
       {registration.status !== 'PENDING' ? (

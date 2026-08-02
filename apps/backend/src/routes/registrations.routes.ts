@@ -1,5 +1,8 @@
 import { Router } from 'express'
 import { Prisma, RegistrationStatus, Role } from '@prisma/client'
+import { issueSignedToken, presignUrl } from '@vercel/blob'
+import { env } from '../config/env.js'
+import { blobAuth } from '../lib/blob.js'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { auditRequest, recordAudit } from '../lib/audit.js'
@@ -18,6 +21,15 @@ import { registrationQuery, rejectRegistrationSchema, uuidParam } from '../schem
  * approving is what mints a Delegate.
  */
 export const registrationsRouter = Router()
+
+/**
+ * How long a signed screenshot URL stays good.
+ *
+ * Long enough to open the image, turn it, and read a transaction number off it;
+ * short enough that a URL copied out of the network tab is worthless by the
+ * time it is pasted anywhere.
+ */
+const PROOF_URL_TTL_MS = 10 * 60 * 1000
 
 /** What a review screen needs. Never includes submittedIp/userAgent — see below. */
 const registrationView = {
@@ -145,6 +157,69 @@ registrationsRouter.get(
     if (!registration) throw ApiError.notFound('Registration not found')
 
     res.json(registration)
+  }),
+)
+
+/**
+ * GET /api/v1/registrations/:id/payment-proof
+ *
+ * A short-lived URL the browser can load the payment screenshot from.
+ *
+ * The store is PRIVATE. Its objects are not readable by anyone holding the
+ * URL — which is the point, since a payment screenshot is a transaction record
+ * with an account name and a number on it. Reaching one requires a signature,
+ * and the only way to get a signature is to ask here, authenticated.
+ *
+ * Both roles may look: a contributor staffing the registration desk has to be
+ * able to check a payment against the list. What neither role gets is a link
+ * that keeps working — the signature expires, so a URL pasted into a group chat
+ * is a dead link by the time anyone else opens it.
+ *
+ * A public store needs none of this; the stored URL is already loadable, and it
+ * is returned unchanged.
+ */
+registrationsRouter.get(
+  '/:id/payment-proof',
+  validate(uuidParam, 'params'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params as { id: string }
+
+    const registration = await prisma.registration.findUnique({
+      where: { id },
+      select: { paymentProofUrl: true },
+    })
+    if (!registration) throw ApiError.notFound('Registration not found')
+
+    const stored = registration.paymentProofUrl
+    if (!stored) throw ApiError.notFound('This registration has no payment screenshot')
+
+    if (env.BLOB_ACCESS === 'public') {
+      res.json({ url: stored, expiresAt: null })
+      return
+    }
+
+    // The pathname is derived from the stored URL rather than kept in its own
+    // column: the URL is what the applicant's browser reported and what every
+    // other part of the system already treats as the record. Two sources for
+    // one fact is one source that goes stale.
+    const pathname = decodeURIComponent(new URL(stored).pathname).replace(/^\//, '')
+
+    const validUntil = Date.now() + PROOF_URL_TTL_MS
+    const signed = await issueSignedToken({
+      ...blobAuth(),
+      pathname,
+      operations: ['get'],
+      validUntil,
+    })
+    const { presignedUrl } = await presignUrl(signed, {
+      operation: 'get',
+      pathname,
+      access: 'private',
+    })
+
+    // No caching anywhere: the body is a credential with a clock on it.
+    res.setHeader('Cache-Control', 'no-store')
+    res.json({ url: presignedUrl, expiresAt: new Date(validUntil).toISOString() })
   }),
 )
 

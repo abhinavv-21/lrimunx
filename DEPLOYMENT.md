@@ -76,7 +76,38 @@ valid admin token without a password.
 `VITE_`-prefixed variables are compiled into the browser bundle and are public
 by definition. Never put a secret behind that prefix.
 
-### 3. Two build settings that are not obvious
+### 3. The blob store, and why it is private
+
+Payment screenshots go to Vercel Blob. Create the store from the project's
+**Storage** tab; Vercel sets `BLOB_STORE_ID` and `BLOB_WEBHOOK_PUBLIC_KEY` for
+you and authenticates the function by OIDC, so there is no long-lived token to
+store anywhere. Nothing else needs setting — `BLOB_ACCESS` defaults to
+`private`, which is what a store created that way is.
+
+Create it **private**. A payment screenshot is a transaction record with an
+account name and a number on it, and a public store hands one to anybody who
+ends up holding the URL — forever, since the URL never expires. Private means:
+
+- the file lands on `<store>.private.blob.vercel-storage.com` and returns 401 to
+  an unauthenticated fetch;
+- the ops hub asks `GET /api/v1/registrations/:id/payment-proof` for a signed
+  URL when a reviewer presses **View screenshot**, and that URL dies after ten
+  minutes;
+- a link copied out of the network tab is worthless by the time it is pasted.
+
+If you ever do run a public store, set `BLOB_ACCESS=public`. It is not cosmetic:
+the two access levels serve from different hosts, and the check that decides
+whether a submitted URL belongs to us keys off this value.
+
+The store is also pinned by id. Without that, a URL on *someone else's* Vercel
+Blob store — which any account can create in a minute — would satisfy the host
+check, and the public form would be a way to put an attacker-hosted image in
+front of the admin who approves registrations.
+
+Local development has no store, and that is a supported state: the upload route
+answers 503 and the form works without a screenshot.
+
+### 4. Two build settings that are not obvious
 
 **`installCommand` is `npm install --include=dev`.** `NODE_ENV=production` is
 right for the function runtime, but npm omits devDependencies whenever it is
@@ -86,14 +117,14 @@ a tree with no compiler, and the build fails with `tsc: command not found`.
 **`vercel.json` rejects unknown keys**, including `//`-prefixed comment keys
 that are legal in most JSON tooling. Explanations go here, not in that file.
 
-### 4. Vercel project settings
+### 5. Vercel project settings
 
 - **Framework preset:** Other
 - **Build command:** leave blank — `vercel.json` sets `npm run vercel-build`
 - **Output directory:** leave blank — `vercel.json` sets `dist`
 - **Node version:** 20 or later
 
-### 5. The first admin account
+### 6. The first admin account
 
 There is no signup page, by design. The first account has to be created
 directly against the production database from your machine:

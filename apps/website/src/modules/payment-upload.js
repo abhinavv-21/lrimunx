@@ -206,9 +206,22 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
     say(COPY.uploading)
 
     try {
-      const { upload } = await loadBlobClient()
-      const blob = await upload(safeName(file.name), file, {
-        access: 'public',
+      /*
+        `uploadPresigned`, not `upload`.
+
+        The store is private, and a private store is reached with a presigned
+        URL the server signs rather than with a client token. Same shape from
+        here — ask our own endpoint, PUT the file straight at the store, never
+        route eight megabytes of photo through a serverless function — but the
+        credential is scoped to this one pathname and expires.
+
+        `access: 'private'` is what puts the object on the private host. The
+        resulting URL is not loadable by itself; the ops hub asks the API for a
+        short-lived signed one when a reviewer opens the screenshot.
+      */
+      const { uploadPresigned } = await loadBlobClient()
+      const blob = await uploadPresigned(safeName(file.name), file, {
+        access: 'private',
         handleUploadUrl: endpoint,
         contentType: file.type,
         onUploadProgress: ({ percentage }) => setProgress(percentage),
