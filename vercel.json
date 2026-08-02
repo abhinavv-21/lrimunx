@@ -15,6 +15,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/register",
+      "destination": "/register.html"
+    },
+    {
       "source": "/admin/((?!assets/|icons/|.*\\.[a-z0-9]+$).*)",
       "destination": "/admin/index.html"
     },

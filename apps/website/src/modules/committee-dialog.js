@@ -99,8 +99,8 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
       // nothing chosen. A query string carrying an empty value would read on
       // the other side as "they chose nothing", which is a different answer.
       slots.apply.href = wanted
-        ? `./register.html?committee=${encodeURIComponent(wanted)}`
-        : './register.html'
+        ? `./register?committee=${encodeURIComponent(wanted)}`
+        : './register'
       const label = slots.apply.querySelector('.cdlg__apply-for')
       if (label) label.textContent = name ? ` for ${name}` : ''
     }

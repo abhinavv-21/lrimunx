@@ -196,8 +196,21 @@ function initAnchors() {
     event.preventDefault()
     ctx.scrollTo(target)
 
-    // Keep the URL and, more importantly, keyboard focus in step with the view.
-    history.pushState(null, '', hash)
+    /*
+      The address bar is left alone.
+
+      It used to take `history.pushState(null, '', hash)`, so reading the page
+      normally rewrote the URL to #committees, then #secretariat, then #editions
+      — and left whichever section you happened to stop at hanging off a link
+      anybody copied. This is one page; the sections are places on it, not
+      destinations, and a URL that changes as you scroll is a URL that says
+      less, not more.
+
+      Two things that did depend on it still work: an incoming
+      /index.html#committees is handled by the browser's own fragment
+      navigation on load, and Back still returns to wherever you actually came
+      from rather than through six scroll positions.
+    */
     target.setAttribute('tabindex', '-1')
     target.focus({ preventScroll: true })
   })
