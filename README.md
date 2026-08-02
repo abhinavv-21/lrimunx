@@ -69,6 +69,9 @@ apps/frontend/     React 18 + Vite PWA
   src/sw.ts        Workbox service worker: precache, runtime cache, push
 integrations/      Google Apps Script for Forms/Sheets ingestion
 DESIGN.md          the design system — read before touching any UI
+RUNNING.md         the three commands that start everything locally
+DEPLOYMENT.md      deploying all three surfaces to one domain on Vercel
+MIGRATION.md       moving off Vercel — and, later, onto the school server
 ```
 
 ### Guarantees worth knowing
