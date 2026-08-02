@@ -67,6 +67,10 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
 
     if (prevBtn) prevBtn.disabled = rail.scrollLeft <= 2
     if (nextBtn) nextBtn.disabled = rail.scrollLeft >= max - 2
+
+    // The cards have just moved under the cursor; work out which one is
+    // actually beneath it now.
+    syncHover()
   }
 
   function onScroll() {
@@ -225,6 +229,58 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
       },
       true
     )
+  })
+
+  /* --------------------------------------------------------------------
+     Hover, resolved rather than inherited.
+
+     A browser only re-evaluates `:hover` when the POINTER moves. Every
+     movement in this rail moves the CONTENT instead — a wheel flick, an arrow
+     key and the prev/next buttons all tween `rail.scrollLeft` — so a card
+     dragged out from under a stationary cursor kept its hover state, and its
+     reveal panel stayed up beside the one that had genuinely arrived.
+
+     So the hovered card is resolved from the pointer's last known position
+     against whatever is under it NOW, and re-resolved on every scroll frame.
+
+     Fine pointers only. On touch there is no hover to track, the panel has its
+     own tap affordance, and elementFromPoint on every scroll frame is a layout
+     read nobody is asking for.
+     -------------------------------------------------------------------- */
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)')
+
+  // Absent on touch and without JS, which is what keeps plain `:hover` in
+  // charge in both of those cases — see committees.css.
+  if (finePointer.matches) rail.classList.add('is-hover-synced')
+
+  let pointerX = -1
+  let pointerY = -1
+
+  function syncHover() {
+    if (!finePointer.matches) return
+    const under = pointerX < 0 ? null : document.elementFromPoint(pointerX, pointerY)
+    const card = under ? under.closest('[data-committee]') : null
+    items.forEach((item) => item.classList.toggle('is-hovered', item === card))
+  }
+
+  // Bound to the section, not the document: a pointer anywhere else on the
+  // page must not cost a hit test, and leaving clears the position so a scroll
+  // afterwards cannot resolve against where the cursor used to be.
+  section?.addEventListener(
+    'pointermove',
+    (event) => {
+      if (event.pointerType === 'touch') return
+      pointerX = event.clientX
+      pointerY = event.clientY
+      syncHover()
+    },
+    { passive: true }
+  )
+
+  section?.addEventListener('pointerleave', () => {
+    pointerX = -1
+    pointerY = -1
+    syncHover()
   })
 
   /* --------------------------------------------------------------------

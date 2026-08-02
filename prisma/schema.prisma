@@ -140,13 +140,39 @@ model Registration {
 }
 
 model Committee {
-  id          String         @id @default(uuid())
-  name        String         @unique // e.g. UNSC, DISEC, UNHRC
+  id          String             @id @default(uuid())
+  name        String             @unique // e.g. UNSC, DISEC, UNHRC
   totalSeats  Int
-  code        String         @unique
+  code        String             @unique
   assignments Assignment[]
   requests    LogisticsReq[]
   awards      Award[]
+  countries   CommitteeCountry[]
+}
+
+/// One country on one committee's matrix — the list of who is IN the room,
+/// which is a different fact from who has been allocated to it.
+///
+/// Until this existed, `Assignment.country` was free text: the system could
+/// tell you a country was taken but not whether it was ever on offer, so
+/// "Fance" saved cleanly and surfaced as a placard.
+///
+/// Deliberately NOT merged into Assignment. A matrix is authored before any
+/// delegate is placed and outlives every allocation — clearing an assignment
+/// must free the country, not delete it from the room.
+///
+/// A committee with no rows here keeps the old free-text behaviour. That is
+/// what lets one committee's matrix be imported without freezing the other
+/// five, and it is enforced in applyAssignment, not just in the UI.
+model CommitteeCountry {
+  id          String    @id @default(uuid())
+  committeeId String
+  country     String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([committeeId, country])
+  @@index([committeeId])
 }
 
 model Assignment {

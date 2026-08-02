@@ -174,12 +174,20 @@
    so a pointer user gets hover and nothing else — and the programmatic focus
    on close inherits the last input's modality, so it stays quiet after a click
    and still opens after a Tab. */
-.committee:hover .committee__card,
+/*
+   `.is-hovered`, set by committees.js, is the real hover state here — see the
+   note in that module. `:hover` stays as the fallback for touch and for no-JS,
+   where it is either moot or the best available, and is switched off the moment
+   the module says it has taken over.
+*/
+.committees__rail:not(.is-hover-synced) .committee:hover .committee__card,
+.committee.is-hovered .committee__card,
 .committee__card:has(:focus-visible) {
   border-color: rgb(var(--rgb-primary) / 0.55);
 }
 
-.committee:hover .committee__index,
+.committees__rail:not(.is-hover-synced) .committee:hover .committee__index,
+.committee.is-hovered .committee__index,
 .committee__card:has(:focus-visible) .committee__index {
   opacity: 0.16;
   transform: translateY(-2px);
@@ -215,7 +223,8 @@
   transition: transform var(--dur-slow) var(--ease-spring);
 }
 
-.committee:hover .committee__icon {
+.committees__rail:not(.is-hover-synced) .committee:hover .committee__icon,
+.committee.is-hovered .committee__icon {
   transform: translateY(-3px) scale(1.08);
 }
 
@@ -302,7 +311,8 @@
   transition: transform var(--dur-slow) var(--ease-expo);
 }
 
-.committee:hover .committee__reveal,
+.committees__rail:not(.is-hover-synced) .committee:hover .committee__reveal,
+.committee.is-hovered .committee__reveal,
 .committee__card:has(:focus-visible) .committee__reveal,
 .committee__reveal.is-open {
   transform: translate3d(0, 0, 0);
@@ -419,11 +429,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .committee.is-hovered .committee__index,
   .committee:hover .committee__index,
   .committee__card:has(:focus-visible) .committee__index {
     transform: none;
   }
 
+  .committee.is-hovered .committee__icon,
   .committee:hover .committee__icon {
     transform: none;
   }
