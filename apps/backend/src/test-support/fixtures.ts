@@ -218,6 +218,7 @@ export interface TableCounts {
   user: number
   delegate: number
   committee: number
+  committeeCountry: number
   assignment: number
   registration: number
   logisticsReq: number
@@ -228,11 +229,12 @@ export interface TableCounts {
 }
 
 export async function countAllTables(prisma: PrismaClient): Promise<TableCounts> {
-  const [user, delegate, committee, assignment, registration, logisticsReq, award, auditLog, setting, pushSub] =
+  const [user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub] =
     await Promise.all([
       prisma.user.count(),
       prisma.delegate.count(),
       prisma.committee.count(),
+      prisma.committeeCountry.count(),
       prisma.assignment.count(),
       prisma.registration.count(),
       prisma.logisticsReq.count(),
@@ -242,5 +244,5 @@ export async function countAllTables(prisma: PrismaClient): Promise<TableCounts>
       prisma.pushSub.count(),
     ])
 
-  return { user, delegate, committee, assignment, registration, logisticsReq, award, auditLog, setting, pushSub }
+  return { user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub }
 }

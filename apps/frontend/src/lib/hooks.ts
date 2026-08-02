@@ -1,9 +1,26 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query'
 import { apiFetch } from './api'
 import type {
-  AttendanceSummary, AuditEntry, Award, AwardInput, Committee, CommitteeDetail, DashboardData,
-  Delegate, DelegateInput, IngestResult, LogisticsRequest, Paginated, Registration,
-  RegistrationStats, ResetPreview, ResetResult, Settings, AuthUser,
+  AttendanceSummary,
+  AuditEntry,
+  AuthUser,
+  Award,
+  AwardInput,
+  Committee,
+  CommitteeDetail,
+  DashboardData,
+  Delegate,
+  DelegateInput,
+  IngestResult,
+  LogisticsRequest,
+  MatrixCommittee,
+  MatrixImportResult,
+  Paginated,
+  Registration,
+  RegistrationStats,
+  ResetPreview,
+  ResetResult,
+  Settings,
 } from '@/types/api'
 
 function qs(params: Record<string, string | number | boolean | undefined | null>): string {
@@ -364,6 +381,54 @@ export function useCsvImport() {
       void queryClient.invalidateQueries({ queryKey: ['delegates'] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
+  })
+}
+
+/* ------------------------------ Country matrix ---------------------------- */
+
+export function useMatrix() {
+  return useQuery({
+    queryKey: ['matrix'],
+    queryFn: () => apiFetch<{ items: MatrixCommittee[] }>('/matrix'),
+  })
+}
+
+/**
+ * Importing the matrix invalidates committees and delegates as well.
+ *
+ * Committees carry `matrixCountries`, which is what turns the allocation
+ * country field into a pick-list — a stale copy would leave an operator typing
+ * into a box the server has just started constraining.
+ */
+function invalidateMatrix(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ['matrix'] })
+  void queryClient.invalidateQueries({ queryKey: ['committees'] })
+  void queryClient.invalidateQueries({ queryKey: ['delegates'] })
+}
+
+export function useImportMatrix() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ csv, mode }: { csv: string; mode: 'merge' | 'replace' }) =>
+      apiFetch<MatrixImportResult>('/matrix/import', { method: 'POST', body: { csv, mode } }),
+    onSuccess: () => invalidateMatrix(queryClient),
+  })
+}
+
+export function useAddMatrixCountry() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ committeeId, country }: { committeeId: string; country: string }) =>
+      apiFetch<{ id: string; country: string }>('/matrix', { method: 'POST', body: { committeeId, country } }),
+    onSuccess: () => invalidateMatrix(queryClient),
+  })
+}
+
+export function useRemoveMatrixCountry() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/matrix/${id}`, { method: 'DELETE' }),
+    onSuccess: () => invalidateMatrix(queryClient),
   })
 }
 

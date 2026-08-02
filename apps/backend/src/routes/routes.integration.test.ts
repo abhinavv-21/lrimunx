@@ -943,4 +943,171 @@ describe.skipIf(!boot.ready)('API integration', () => {
       expect(after.status).toBe(RegistrationStatus.PENDING)
     })
   })
+
+  /* ======================================================================
+     The country matrix
+     ====================================================================== */
+  describe('the country matrix', () => {
+    /** Cleared between cases so each starts from "this committee has no matrix". */
+    async function clearMatrix() {
+      await prisma.committeeCountry.deleteMany({ where: { committeeId: fixtures.committeeId } })
+    }
+
+    async function addToMatrix(...countries: string[]) {
+      for (const country of countries) {
+        await prisma.committeeCountry.create({
+          data: { committeeId: fixtures.committeeId, country },
+        })
+      }
+    }
+
+    /** Places the fixture delegate, returning the raw response. */
+    function allocate(country: string) {
+      return api
+        .request('patch', `/api/v1/delegates/${fixtures.delegateId}`, { token: adminToken })
+        .send({ committeeId: fixtures.committeeId, country })
+    }
+
+    async function unallocate() {
+      await api
+        .request('patch', `/api/v1/delegates/${fixtures.delegateId}`, { token: adminToken })
+        .send({ committeeId: null })
+    }
+
+    it('leaves a committee with no matrix unconstrained', async () => {
+      // This is what lets one committee's matrix be imported without freezing
+      // the other five, so it is the case that matters most.
+      await clearMatrix()
+      const response = await allocate('Anywhere At All')
+      expect(response.status).toBe(200)
+      await unallocate()
+    })
+
+    it('refuses a country that is not on the matrix', async () => {
+      await clearMatrix()
+      await addToMatrix('France', 'China')
+
+      const response = await allocate('Atlantis')
+      expect(response.status).toBe(422)
+      const body = response.body as ApiErrorBody
+      expect(body.error).toContain('Atlantis')
+      expect(body.error).toContain('matrix')
+
+      // Refused, not partially applied.
+      const delegate = await prisma.delegate.findUniqueOrThrow({
+        where: { id: fixtures.delegateId },
+        include: { assignment: true },
+      })
+      expect(delegate.assignment).toBeNull()
+    })
+
+    it('accepts a country that is on it', async () => {
+      await clearMatrix()
+      await addToMatrix('France', 'China')
+
+      expect((await allocate('France')).status).toBe(200)
+      const delegate = await prisma.delegate.findUniqueOrThrow({
+        where: { id: fixtures.delegateId },
+        include: { assignment: true },
+      })
+      expect(delegate.assignment?.country).toBe('France')
+      await unallocate()
+    })
+
+    it('enforces it on the server, not only in the allocation screen', async () => {
+      // The UI offers a pick-list, but a stale tab or a direct PATCH goes
+      // through the same function — which is the point of checking here.
+      await clearMatrix()
+      await addToMatrix('France')
+
+      const response = await api
+        .request('patch', `/api/v1/delegates/${fixtures.delegateId}`, { token: adminToken })
+        .send({ committeeId: fixtures.committeeId, country: 'france' })
+      // Case matters: the matrix holds "France", and a delegate placed on
+      // "france" would be a second row past the unique index.
+      expect(response.status).toBe(422)
+    })
+
+    it('publishes the matrix on the committees payload', async () => {
+      await clearMatrix()
+      await addToMatrix('France', 'China')
+
+      const response = await api.request('get', '/api/v1/committees', { token: contributorToken })
+      expect(response.status).toBe(200)
+      const items = (response.body as { items: Array<{ id: string; matrixCountries: string[] }> }).items
+      const ours = items.find((c) => c.id === fixtures.committeeId)
+      expect(ours?.matrixCountries).toEqual(['China', 'France'])
+    })
+
+    it('lets a contributor read it but not change it', async () => {
+      await clearMatrix()
+      expect((await api.request('get', '/api/v1/matrix', { token: contributorToken })).status).toBe(200)
+
+      const write = await api
+        .request('post', '/api/v1/matrix', { token: contributorToken })
+        .send({ committeeId: fixtures.committeeId, country: 'France' })
+      expect(write.status).toBe(403)
+
+      const importing = await api
+        .request('post', '/api/v1/matrix/import', { token: contributorToken })
+        .send({ csv: 'ZZ,France' })
+      expect(importing.status).toBe(403)
+    })
+
+    it('imports a wide sheet and reports a committee it cannot find', async () => {
+      await clearMatrix()
+      const committee = await prisma.committee.findUniqueOrThrow({
+        where: { id: fixtures.committeeId },
+        select: { code: true },
+      })
+
+      const response = await api
+        .request('post', '/api/v1/matrix/import', { token: adminToken })
+        .send({ csv: `${committee.code},NoSuchCommittee\nFrance,Atlantis\nChina,\n`, mode: 'merge' })
+
+      expect(response.status).toBe(200)
+      const body = response.body as {
+        added: number
+        committees: string[]
+        issues: Array<{ reason: string }>
+      }
+      expect(body.added).toBe(2)
+      expect(body.committees).toEqual([committee.code])
+      // Never invents a committee — it cannot know the seat count.
+      expect(body.issues.some((i) => i.reason.includes('NoSuchCommittee'))).toBe(true)
+      expect(await prisma.committee.count({ where: { code: 'NoSuchCommittee' } })).toBe(0)
+    })
+
+    it('will not remove a country a delegate is sitting on', async () => {
+      await clearMatrix()
+      await addToMatrix('France', 'China')
+      expect((await allocate('France')).status).toBe(200)
+
+      const committee = await prisma.committee.findUniqueOrThrow({
+        where: { id: fixtures.committeeId },
+        select: { code: true },
+      })
+
+      // `replace` with a sheet that drops France. It has to stay: removing it
+      // would strand the delegate on a country the committee no longer has.
+      const response = await api
+        .request('post', '/api/v1/matrix/import', { token: adminToken })
+        .send({ csv: `${committee.code}\nChina\n`, mode: 'replace' })
+
+      expect(response.status).toBe(200)
+      const body = response.body as { kept: Array<{ country: string }>; removed: number }
+      expect(body.kept.map((k) => k.country)).toEqual(['France'])
+      expect(body.removed).toBe(0)
+
+      const remaining = await prisma.committeeCountry.findMany({
+        where: { committeeId: fixtures.committeeId },
+        select: { country: true },
+      })
+      expect(remaining.map((r) => r.country).sort()).toEqual(['China', 'France'])
+
+      await unallocate()
+      await clearMatrix()
+    })
+  })
+
 })

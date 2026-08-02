@@ -7,6 +7,7 @@ import { registrationsRouter } from './registrations.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { delegatesRouter } from './delegates.routes.js'
 import { committeesRouter } from './committees.routes.js'
+import { matrixRouter } from './matrix.routes.js'
 import { assignmentsRouter } from './assignments.routes.js'
 import { logisticsRouter } from './logistics.routes.js'
 import { attendanceRouter } from './attendance.routes.js'
@@ -36,6 +37,8 @@ apiRouter.use('/dashboard', dashboardRouter)
 apiRouter.use('/delegates', delegatesRouter)
 apiRouter.use('/registrations', registrationsRouter)
 apiRouter.use('/committees', committeesRouter)
+// Both roles read the matrix; every write inside is ADMIN-only and audited.
+apiRouter.use('/matrix', matrixRouter)
 apiRouter.use('/assignments', assignmentsRouter)
 apiRouter.use('/logistics-requests', logisticsRouter)
 apiRouter.use('/attendance', attendanceRouter)

@@ -105,10 +105,38 @@ export function AllocationRow({
       return
     }
     // Needs a country before it can be saved — send them straight there.
-    countryRef.current?.focus()
+    // `countryRef` is only attached to the free-text input; with a matrix the
+    // control is a <select>, so it is found by id instead.
+    const target =
+      countryRef.current ?? document.getElementById(`country-${delegate.id}`)
+    if (target instanceof HTMLElement) target.focus()
   }
 
   const countryListId = `taken-${delegate.id}`
+
+  /* --------------------------------------------------------------------
+     The country matrix, when the selected committee has one.
+
+     An EMPTY list means unconstrained, not "nothing available" — the server
+     reads it the same way. So this is the switch between a pick-list and the
+     old free-text box, and it is per committee rather than global.
+     -------------------------------------------------------------------- */
+  const matrixCountries = selected?.matrixCountries ?? []
+  const hasMatrix = matrixCountries.length > 0
+
+  /** Country → the delegate holding it, excluding this row's own allocation. */
+  const takenBy = useMemo(() => {
+    const map = new Map<string, string>()
+    selected?.takenCountries?.forEach((taken) => {
+      if (taken.delegateId !== delegate.id) map.set(taken.country, taken.delegateName)
+    })
+    return map
+  }, [selected, delegate.id])
+
+  /** Whether what is currently in the field is a country this committee has. */
+  const onMatrix = matrixCountries.some((name) => fold(name) === fold(country))
+
+  const openOnMatrix = matrixCountries.filter((name) => !takenBy.has(name)).length
 
   /**
    * Both choices on one line — "DISEC, then UNHRC".
@@ -203,34 +231,83 @@ export function AllocationRow({
         <label className="sr-only" htmlFor={`country-${delegate.id}`}>
           Country for {delegate.fullName}
         </label>
-        <Input
-          id={`country-${delegate.id}`}
-          ref={countryRef}
-          value={country}
-          list={selected ? countryListId : undefined}
-          placeholder={committeeId === '' ? 'Pick a committee' : 'Country'}
-          disabled={committeeId === '' || state === 'saving'}
-          aria-invalid={clash ? true : undefined}
-          onChange={(event) => setCountry(event.target.value)}
-          onBlur={() => void save(committeeId, country)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault()
-              event.currentTarget.blur()
-            }
-            if (event.key === 'Escape') {
-              setCountry(savedCountry)
-              event.currentTarget.blur()
-            }
-          }}
-        />
+
+        {/*
+          Two controls, and which one you get is decided by the data.
+
+          A committee with an imported matrix knows what countries are in the
+          room, so the honest control is a list of them — with the taken ones
+          disabled and named. The server enforces the same rule, so a free-text
+          box here would only be an invitation to type something that gets
+          refused on save.
+
+          A committee with NO matrix is unconstrained, and the text box stays.
+          That is what lets one committee's matrix be imported without freezing
+          the others, and it is why this keys off the array rather than off a
+          global setting.
+        */}
+        {hasMatrix ? (
+          <Select
+            id={`country-${delegate.id}`}
+            value={onMatrix || country === '' ? country : ''}
+            disabled={committeeId === '' || state === 'saving'}
+            onChange={(event) => {
+              setCountry(event.target.value)
+              void save(committeeId, event.target.value)
+            }}
+          >
+            <option value="">Unallocated</option>
+            {/*
+              An off-matrix country the delegate already holds is offered so the
+              select can show what is actually saved. Without it the control
+              would read "Unallocated" over a delegate who is placed — the row
+              would be lying about the database.
+            */}
+            {!onMatrix && country !== '' ? (
+              <option value={country}>{country} — not on the matrix</option>
+            ) : null}
+            {matrixCountries.map((name) => {
+              const heldBy = takenBy.get(name)
+              const mine = name === savedCountry
+              return (
+                <option key={name} value={name} disabled={Boolean(heldBy) && !mine}>
+                  {name}
+                  {heldBy && !mine ? ` — ${heldBy}` : ''}
+                </option>
+              )
+            })}
+          </Select>
+        ) : (
+          <Input
+            id={`country-${delegate.id}`}
+            ref={countryRef}
+            value={country}
+            list={selected ? countryListId : undefined}
+            placeholder={committeeId === '' ? 'Pick a committee' : 'Country'}
+            disabled={committeeId === '' || state === 'saving'}
+            aria-invalid={clash ? true : undefined}
+            onChange={(event) => setCountry(event.target.value)}
+            onBlur={() => void save(committeeId, country)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                event.currentTarget.blur()
+              }
+              if (event.key === 'Escape') {
+                setCountry(savedCountry)
+                event.currentTarget.blur()
+              }
+            }}
+          />
+        )}
 
         {/*
           A datalist of countries already taken. Suggesting them looks backwards
           until you use it: typing "Fr" and seeing France offered is exactly how
-          you discover the clash before committing to it.
+          you discover the clash before committing to it. Only for the free-text
+          case — the select already names its holders inline.
         */}
-        {selected ? (
+        {selected && !hasMatrix ? (
           <datalist id={countryListId}>
             {selected.takenCountries?.map((taken) => (
               <option key={taken.delegateId} value={taken.country}>
@@ -246,10 +323,19 @@ export function AllocationRow({
               <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
               {clash.country} is already {clash.delegateName}’s in {selected.code}
             </p>
+          ) : hasMatrix && country !== '' && !onMatrix ? (
+            <p className="mt-1 flex items-start gap-1.5 text-body-sm text-warning">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+              Not on {selected.code}’s matrix — add it there, or choose another
+            </p>
           ) : country.trim() !== '' ? (
             <p className="mt-1 flex items-start gap-1.5 text-body-sm text-success">
               <Check size={14} className="mt-0.5 shrink-0" aria-hidden />
               Free in {selected.code}
+            </p>
+          ) : hasMatrix ? (
+            <p className="mt-1 text-body-sm text-ink-secondary">
+              {openOnMatrix} of {matrixCountries.length} countries open
             </p>
           ) : (
             <p className="mt-1 text-body-sm text-ink-secondary">

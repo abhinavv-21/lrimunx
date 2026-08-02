@@ -371,6 +371,32 @@ export const csvImportSchema = z.object({
 })
 
 /* -------------------------------------------------------------------------- */
+/* Country matrix                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A matrix spreadsheet.
+ *
+ * Same ceiling as the delegate importer. A matrix is six columns of a few
+ * dozen countries — a couple of kilobytes — so anything approaching 2 MB is a
+ * wrong file, and saying so is kinder than timing out on it.
+ */
+export const matrixImportSchema = z.object({
+  csv: z.string().min(1, 'CSV content is empty').max(2_000_000),
+  /**
+   * `merge` is the default because it cannot lose anything. `replace` has to be
+   * asked for, since it is the one that removes countries.
+   */
+  mode: z.enum(['merge', 'replace']).default('merge'),
+})
+
+/** One country added to one committee by hand. */
+export const matrixCountrySchema = z.object({
+  committeeId: z.string().uuid('Expected a committee id'),
+  country: trimmed(1, 80),
+})
+
+/* -------------------------------------------------------------------------- */
 /* Public registrations                                                        */
 /* -------------------------------------------------------------------------- */
 

@@ -52,10 +52,13 @@ async function listWithCapacity() {
         orderBy: { country: 'asc' },
         select: { country: true, delegateId: true, delegate: { select: { fullName: true } } },
       },
+      // The committee's country matrix, if one has been imported. An empty
+      // array means unconstrained, not "none available" — see applyAssignment.
+      countries: { orderBy: { country: 'asc' }, select: { country: true } },
     },
   })
 
-  return committees.map(({ _count, assignments, ...committee }) => ({
+  return committees.map(({ _count, assignments, countries, ...committee }) => ({
     ...committee,
     filledSeats: _count.assignments,
     openRequests: _count.requests,
@@ -66,6 +69,7 @@ async function listWithCapacity() {
       delegateId: a.delegateId,
       delegateName: a.delegate.fullName,
     })),
+    matrixCountries: countries.map((c) => c.country),
   }))
 }
 
@@ -313,6 +317,9 @@ committeesRouter.post(
       awardCount: 0,
       seatsRemaining: committee.totalSeats,
       takenCountries: [],
+      // A brand-new committee has no matrix, so it is unconstrained until one
+      // is imported for it.
+      matrixCountries: [],
     })
   }),
 )

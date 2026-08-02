@@ -1,6 +1,6 @@
 import {
-  ClipboardList, FileClock, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings, UserCheck,
-  Users, UsersRound,
+  ClipboardList, FileClock, Globe2, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings,
+  UserCheck, Users, UsersRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '@/types/api'
@@ -26,6 +26,9 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/registrations', label: 'Registrations', icon: Inbox, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/allocations', label: 'Allocations', icon: ClipboardList, roles: ['ADMIN'] },
   { to: '/committees', label: 'Committees', icon: Landmark, roles: ['ADMIN', 'CONTRIBUTOR'] },
+  // Both roles read it — a contributor at the desk has to be able to answer
+  // "is Brazil in DISEC?". Every write inside is ADMIN-only.
+  { to: '/matrix', label: 'Country matrix', icon: Globe2, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'] },
   { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'] },
   { to: '/audit', label: 'Audit log', icon: FileClock, roles: ['ADMIN'] },

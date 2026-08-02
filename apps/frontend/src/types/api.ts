@@ -53,6 +53,56 @@ export interface Committee extends CommitteeRef {
   awardCount?: number
   /** Present on the list endpoint; drives the clash warning in Allocations. */
   takenCountries?: TakenCountry[]
+  /**
+   * The committee's country matrix, if one has been imported.
+   *
+   * EMPTY MEANS UNCONSTRAINED, not "no countries available" — a committee
+   * without a matrix still accepts any country, which is what lets one be
+   * imported without freezing the rest. Allocations reads it exactly that way:
+   * a list turns the country field into a pick-list, an empty one leaves the
+   * old free-text box.
+   */
+  matrixCountries?: string[]
+}
+
+/* -------------------------------------------------------------------------- */
+/* Country matrix                                                              */
+/* -------------------------------------------------------------------------- */
+
+/** One country on a committee's matrix, and whoever currently holds it. */
+export interface MatrixCountry {
+  id: string
+  country: string
+  delegateId: string | null
+  delegateName: string | null
+}
+
+export interface MatrixCommittee {
+  id: string
+  code: string
+  name: string
+  totalSeats: number
+  countries: MatrixCountry[]
+  /**
+   * Delegates sitting on a country the matrix does not contain.
+   *
+   * Only possible for allocations made BEFORE a matrix was imported — the
+   * server refuses to create one afterwards. Surfaced because it is the one
+   * thing an importer can leave broken, and silence would hide it.
+   */
+  offMatrix: Array<{ country: string; delegateId: string; delegateName: string }>
+}
+
+export interface MatrixImportResult {
+  mode: 'merge' | 'replace'
+  committees: string[]
+  added: number
+  removed: number
+  unchanged: number
+  /** Countries kept despite `replace`, because a delegate is sitting on them. */
+  kept: Array<{ committee: string; country: string; delegateName: string }>
+  issues: Array<{ row: number; column?: string; reason: string }>
+  longForm: boolean
 }
 
 /** One seat in a committee: the country and whoever holds it. */

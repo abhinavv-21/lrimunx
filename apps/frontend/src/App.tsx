@@ -7,6 +7,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { DelegatesPage } from '@/features/delegates/DelegatesPage'
 import { CommitteesPage } from '@/features/committees/CommitteesPage'
 import { CommitteeDetailPage } from '@/features/committees/CommitteeDetailPage'
+import { MatrixPage } from '@/features/matrix/MatrixPage'
 import { AllocationsPage } from '@/features/allocations/AllocationsPage'
 import { RegistrationsPage } from '@/features/registrations/RegistrationsPage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
@@ -58,6 +59,9 @@ export function App() {
         <Route path="delegates" element={<DelegatesPage />} />
         <Route path="committees" element={<CommitteesPage />} />
         <Route path="committees/:id" element={<CommitteeDetailPage />} />
+        {/* Reading is open to both roles; the page hides its own write
+            controls for a contributor, and the server enforces it. */}
+        <Route path="matrix" element={<MatrixPage />} />
         <Route path="logistics" element={<LogisticsPage />} />
         <Route path="attendance" element={<AttendancePage />} />
         {/*

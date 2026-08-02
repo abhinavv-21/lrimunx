@@ -87,6 +87,32 @@ async function applyAssignment(
   })
   if (!committee) throw ApiError.notFound('Committee not found')
 
+  /*
+    The country matrix, where there is one.
+
+    A committee with rows in CommitteeCountry accepts only those countries. A
+    committee with none is unconstrained and behaves exactly as it always did —
+    that is what lets one committee's matrix be imported without freezing the
+    others, and it is why this is a count rather than a flag on the committee.
+
+    Enforced here rather than only in the allocation UI, because the UI is a
+    convenience and this is the guarantee. A stale browser tab, a direct PATCH
+    or a CSV delegate import all arrive through this function.
+  */
+  const matrixSize = await tx.committeeCountry.count({ where: { committeeId: targetCommitteeId } })
+  if (matrixSize > 0) {
+    const onMatrix = await tx.committeeCountry.findUnique({
+      where: { committeeId_country: { committeeId: targetCommitteeId, country: targetCountry } },
+      select: { id: true },
+    })
+    if (!onMatrix) {
+      throw ApiError.unprocessable(
+        `${targetCountry} is not on ${committee.code}'s country matrix.`,
+        { committee: committee.code, country: targetCountry, matrixSize },
+      )
+    }
+  }
+
   // Only re-check capacity when the delegate is entering a committee they are
   // not already seated in.
   if (existing?.committeeId !== targetCommitteeId) {
