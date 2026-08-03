@@ -71,7 +71,7 @@ integrations/      Google Apps Script for Forms/Sheets ingestion
 DESIGN.md          the design system — read before touching any UI
 RUNNING.md         the three commands that start everything locally
 DEPLOYMENT.md      deploying all three surfaces to one domain on Vercel
-MIGRATION.md       moving off Vercel — and, later, onto the school server
+SCHOOL-SERVER.md   what it would take to run all of this on the school's own box
 ```
 
 ### Guarantees worth knowing
