@@ -319,6 +319,12 @@ const DONE_WITHOUT_PROOF = {
 /** Shown in place of the reference line if the name is somehow empty. */
 const REFERENCE_FALLBACK = 'Your full name, as entered in step 1'
 
+/** The same, for the recap above the payment blocks. */
+const RECAP_FALLBACK = {
+  name: 'the name you gave in step 1',
+  email: 'the email address you gave in step 1',
+}
+
 export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}) {
   const root = document.querySelector('[data-register]')
   if (!root) return
@@ -358,6 +364,8 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   const live = root.querySelector('[data-register-live]')
   const done = root.querySelector('[data-register-done]')
   const paymentReference = form.querySelector('[data-regpay-reference]')
+  const recapName = form.querySelector('[data-regpay-name]')
+  const recapEmail = form.querySelector('[data-regpay-email]')
 
   const inputs = new Map()
   FIELDS.forEach((field) => {
@@ -379,6 +387,8 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   let step = 1
   let busy = false
   let timer = null
+  /** True once the reader has given an answer that leaving would throw away. */
+  let dirty = false
 
   const announce = (message) => {
     if (!live || !message) return
@@ -411,15 +421,23 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     options: ACADEMIC_LEVELS,
     allowEmpty: false,
     showCodes: false,
+    // A listbox choice is an answer like any other — see markDirty.
+    onSelect: () => markDirty(),
   })
 
   const primary = initListbox(selectRoot('cs-committeePreference'), {
     announce,
-    onSelect: () => syncPreferences(),
+    onSelect: () => {
+      markDirty()
+      syncPreferences()
+    },
   })
   const second = initListbox(selectRoot('cs-committeePreference2'), {
     announce,
-    onSelect: () => syncPreferences(),
+    onSelect: () => {
+      markDirty()
+      syncPreferences()
+    },
   })
 
   /**
@@ -471,6 +489,9 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     endpoint: UPLOAD_ENDPOINT,
     announce,
     onChange: () => {
+      // A screenshot that has been chosen is an answer too, and re-uploading it
+      // is the most expensive thing on this page to lose.
+      markDirty()
       reconcileUploadError()
       paintSubmitState()
     },
@@ -736,14 +757,27 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
    * the name shown here.
    */
   function paintPaymentReference() {
-    if (!paymentReference) return
     const name = String(inputs.get('fullName')?.value ?? '').trim()
-    paymentReference.textContent = name || REFERENCE_FALLBACK
+    const email = String(inputs.get('email')?.value ?? '').trim()
+
+    if (paymentReference) paymentReference.textContent = name || REFERENCE_FALLBACK
+
+    /*
+      The recap above the payment blocks. The email is the point of it: a typo
+      there is unrecoverable and silent, because the API sends no confirmation
+      and a wrong address produces no bounce the delegate will ever see. Showing
+      it back to them where they are already reading is the cheapest catch
+      available, and step 2 is the last screen on which it can still be fixed.
+    */
+    if (recapName) recapName.textContent = name || RECAP_FALLBACK.name
+    if (recapEmail) recapEmail.textContent = email || RECAP_FALLBACK.email
   }
 
   function revealPanel(panel) {
     if (reduced || !gsap) return
-    const rows = panel.querySelectorAll('.regstep__intro, .regfield, .regpay__block, .regstep__foot')
+    const rows = panel.querySelectorAll(
+      '.regstep__intro, .regfield, .regpay__recap, .regpay__block, .regstep__foot',
+    )
     if (!rows.length) return
     gsap.fromTo(
       rows,
@@ -968,6 +1002,10 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   function showDone() {
     if (!done) return
 
+    // Sent. Nothing on this page is at risk any more, and a thank-you that
+    // argues with you on the way out is worse than no guard at all.
+    clearDirty()
+
     /* The registration can legitimately arrive without a screenshot — see
        SUBMIT_NOTE.fallback. When it does, the thank-you must not thank the
        reader for something they did not manage to send, and must not tell them
@@ -1041,7 +1079,10 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   // somebody their email is invalid while they are still typing the @.
   inputs.forEach((input, name) => {
     if (input.type === 'hidden') return
-    input.addEventListener('input', () => clearOne(name))
+    input.addEventListener('input', () => {
+      markDirty()
+      clearOne(name)
+    })
     input.addEventListener('blur', () => {
       if (busy) return
       const field = FIELD_BY_NAME.get(name)
@@ -1054,6 +1095,42 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
       if (error) error.textContent = message
     })
   })
+
+  /*
+    Warn before the page is left with answers in it.
+
+    Thirteen links on this page navigate away — the lockup, the four nav links,
+    the menu overlay, "Back to the conference site" (the tab stop immediately
+    before the first field), and the nav's own Register link, which points at
+    the page you are already on and so reloads the form empty. None of it is
+    stored anywhere until the registration is sent, so any of them threw away
+    twelve fields and an uploaded screenshot with no prompt.
+
+    The listener is attached only once something has actually been typed, and
+    removed the moment the registration is sent, so a delegate who reads the
+    page and leaves is never nagged and the thank-you never blocks.
+
+    `preventDefault()` is the modern spelling; `returnValue` is still required
+    by Safari and older WebKit. The browser picks its own wording — a custom
+    string has not been honoured anywhere for years.
+  */
+  function onBeforeUnload(event) {
+    event.preventDefault()
+    event.returnValue = ''
+    return ''
+  }
+
+  function markDirty() {
+    if (dirty || busy) return
+    dirty = true
+    window.addEventListener('beforeunload', onBeforeUnload)
+  }
+
+  function clearDirty() {
+    if (!dirty) return
+    dirty = false
+    window.removeEventListener('beforeunload', onBeforeUnload)
+  }
 
   syncPreferences()
   applyQueryPreselect()

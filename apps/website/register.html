@@ -948,6 +948,33 @@
                     checks each one by hand against the account.
                   </p>
 
+                  <!-- Shown before any of the payment steps, because this is the
+                       last moment a typo can still be caught. A wrong email
+                       address here is unrecoverable AND silent: the API sends no
+                       confirmation, so nothing bounces back to the delegate —
+                       they simply never hear from the secretariat and have no way
+                       to learn why. Both values are printed by register-page.js on
+                       every arrival at step 2; the text below is the fallback for
+                       a page whose script never ran. -->
+                  <div class="regpay__recap">
+                    <dl class="regpay__account regpay__recap-list">
+                      <div>
+                        <dt class="label">Registering as</dt>
+                        <dd data-regpay-name>the name you gave in step 1</dd>
+                      </div>
+                      <div>
+                        <dt class="label">Everything is sent to</dt>
+                        <dd data-regpay-email>the email address you gave in step 1</dd>
+                      </div>
+                    </dl>
+                    <p class="regpay__recap-note">
+                      Your allocation, the handbook and the schedule all go to that address, and it
+                      is the only way the secretariat can reach you. If it is wrong, press
+                      <strong>Back to details</strong> at the foot of this step and correct it
+                      before you pay.
+                    </p>
+                  </div>
+
                   <div class="regpay">
                     <!-- 01 — THE AMOUNT ------------------------------------ -->
                     <div class="regpay__block">

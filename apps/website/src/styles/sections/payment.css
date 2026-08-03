@@ -138,6 +138,36 @@
   transform: rotate(45deg);
 }
 
+/* --------------------------------------------------------------------------
+   THE RECAP
+
+   Reads as a quiet card rather than a step: it is not something to do, it is
+   something to check. Sits above the numbered blocks because the one thing it
+   guards against — a mistyped email — has to be caught before the delegate
+   leaves for their banking app, not after.
+   -------------------------------------------------------------------------- */
+.regpay__recap {
+  margin-block-end: clamp(var(--sp-6), 4vw, var(--sp-8));
+  padding: clamp(var(--sp-4), 3vw, var(--sp-5));
+  border: 1px solid var(--border-interactive);
+  border-radius: var(--radius-sm);
+}
+
+/* Two up as soon as there is room for the address to sit beside the name. */
+@media (min-width: 40rem) {
+  .regpay__recap-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5);
+  }
+}
+
+.regpay__recap-note {
+  max-inline-size: var(--measure);
+  margin-block: var(--sp-4) 0;
+  font-size: var(--fs-200);
+  color: var(--on-ground-muted);
+}
+
 .regpay__account {
   display: grid;
   gap: var(--sp-4);
