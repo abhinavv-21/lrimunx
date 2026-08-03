@@ -50,6 +50,36 @@ model User {
   auditLogs     AuditLog[]
   subscriptions PushSub[]
   reviewedRegs  Registration[] @relation("ReviewedBy")
+  sessions      Session[]
+}
+
+/// One live sign-in, so that signing out can actually end it.
+///
+/// Refresh tokens used to be purely stateless: the server checked the signature
+/// and the expiry and asked nothing else, which meant it had no way to say no to
+/// one it had already issued. Signing out cleared the browser and nothing more,
+/// so a copy taken from a shared school machine kept minting access tokens for
+/// the rest of its lifetime and there was no way to stop it — not by signing
+/// out, not by changing the password.
+///
+/// The token itself is never stored. `tokenHash` is a SHA-256 of it, so this
+/// table cannot be read back into a working credential, and it is the lookup
+/// key rather than the id because that is what arrives on the request.
+model Session {
+  id         String    @id @default(uuid())
+  userId     String
+  /// SHA-256 (hex) of the refresh token. Never the token.
+  tokenHash  String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Copied from the token's own exp, so expired rows can be swept.
+  expiresAt  DateTime
+  /// Set when the session is ended — by signing out, or by being rotated away.
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Delegate {

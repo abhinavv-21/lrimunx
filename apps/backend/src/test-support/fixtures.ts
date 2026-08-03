@@ -226,10 +226,11 @@ export interface TableCounts {
   auditLog: number
   setting: number
   pushSub: number
+  session: number
 }
 
 export async function countAllTables(prisma: PrismaClient): Promise<TableCounts> {
-  const [user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub] =
+  const [user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub, session] =
     await Promise.all([
       prisma.user.count(),
       prisma.delegate.count(),
@@ -242,7 +243,10 @@ export async function countAllTables(prisma: PrismaClient): Promise<TableCounts>
       prisma.auditLog.count(),
       prisma.setting.count(),
       prisma.pushSub.count(),
+      // Signing in creates one of these, so the census has to see them or a
+      // suite that logs in would leave rows behind and still report clean.
+      prisma.session.count(),
     ])
 
-  return { user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub }
+  return { user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub, session }
 }

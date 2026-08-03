@@ -583,6 +583,91 @@ describe.skipIf(!boot.ready)('API integration', () => {
   /* 3. The public endpoint's contract                                        */
   /* ======================================================================== */
 
+  describe('signing out actually ends the session', () => {
+    /*
+      The guarantee under test is the one a stateless refresh token could not
+      make: that the server can refuse a token it issued itself. Everything
+      here goes through HTTP, because that is the only way the client's copy of
+      a token can be replayed the way a stolen one would be.
+    */
+    async function signIn(username: string) {
+      const response = await api.request('post', '/api/v1/auth/login')
+        .send({ username, password: fixtures.password })
+      expect(response.status).toBe(200)
+      return response.body as { accessToken: string; refreshToken: string }
+    }
+
+    const refreshWith = (refreshToken: string) =>
+      api.request('post', '/api/v1/auth/refresh').send({ refreshToken })
+
+    const signOut = (accessToken: string, refreshToken?: string) =>
+      api.request('post', '/api/v1/auth/logout', { token: accessToken })
+        .send(refreshToken === undefined ? {} : { refreshToken })
+
+    it('refuses a refresh token once that session has been signed out', async () => {
+      const session = await signIn(fixtures.contributorUsername)
+
+      const before = await refreshWith(session.refreshToken)
+      expect(before.status).toBe(200)
+      const live = (before.body as { refreshToken: string }).refreshToken
+
+      expect((await signOut(session.accessToken, live)).status).toBe(204)
+
+      // The signature and the expiry are both still perfectly valid here. Only
+      // the session says no, which is the entire point of the table.
+      const after = await refreshWith(live)
+      expect(after.status).toBe(401)
+    })
+
+    it('spends the presented token, so a copy of it stops working', async () => {
+      const session = await signIn(fixtures.contributorUsername)
+
+      const first = await refreshWith(session.refreshToken)
+      expect(first.status).toBe(200)
+      const rotated = (first.body as { accessToken: string; refreshToken: string })
+
+      // This is the copy someone else might be holding. The real client has
+      // already moved on, and that alone kills it.
+      expect((await refreshWith(session.refreshToken)).status).toBe(401)
+
+      await signOut(rotated.accessToken, rotated.refreshToken)
+    })
+
+    it('signs out every session when it is not told which one', async () => {
+      const desk = await signIn(fixtures.contributorUsername)
+      const phone = await signIn(fixtures.contributorUsername)
+
+      expect((await signOut(desk.accessToken)).status).toBe(204)
+
+      for (const session of [desk, phone]) {
+        expect((await refreshWith(session.refreshToken)).status).toBe(401)
+      }
+    })
+
+    it('stores a hash, never the token', async () => {
+      const session = await signIn(fixtures.contributorUsername)
+
+      const rows = await prisma.session.findMany({ where: { userId: fixtures.contributorId } })
+      expect(rows.length).toBeGreaterThan(0)
+      expect(rows.some((row) => row.tokenHash === session.refreshToken)).toBe(false)
+      expect(rows.every((row) => /^[0-9a-f]{64}$/.test(row.tokenHash))).toBe(true)
+
+      await signOut(session.accessToken)
+    })
+
+    it('issues distinct tokens for two sign-ins in the same second', async () => {
+      // Without a jti the payload would be byte-identical and the two would
+      // collide on Session.tokenHash's unique index.
+      const [a, b] = await Promise.all([
+        signIn(fixtures.contributorUsername),
+        signIn(fixtures.contributorUsername),
+      ])
+      expect(a.refreshToken).not.toBe(b.refreshToken)
+
+      await signOut(a.accessToken)
+    })
+  })
+
   describe('the public registration endpoint', () => {
     it('answers a duplicate exactly as it answers a first submission', async () => {
       // A 201/200 split used to answer "has this person applied to LRI MUN X?"

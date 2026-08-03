@@ -85,7 +85,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiFetch('/auth/logout', { method: 'POST' })
+      /*
+        The refresh token goes with it, because that is the one the server can
+        end. Sent BEFORE tokens.clear(), or there would be nothing left to send.
+
+        Without it the server cannot tell which of this account's sessions is
+        being left and signs out all of them — correct, but it would take the
+        operator's other device down with this one.
+      */
+      await apiFetch('/auth/logout', {
+        method: 'POST',
+        body: { refreshToken: tokens.refresh() ?? '' },
+      })
     } catch {
       // Signing out must succeed locally even if the network call does not.
     }

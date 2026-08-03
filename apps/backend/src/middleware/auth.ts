@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import type { Role } from '@prisma/client'
@@ -15,6 +16,8 @@ export interface AccessTokenPayload {
 export interface RefreshTokenPayload {
   sub: string
   tokenType: 'refresh'
+  /** Makes every issued token distinct — see signRefreshToken. */
+  jti: string
 }
 
 export function signAccessToken(user: AuthUser): string {
@@ -27,8 +30,22 @@ export function signAccessToken(user: AuthUser): string {
   return jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_ACCESS_TTL } as jwt.SignOptions)
 }
 
+/*
+  `jti` is a random id, and it is load-bearing rather than decorative.
+
+  Without it the payload is {sub, tokenType, iat, exp} — so two tokens minted
+  for the same user in the same SECOND are byte-identical, and therefore hash
+  identically. Session.tokenHash is unique, so the second one would collide:
+  signing in on a phone and a laptop at once, or a double-tapped sign-in, would
+  fail on a constraint rather than issue a session. It also means one token can
+  now be revoked without revoking its twin.
+*/
 export function signRefreshToken(userId: string): string {
-  const payload: RefreshTokenPayload = { sub: userId, tokenType: 'refresh' }
+  const payload: RefreshTokenPayload = {
+    sub: userId,
+    tokenType: 'refresh',
+    jti: randomUUID(),
+  }
   return jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_TTL } as jwt.SignOptions)
 }
 
