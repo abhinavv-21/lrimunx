@@ -355,7 +355,11 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
      -------------------------------------------------------------------- */
   const selectRoot = (id) => form.querySelector(`[data-cselect][data-cselect-id="${id}"]`)
 
-  initListbox(selectRoot('cs-grade'), {
+  // Held rather than discarded: it has to be locked with the other two while a
+  // submission is in flight, or the academic level can still be changed after
+  // the values were read and the page ends up showing an answer that is not the
+  // one that was sent.
+  const gradeSelect = initListbox(selectRoot('cs-grade'), {
     announce,
     options: ACADEMIC_LEVELS,
     allowEmpty: false,
@@ -406,8 +410,10 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     if (!wanted) return
     if (!primary.selectByCode(wanted, { silent: true })) return
 
+    // markPreselected marks the field wrapper too — it is the element the tick
+    // is drawn from, and it has to be cleared by the same code that clears the
+    // rest of the preselected state.
     primary.markPreselected(PRESELECT_NOTICE)
-    fieldWrap('committeePreference')?.classList.add('is-preselected')
     syncPreferences()
   }
 
@@ -730,6 +736,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     inputs.forEach((input) => {
       if (input.type !== 'hidden') input.readOnly = state
     })
+    gradeSelect?.setReadOnly(state)
     primary?.setReadOnly(state)
     second?.setReadOnly(state)
     upload?.setReadOnly(state)
@@ -800,7 +807,11 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
       return
     }
 
-    if (!upload?.url) {
+    // `uploadsGivenUp()` is the same condition that unlocked the button and put
+    // SUBMIT_NOTE.fallback under it. Without it here the two disagree: the page
+    // says "you can send this now" and then refuses to, which is a form that
+    // cannot be submitted at all whenever the blob store is unreachable.
+    if (!upload?.url && !uploadsGivenUp()) {
       clearErrors()
       upload?.setError(MISSING_PROOF)
       showSummary(SUMMARY.payment, [[PAYMENT_FIELD.name, 'Upload the screenshot of your payment.']])
@@ -915,7 +926,13 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   // the thing that is missing. A greyed-out control that does nothing when you
   // press it is the least helpful state a form can hold.
   submit?.addEventListener('click', (event) => {
-    if (busy || upload?.url || uploadsGivenUp()) return
+    // `step === 1` first, because this button is the form's DEFAULT button and
+    // therefore what Enter in any step-1 field activates. Without the guard the
+    // preventDefault below cancelled that implicit submission before onSubmit
+    // could read it as "next": Enter did nothing at all, announced a missing
+    // payment screenshot to a reader who was still typing their name, and left
+    // the step-2 upload marked invalid before it had been reached.
+    if (busy || step === 1 || upload?.url || uploadsGivenUp()) return
     event.preventDefault()
     upload?.setError(MISSING_PROOF)
     announce(LIVE.missingProof)

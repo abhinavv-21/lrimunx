@@ -289,9 +289,25 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     const control = event.target.closest('a, button')
     if (control && !control.hasAttribute('data-committee-open')) return
 
-    if (press) {
-      const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y)
-      press = null
+    const from = press
+    press = null
+
+    /*
+      `event.detail` is the click count, and it is 0 for the click a browser
+      synthesises when Enter or Space is pressed on a button. Such a click also
+      reports clientX/clientY as 0, so measuring it against a press position
+      produces the distance from the card to the top-left corner of the viewport
+      — always past the slop, always read as a drag.
+
+      A press only stays on record when the gesture ended without a click on a
+      card: released over the gap between two cards, or dragged off the rail
+      entirely. After either of those, the next Enter on a card opened nothing
+      and the one after it worked, because the first had cleared the stale press.
+      A keyboard activation has no pointer travel to measure, so it is not
+      measured.
+    */
+    if (from && event.detail > 0) {
+      const moved = Math.hypot(event.clientX - from.x, event.clientY - from.y)
       if (moved > DRAG_SLOP) return
     }
 

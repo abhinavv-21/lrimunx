@@ -310,6 +310,17 @@
   transform: translateY(-3px) rotate(-12deg);
 }
 
+/* The bar has to sit ABOVE the overlay while the menu is open, because the
+   toggle in it is the only close control there is — it relabels itself to
+   "Close" the moment the menu opens. At --z-nav it was buried under an opaque
+   --z-overlay panel: the word was never painted, the button never hit-tested,
+   and on a phone (no Escape key, no backdrop — the overlay fills the viewport)
+   the menu could only be left by following one of its links. The overlay's
+   inner already reserves --nav-h of top padding for the bar to occupy. */
+.nav.is-menu-open {
+  z-index: calc(var(--z-overlay) + 1);
+}
+
 /* --- Full-screen overlay -------------------------------------------------- */
 .nav-overlay {
   position: fixed;

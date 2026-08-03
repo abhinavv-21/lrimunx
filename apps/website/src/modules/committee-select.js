@@ -98,7 +98,16 @@ export function initListbox(
   const list = root.querySelector('[data-cselect-list]')
   const valueEl = root.querySelector('[data-cselect-value]')
   const input = root.querySelector('[data-cselect-input]')
-  const notice = root.querySelector('[data-cselect-notice]')
+  /* The notice line is a sibling of this root, not a child of it — it is styled
+     as a `.regfield` row and has to sit at that level to get the layout. Looked
+     up from the field wrapper for that reason; a root-scoped query finds nothing
+     and every notice this control can raise (the ?committee= preselection, the
+     "second preference cleared" line) is then silently dropped. */
+  const field = root.closest('[data-field]')
+  const notice =
+    root.querySelector('[data-cselect-notice]') ??
+    field?.querySelector('[data-cselect-notice]') ??
+    null
   if (!button || !list || !valueEl || !input) return null
 
   const idBase = root.dataset.cselectId || input.name || 'cselect'
@@ -264,7 +273,12 @@ export function initListbox(
 
     const changed = index !== selectedIndex
     selectedIndex = index
+    // Cleared from BOTH, because the mark is painted from the field wrapper
+    // (`.regfield.is-preselected .regfield__label::after`). Dropping it from the
+    // root alone left the tick standing beside a value the reader chose
+    // themselves, which is the one thing the tick is there to deny.
     root.classList.remove('is-preselected')
+    field?.classList.remove('is-preselected')
     hideNotice()
     paintSelection()
 
@@ -490,6 +504,7 @@ export function initListbox(
     /** Mark this control as having been filled in from the query string. */
     markPreselected(text) {
       root.classList.add('is-preselected')
+      field?.classList.add('is-preselected')
       showNotice(text)
     },
 
