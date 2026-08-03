@@ -221,9 +221,25 @@ const SUMMARY = {
     title: 'That could not be accepted',
     copy: 'The secretariat could not accept this registration as it stands. Everything you typed is still here.',
   },
+  /*
+    The wait is NOT "a minute or two".
+
+    The API's burst limiter is five submissions per fifteen minutes in a fixed
+    window (public.routes.ts, BURST_WINDOW_MS / BURST_LIMIT), so the real wait
+    is anything up to a quarter of an hour — measured at ten minutes on the
+    first attempt that tripped it. Promising two minutes bought a delegate on
+    deadline night three more refusals and then the belief that the form was
+    broken. The window cannot be read from here: the API sends RateLimit-Reset
+    but does not put it in CORS `exposedHeaders`, so a cross-origin page cannot
+    see it. Until it does, the honest thing is the ceiling.
+
+    It also names the shared-connection case, which is how most people meet
+    this: a school lab behind one address, where the fifth registration of the
+    evening refuses the sixth delegate on their very first try.
+  */
   rateLimited: {
     title: 'Too many attempts just now',
-    copy: 'Several registrations have been sent from this connection in the last few minutes. There is nothing wrong with your details — wait a minute or two and send it again.',
+    copy: 'Several registrations have already been sent from this connection, so the form is holding this one back. On a shared school or home connection that can happen on your first try — there is nothing wrong with your details. Keep this page open, everything you typed is still here, and press Send again in ten or fifteen minutes.',
   },
   offline: {
     title: 'That did not go through',
@@ -273,6 +289,36 @@ const UPLOAD_FAILURES_BEFORE_FALLBACK = 2
 
 const MISSING_PROOF = 'Add the screenshot of your payment before sending this.'
 
+/**
+ * Replaces the upload module's own failure message once the fallback opens.
+ *
+ * payment-upload.js writes "check your connection and try again" after every
+ * failure, which is right the first time and wrong the second: by then the
+ * submit button has unlocked and the note under it says the opposite — send it
+ * now, the screenshot can follow by email. The reader was left holding two
+ * instructions that contradicted each other, and the one in the error was the
+ * louder of the two.
+ */
+const UPLOAD_GAVE_UP =
+  'The screenshot still could not be uploaded. You can send your registration without it — the secretariat will ask you for it by email.'
+
+/**
+ * The thank-you, when the registration went without its screenshot.
+ *
+ * The default copy says the screenshot is with the secretariat and that nothing
+ * else is needed. Down the fallback path neither is true, and a delegate who
+ * believes both has an unpaid-looking registration and no reason to act on it.
+ */
+const DONE_WITHOUT_PROOF = {
+  copy: 'Your details are with the LRI MUN X secretariat. Your payment screenshot did not upload, so it still has to reach them — email it to the address in the footer below, quoting the email address you registered with.',
+  proofTitle: 'Send your payment screenshot',
+  proofCopy:
+    'It could not be uploaded from this page. Email it to the secretariat at the address in the footer; screenshots are matched against the account by hand.',
+}
+
+/** Shown in place of the reference line if the name is somehow empty. */
+const REFERENCE_FALLBACK = 'Your full name, as entered in step 1'
+
 export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}) {
   const root = document.querySelector('[data-register]')
   if (!root) return
@@ -311,6 +357,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   const summaryList = form.querySelector('[data-register-summary-list]')
   const live = root.querySelector('[data-register-live]')
   const done = root.querySelector('[data-register-done]')
+  const paymentReference = form.querySelector('[data-regpay-reference]')
 
   const inputs = new Map()
   FIELDS.forEach((field) => {
@@ -423,12 +470,30 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
   const upload = initPaymentUpload(root.querySelector('[data-upload]'), {
     endpoint: UPLOAD_ENDPOINT,
     announce,
-    onChange: () => paintSubmitState(),
+    onChange: () => {
+      reconcileUploadError()
+      paintSubmitState()
+    },
   })
 
   /** True once uploading has failed enough times to stop being the only route. */
   function uploadsGivenUp() {
     return (upload?.failures ?? 0) >= UPLOAD_FAILURES_BEFORE_FALLBACK
+  }
+
+  /**
+   * Bring the upload's error into line with the note under the submit button.
+   *
+   * Called from onChange, which the upload module fires AFTER it has written
+   * its own message, so this overwrites rather than races. setError does not
+   * call back, so there is no loop. The re-announcement is deliberate: the
+   * module has just read the superseded message into the live region, and the
+   * last thing announced should be the one that is still true.
+   */
+  function reconcileUploadError() {
+    if (!upload || upload.url || !uploadsGivenUp()) return
+    upload.setError(UPLOAD_GAVE_UP)
+    announce(UPLOAD_GAVE_UP)
   }
 
   function paintSubmitState() {
@@ -658,6 +723,24 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     })
   }
 
+  /**
+   * Print the reference the payment should carry — which is the name typed one
+   * step earlier.
+   *
+   * "Your full name, as entered in step 1" is an instruction to go and look,
+   * and step 1 is hidden by the time it is read: a delegate halfway through a
+   * transfer in their banking app had to come back, press Back to details,
+   * scroll, read, and return. The page already holds the answer.
+   *
+   * Re-run on every arrival at step 2, so a name corrected on the way back is
+   * the name shown here.
+   */
+  function paintPaymentReference() {
+    if (!paymentReference) return
+    const name = String(inputs.get('fullName')?.value ?? '').trim()
+    paymentReference.textContent = name || REFERENCE_FALLBACK
+  }
+
   function revealPanel(panel) {
     if (reduced || !gsap) return
     const rows = panel.querySelectorAll('.regstep__intro, .regfield, .regpay__block, .regstep__foot')
@@ -686,6 +769,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     })
 
     paintSteps()
+    if (step === 2) paintPaymentReference()
 
     const panel = panels.get(step)
     if (panel) revealPanel(panel)
@@ -883,6 +967,19 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
      -------------------------------------------------------------------- */
   function showDone() {
     if (!done) return
+
+    /* The registration can legitimately arrive without a screenshot — see
+       SUBMIT_NOTE.fallback. When it does, the thank-you must not thank the
+       reader for something they did not manage to send, and must not tell them
+       nothing else is needed. */
+    if (!upload?.url) {
+      const copy = done.querySelector('[data-regdone-copy]')
+      const proofTitle = done.querySelector('[data-regdone-proof-title]')
+      const proofCopy = done.querySelector('[data-regdone-proof-copy]')
+      if (copy) copy.textContent = DONE_WITHOUT_PROOF.copy
+      if (proofTitle) proofTitle.textContent = DONE_WITHOUT_PROOF.proofTitle
+      if (proofCopy) proofCopy.textContent = DONE_WITHOUT_PROOF.proofCopy
+    }
 
     form.hidden = true
     if (steps) steps.hidden = true

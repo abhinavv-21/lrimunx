@@ -596,9 +596,12 @@
                         />
                         <span class="regfield__mount" aria-hidden="true"></span>
                       </span>
+                      <!-- Says "how many" outright. The field takes a NUMBER and
+                           nothing else, and a hint that opens with a noun invites
+                           the noun to be typed into it. -->
                       <p class="regfield__hint" id="rp-hint-munsAttended">
-                        Conferences you have sat in before this one. First-timers are welcome —
-                        leave it at 0.
+                        How many conferences you have sat in before this one. First-timers are
+                        welcome — put 0, or leave it blank.
                       </p>
                       <p
                         class="regfield__error"
@@ -625,8 +628,14 @@
                         />
                         <span class="regfield__mount" aria-hidden="true"></span>
                       </span>
+                      <!-- Same reason as MUNs attended, and worse before: this hint
+                           used to be a list of award NAMES on a field that only
+                           accepts 0–99, so the obvious thing to type into it —
+                           "Best Delegate" — was refused. "Gavelled" also went, as
+                           jargon a first-time delegate has no way to know. -->
                       <p class="regfield__hint" id="rp-hint-awardsWon">
-                        Best Delegate, High Commendation, Verbal Mention — anything gavelled.
+                        How many you have won. Best Delegate, High Commendation and Verbal Mention
+                        all count.
                       </p>
                       <p
                         class="regfield__error"
@@ -907,8 +916,13 @@
                       </svg>
                       <span class="btn__mount" aria-hidden="true"></span>
                     </button>
+                    <!-- The old line stopped one clause short of the truth. Answers
+                         survive the trip to step 2 and back, but nothing is stored
+                         anywhere until the registration is sent, and "your answers
+                         are kept" read as "this is saved" to anyone about to close
+                         a tab. -->
                     <p class="regstep__note label">
-                      Your answers are kept as you move between steps.
+                      Your answers are kept between steps — but not if you leave this page.
                     </p>
                   </div>
                 </fieldset>
@@ -926,8 +940,10 @@
                     <span class="regstep__legend-title">Payment</span>
                   </legend>
 
+                  <!-- "the code below" was ambiguous on a page that also asks for a
+                       referral code one step earlier. It is the QR code. -->
                   <p class="regstep__intro">
-                    Registration is confirmed once the delegate fee is paid. Pay with the code
+                    Registration is confirmed once the delegate fee is paid. Pay with the QR code
                     below, then upload the screenshot your payment app gives you — the secretariat
                     checks each one by hand against the account.
                   </p>
@@ -992,9 +1008,15 @@
                               <dt class="label">Account / wallet number</dt>
                               <dd>To be announced</dd>
                             </div>
+                            <!-- The reference is the name that was typed one step
+                                 ago, and the page already has it. Printing it here
+                                 rather than describing it saves a trip back to
+                                 step 1 in the middle of a payment — register-page.js
+                                 fills this the moment step 2 opens. The text below
+                                 is the fallback for a page whose script never ran. -->
                             <div>
                               <dt class="label">Reference to use</dt>
-                              <dd>Your full name, as entered in step 1</dd>
+                              <dd data-regpay-reference>Your full name, as entered in step 1</dd>
                             </div>
                           </dl>
                         </div>
@@ -1164,7 +1186,13 @@
               <div class="regdone" tabindex="-1" hidden data-register-done>
                 <p class="label regdone__eyebrow">Registration received</p>
                 <h2 class="regdone__title">You are on the list.</h2>
-                <p class="regdone__copy">
+                <!-- The wording here assumes a screenshot went up, and until now it
+                     said so even when the upload had failed twice and the reader
+                     was let through without one — the page promised "nothing else
+                     is needed" to somebody who still owed the secretariat their
+                     proof of payment. register-page.js swaps this paragraph, and
+                     step 01 below, when upload.url is empty. -->
+                <p class="regdone__copy" data-regdone-copy>
                   Your details and your payment screenshot are with the LRI MUN X secretariat.
                   Nothing else is needed from you today.
                 </p>
@@ -1173,9 +1201,11 @@
                   <li>
                     <span class="regdone__next-index">01</span>
                     <span class="regdone__next-body">
-                      <span class="regdone__next-title">The secretariat checks your payment</span>
+                      <span class="regdone__next-title" data-regdone-proof-title
+                        >The secretariat checks your payment</span
+                      >
                       <!-- PLACEHOLDER — confirm the real turnaround with the OC. -->
-                      <span class="regdone__next-copy"
+                      <span class="regdone__next-copy" data-regdone-proof-copy
                         >Screenshots are matched against the account by hand, usually within a few
                         days of arriving.</span
                       >
@@ -1206,10 +1236,18 @@
                   </li>
                 </ol>
 
+                <!-- "Nothing is entered twice" was a promise the API only keeps
+                     when the email address matches: the duplicate check on
+                     /public/register keys on email alone, so re-registering to
+                     correct a MISTYPED address creates a second row rather than
+                     replacing the first. Say what is actually true, and say
+                     plainly that the form is not the way to change an answer —
+                     re-submitting it looks like it worked and changes nothing. -->
                 <p class="regdone__foot">
-                  If anything above needs correcting, or you registered twice by accident, write to
-                  the secretariat at the address in the footer and quote the email you used —
-                  nothing is entered twice.
+                  Sending this form again with the same email address will not add a second entry —
+                  but it will not change what you have already sent either. If anything above needs
+                  correcting, or you think you registered twice, write to the secretariat at the
+                  address in the footer and quote the email address you used.
                 </p>
 
                 <a class="btn btn--ghost-dark regdone__cta" href="./#committees">
