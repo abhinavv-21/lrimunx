@@ -1,0 +1,20 @@
+# Cloudflare Pages routing — the equivalent of the "rewrites" block in
+# vercel.json, minus the API.
+#
+# Status 200 means REWRITE, not redirect: the URL in the address bar does not
+# change, the file is just served from somewhere else. A 301/302 here would put
+# ".html" back in front of the delegate, which is the thing these exist to
+# remove.
+#
+# Pages serves a real file if one exists at the path before it consults this
+# file, so "/admin/*" cannot swallow "/admin/assets/...". That is also why
+# there is no explicit assets rule, unlike the Vercel regex which had to
+# exclude them by hand.
+#
+# There is deliberately NO /api rule. Cloudflare Pages has no Express to route
+# to; while the API stays on Vercel, the two front ends reach it by absolute
+# URL through VITE_API_BASE_URL. See MIGRATION.md.
+
+/register    /register.html      200
+/admin       /admin/index.html   200
+/admin/*     /admin/index.html   200
