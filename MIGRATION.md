@@ -1,5 +1,21 @@
 # Moving off Vercel
 
+> **Read [CLOUDFLARE.md](./CLOUDFLARE.md) first — it supersedes this document
+> where the two disagree.**
+>
+> Three things changed after this was written:
+>
+> 1. **Vercel is being kept**, as a backup that keeps receiving updates. So
+>    `api/index.ts`, `vercel.json` and `scripts/build-vercel.mjs` are NOT
+>    deleted — the table below saying "deleted, not ported" is out of date. The
+>    Cloudflare build lives beside them as `npm run pages-build`.
+> 2. **The Pages half is done.** `deploy/cloudflare/_redirects` and `_headers`
+>    exist, and §4 below is built rather than planned.
+> 3. **The API cannot go on Cloudflare Workers on a free plan.** Measured:
+>    signing in costs 340 ms of CPU against a 10 ms free-tier budget. The
+>    "Node host" this document recommends is still the right answer, and
+>    CLOUDFLARE.md lists the free ones.
+
 Written against the repository as it stands, not from a template — every file
 path below is real and every claim was checked.
 
