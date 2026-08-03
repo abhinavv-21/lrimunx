@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Check } from 'lucide-react'
 import { Select, Input } from '@/components/ui/Field'
 import { SaveIndicator, type SaveState } from '@/components/ui/SaveIndicator'
-import { ApiError } from '@/lib/api'
+import { errorMessage } from '@/lib/api'
 import { useUpdateDelegate } from '@/lib/hooks'
 import { cn, munExperience } from '@/lib/utils'
 import type { Committee, Delegate } from '@/types/api'
@@ -60,6 +60,27 @@ export function AllocationRow({
 
   const update = useUpdateDelegate()
 
+  /**
+   * The id of the control that held focus when a save disabled it.
+   *
+   * Both controls are disabled while `state === 'saving'`, and a browser blurs
+   * an element the moment it becomes disabled — focus lands on `<body>` and
+   * stays there. On a screen whose whole purpose is placing fifty people in a
+   * row, that meant every single save threw the operator back to the top of the
+   * document: the next Tab started at the skip link rather than the next row.
+   * Remembered here and given back once the control is live again.
+   */
+  const focusOnRelease = useRef<string | null>(null)
+
+  /**
+   * Whether the committee select was last touched by a key rather than a
+   * pointer. A closed native `<select>` commits on every arrow press, so
+   * jumping focus to the country field on `change` made the list impossible to
+   * browse from the keyboard — one ArrowDown chose the first committee and tore
+   * focus out of the control before a second press could reach the next one.
+   */
+  const committeeViaKeyboard = useRef(false)
+
   // Re-sync when the row is replaced by a refetch, but never mid-edit.
   useEffect(() => {
     if (state === 'saving') return
@@ -67,6 +88,17 @@ export function AllocationRow({
     setCountry(delegate.assignment?.country ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delegate.assignment?.committee.id, delegate.assignment?.country])
+
+  // Hand focus back to whichever control the save took it from — but only if
+  // nothing else has claimed it, so a mouse user who moved on is left alone.
+  useEffect(() => {
+    if (state === 'saving') return
+    const id = focusOnRelease.current
+    if (id === null) return
+    focusOnRelease.current = null
+    if (document.activeElement !== document.body) return
+    document.getElementById(id)?.focus()
+  }, [state])
 
   const savedCommitteeId = delegate.assignment?.committee.id ?? ''
   const savedCountry = delegate.assignment?.country ?? ''
@@ -90,6 +122,13 @@ export function AllocationRow({
     const target = committees.find((committee) => committee.id === nextCommitteeId)
     if (nextCommitteeId !== '' && findClash(target, nextCountry, delegate.id)) return
 
+    const active = document.activeElement
+    focusOnRelease.current =
+      active instanceof HTMLElement &&
+      (active.id === `committee-${delegate.id}` || active.id === `country-${delegate.id}`)
+        ? active.id
+        : null
+
     setState('saving')
     setError(null)
     try {
@@ -102,7 +141,7 @@ export function AllocationRow({
       setTimeout(() => setState((s) => (s === 'saved' ? 'idle' : s)), 1600)
     } catch (caught) {
       setState('error')
-      setError(caught instanceof ApiError ? caught.message : 'Could not save.')
+      setError(errorMessage(caught, 'Could not save.'))
       // Put the controls back to the truth held by the server.
       setCommitteeId(savedCommitteeId)
       setCountry(savedCountry)
@@ -123,6 +162,13 @@ export function AllocationRow({
     /*
       Needs a country before it can be saved — send them straight there.
 
+      Only for a pointer-driven change. A closed native <select> fires `change`
+      on every arrow press, so doing this for keyboard changes made the
+      committee list unbrowsable: the first ArrowDown committed to the first
+      committee and moved focus off the control, and the operator could never
+      arrow to the second. From the keyboard the country field is one Tab away
+      and stays where they left it.
+
       Deferred past the render this change causes, and looked up by id rather
       than through the ref. Picking a committee can swap the country control
       from the free-text input to the matrix pick-list, and at this point in
@@ -131,6 +177,7 @@ export function AllocationRow({
       up on <body> and the `??` fallback never ran. Both controls carry the
       same id, so one lookup after the swap works for either.
     */
+    if (committeeViaKeyboard.current) return
     const id = `country-${delegate.id}`
     requestAnimationFrame(() => {
       const target = document.getElementById(id)
@@ -239,6 +286,12 @@ export function AllocationRow({
           id={`committee-${delegate.id}`}
           value={committeeId}
           disabled={state === 'saving'}
+          onKeyDown={() => {
+            committeeViaKeyboard.current = true
+          }}
+          onPointerDown={() => {
+            committeeViaKeyboard.current = false
+          }}
           onChange={(event) => handleCommitteeChange(event.target.value)}
         >
           <option value="">Unallocated</option>

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Clock } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
@@ -7,7 +7,7 @@ import { ApiError } from '@/lib/api'
 import { asset } from '@/lib/utils'
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, sessionExpired } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -71,6 +71,25 @@ export function LoginPage() {
           <p className="mt-4 text-body text-ink-secondary">
             Use the account issued to you by the secretariat.
           </p>
+
+          {/*
+            An expired token drops you here from wherever you were working. Say
+            so: an unexplained sign-in screen mid-task reads as the hub having
+            broken, and the operator's first instinct is to doubt their
+            credentials rather than to sign back in.
+          */}
+          {sessionExpired ? (
+            <div
+              role="status"
+              className="mt-4 flex items-start gap-2.5 rounded-card border border-info bg-info-wash p-3.5"
+            >
+              <Clock size={18} className="mt-0.5 shrink-0 text-info" aria-hidden />
+              <p className="text-body-sm text-ink">
+                Your session ended. Sign in again to pick up where you left off — nothing already
+                saved was lost.
+              </p>
+            </div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4" noValidate>
             {error ? (

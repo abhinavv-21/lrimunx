@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseCsv } from './ingestion.js'
+import { parseCsv, reportIgnoredPlacementColumns, type IngestResult } from './ingestion.js'
 import { ApiError } from './errors.js'
 import { ingestRowSchema } from '../schemas/index.js'
 
@@ -100,5 +100,38 @@ describe('ingestRowSchema', () => {
       schoolName: 'The Lawrence School, Sanawar (Himachal Pradesh Residential Campus)',
     })
     expect(result.success).toBe(true)
+  })
+})
+
+describe('reportIgnoredPlacementColumns', () => {
+  const blank = (): IngestResult => ({
+    created: 0, updated: 0, skipped: 0, issues: [], phoneCollisions: [],
+  })
+
+  it('names the allocation columns it dropped', () => {
+    // The case that loses data: an operator exports the roster, edits it in a
+    // spreadsheet, imports it back, and every placement is discarded.
+    const result = blank()
+    reportIgnoredPlacementColumns(parseCsv(
+      'fullName,email,phone,schoolName,grade,committee,country\n' +
+      "Aarav Menon,aarav@example.edu.in,+91 98200 41773,Ridge International,11,UNSC,France\n",
+    ), result)
+
+    expect(result.issues).toHaveLength(1)
+    expect(result.issues[0]?.reason).toContain('"committee"')
+    expect(result.issues[0]?.reason).toContain('"country"')
+    expect(result.issues[0]?.reason).toContain('Allocations')
+  })
+
+  it('stays quiet about a committee PREFERENCE, which is read', () => {
+    // "committee preference" is an alias of a field the importer stores, so it
+    // must not be reported as dropped.
+    const result = blank()
+    reportIgnoredPlacementColumns(parseCsv(
+      'Full Name,Email Address,Phone Number,School,Grade,Committee Preference\n' +
+      "Aarav Menon,aarav@example.edu.in,+91 98200 41773,Ridge International,11,DISEC\n",
+    ), result)
+
+    expect(result.issues).toEqual([])
   })
 })

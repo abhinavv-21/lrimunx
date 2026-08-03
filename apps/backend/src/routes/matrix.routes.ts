@@ -53,10 +53,26 @@ matrixRouter.get(
 
       return {
         ...committee,
-        /** Allocated to a country that is NOT on the matrix. See below. */
-        offMatrix: assignments
-          .filter((a) => !countries.some((c) => c.country === a.country))
-          .map((a) => ({ country: a.country, delegateId: a.delegate.id, delegateName: a.delegate.fullName })),
+        /**
+         * Allocated to a country that is NOT on the matrix.
+         *
+         * Only meaningful once the committee HAS a matrix. With no rows every
+         * country is unconstrained and therefore accepted — but this listed
+         * every assignment anyway, so an unconstrained committee showed a
+         * warning naming its own delegates and telling the operator to add the
+         * country or move them, directly under the line saying any country is
+         * accepted. Nothing was wrong and there was nothing to fix.
+         */
+        offMatrix:
+          countries.length === 0
+            ? []
+            : assignments
+                .filter((a) => !countries.some((c) => c.country === a.country))
+                .map((a) => ({
+                  country: a.country,
+                  delegateId: a.delegate.id,
+                  delegateName: a.delegate.fullName,
+                })),
         countries: countries.map((c) => {
           const holder = held.get(c.country)
           return {
@@ -103,6 +119,13 @@ matrixRouter.post(
     const actor = currentUser(req)
 
     const parsed = parseMatrixCsv(csv)
+
+    // Refused before a single row is written — see the quote-error note in
+    // parseMatrixCsv for why this one class of problem cannot be partial.
+    if (parsed.fatal) {
+      throw ApiError.unprocessable(parsed.fatal, { issues: parsed.issues })
+    }
+
     const issues: MatrixIssue[] = [...parsed.issues]
 
     const committees = await prisma.committee.findMany({ select: { id: true, code: true, name: true } })

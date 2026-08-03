@@ -4,7 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, Select, Textarea } from '@/components/ui/Field'
 import { useImportMatrix } from '@/lib/hooks'
-import { ApiError } from '@/lib/api'
+import { errorMessage } from '@/lib/api'
 import type { MatrixImportResult } from '@/types/api'
 
 /**
@@ -41,7 +41,7 @@ export function MatrixImportDialog({
     try {
       setResult(await importMatrix.mutateAsync({ csv, mode }))
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'The matrix could not be imported.')
+      setError(errorMessage(caught, 'The matrix could not be imported.'))
     }
   }
 
@@ -56,7 +56,7 @@ export function MatrixImportDialog({
   }
 
   return (
-    <Modal open={open} onOpenChange={close} title="Import the country matrix">
+    <Modal open={open} onOpenChange={close} title="Import the country matrix" holdsInput>
       <div className="flex flex-col gap-4">
         <p className="text-body-sm text-ink-secondary">
           One column per committee, countries listed down each. The heading must match a committee's

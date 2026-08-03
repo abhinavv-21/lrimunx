@@ -4,6 +4,7 @@ import { useAuth } from '@/providers/AuthProvider'
 import { useToast } from '@/providers/ToastProvider'
 import {
   useApproveRegistration,
+  useDebounced,
   useDeleteRegistration,
   useRegistrationStats,
   useRegistrations,
@@ -46,6 +47,7 @@ function RejectDialog({
           ? `${registration.fullName} from ${registration.schoolName} will not be added to the roster.`
           : ''
       }
+      holdsInput
     >
       <div className="flex flex-col gap-4">
         <Field label="Reason" hint="Kept on the record so the decision can be explained later.">
@@ -85,12 +87,14 @@ export function RegistrationsPage() {
   const [rejecting, setRejecting] = useState<Registration | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Registration | null>(null)
 
+  const debouncedSearch = useDebounced(search)
+
   const filters = useMemo(
-    () => ({ ...(status ? { status } : {}), ...(search ? { search } : {}) }),
-    [status, search],
+    () => ({ ...(status ? { status } : {}), ...(debouncedSearch ? { search: debouncedSearch } : {}) }),
+    [status, debouncedSearch],
   )
 
-  const { data, isPending, isError, error, refetch } = useRegistrations(filters)
+  const { data, isPending, isFetching, isError, error, refetch } = useRegistrations(filters)
   const { data: stats } = useRegistrationStats()
   const approve = useApproveRegistration()
   const reject = useRejectRegistration()
@@ -223,7 +227,19 @@ export function RegistrationsPage() {
         <>
           <p className="mb-3 font-mono text-data text-ink-secondary" aria-live="polite">
             {data.total} {data.total === 1 ? 'registration' : 'registrations'}
+            {isFetching ? ' · updating…' : ''}
           </p>
+
+          {/* The queue is capped at 200 per fetch and there is no next page.
+              On the night a deadline closes that is a realistic number, and
+              silently stopping at 200 would leave real submissions unreviewed
+              with the count above insisting they had all been seen. */}
+          {data.items.length < data.total ? (
+            <p className="mb-3 rounded-control border border-warning bg-warning-wash p-3 text-body-sm text-ink">
+              Showing the newest {data.items.length} of {data.total}. The rest appear as you work
+              through these — or narrow the list with search.
+            </p>
+          ) : null}
           <div className="flex flex-col gap-3">
             {data.items.map((registration) => (
               <RegistrationCard

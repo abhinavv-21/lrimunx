@@ -3,7 +3,7 @@ import { Pencil, Plus, Trash2, UsersRound } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useToast } from '@/providers/ToastProvider'
 import { useDeleteUser, useSaveUser, useUsers } from '@/lib/hooks'
-import { ApiError } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -56,7 +56,7 @@ function UserForm({
       toast.success(user ? 'Account updated' : 'Account created', fullName.trim())
       onOpenChange(false)
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Could not save this account.')
+      setError(errorMessage(caught, 'Could not save this account.'))
     }
   }
 
@@ -70,6 +70,7 @@ function UserForm({
           ? 'Leave the password blank to keep the current one.'
           : 'Contributors can raise logistics requests and check delegates in. Admins can do everything.'
       }
+      holdsInput
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (

@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { useCommittees } from '@/lib/hooks'
-import { ApiError, apiFetch } from '@/lib/api'
+import { ApiError, apiFetch, errorMessage } from '@/lib/api'
 import { useOffline } from '@/providers/OfflineProvider'
 import { useToast } from '@/providers/ToastProvider'
 import type { LogisticsRequest, RequestCategory } from '@/types/api'
@@ -103,7 +103,7 @@ export function RequestForm({
         })
         onOpenChange(false)
       } else {
-        setError(caught instanceof ApiError ? caught.message : 'Could not raise this request.')
+        setError(errorMessage(caught, 'Could not raise this request.'))
       }
     } finally {
       setSubmitting(false)
@@ -116,6 +116,7 @@ export function RequestForm({
       onOpenChange={onOpenChange}
       title="Raise a request"
       description="Tell the desk what a committee needs. Anything urgent alerts the secretariat immediately."
+      holdsInput
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {!isOnline ? (

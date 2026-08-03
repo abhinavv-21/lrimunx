@@ -4,7 +4,7 @@ import { AlertTriangle, Globe2, Plus, Trash2, Upload } from 'lucide-react'
 import { useAddMatrixCountry, useMatrix, useRemoveMatrixCountry } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import { useAuth } from '@/providers/AuthProvider'
-import { ApiError } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card, Stat } from '@/components/ui/Card'
@@ -36,7 +36,7 @@ function CommitteeMatrix({ committee, isAdmin }: { committee: MatrixCommittee; i
       setAdding('')
       toast.success('Added to the matrix', `${country} — ${committee.code}`)
     } catch (caught) {
-      toast.error(caught instanceof ApiError ? caught.message : 'That could not be added.')
+      toast.error(errorMessage(caught, 'That could not be added.'))
     }
   }
 
@@ -91,7 +91,8 @@ function CommitteeMatrix({ committee, isAdmin }: { committee: MatrixCommittee; i
             <li key={c.id}>
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-control border px-2 py-1 text-body-sm',
+                  'inline-flex min-h-tap items-center gap-1.5 rounded-control border py-1 pl-2 text-body-sm md:min-h-10',
+                  isAdmin && !c.delegateId ? 'pr-0' : 'pr-2',
                   c.delegateId
                     ? 'border-edge bg-surface-sunken text-ink-secondary'
                     : 'border-edge-strong text-ink',
@@ -101,14 +102,20 @@ function CommitteeMatrix({ committee, isAdmin }: { committee: MatrixCommittee; i
                 {c.delegateName ? (
                   <span className="text-ink-tertiary">— {c.delegateName}</span>
                 ) : null}
+                {/*
+                  Removing a country is destructive and instant. At 13×13px on a
+                  phone, with the pills sitting a few pixels apart, choosing
+                  which country to drop was a matter of luck — the icon stays
+                  the same size, the thing you press does not.
+                */}
                 {isAdmin && !c.delegateId ? (
                   <button
                     type="button"
-                    className="ml-0.5 text-ink-tertiary hover:text-danger"
+                    className="grid size-tap shrink-0 place-items-center rounded-control text-ink-tertiary transition-colors duration-micro hover:text-danger md:size-10"
                     aria-label={`Remove ${c.country} from ${committee.code}`}
                     onClick={() => void handleRemove(c.id, c.country)}
                   >
-                    <Trash2 size={13} aria-hidden />
+                    <Trash2 size={16} aria-hidden />
                   </button>
                 ) : null}
               </span>

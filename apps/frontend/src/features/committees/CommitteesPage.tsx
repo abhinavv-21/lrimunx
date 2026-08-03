@@ -10,7 +10,7 @@ import { Card, CapacityMeter } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonCards } from '@/components/ui/States'
-import { ApiError } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import type { Committee } from '@/types/api'
 
 function CommitteeForm({
@@ -51,7 +51,7 @@ function CommitteeForm({
       toast.success(committee ? 'Committee updated' : 'Committee created', code.toUpperCase())
       onOpenChange(false)
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Could not save this committee.')
+      setError(errorMessage(caught, 'Could not save this committee.'))
     }
   }
 
@@ -61,6 +61,7 @@ function CommitteeForm({
       onOpenChange={onOpenChange}
       title={committee ? 'Edit committee' : 'New committee'}
       description={committee ? undefined : 'Seats determine how many delegates can be assigned.'}
+      holdsInput
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (
@@ -266,11 +267,23 @@ export function CommitteesPage() {
           <ConfirmDialog
             open={pendingDelete !== null}
             onOpenChange={(open) => !open && setPendingDelete(null)}
-            title="Delete committee?"
+            title={
+              pendingDelete && pendingDelete.filledSeats > 0
+                ? 'This committee still has delegates in it'
+                : 'Delete committee?'
+            }
+            /*
+              The server refuses to delete a committee anyone is assigned to.
+              Offering a plain "this cannot be undone" and then failing on
+              confirm made the operator take a destructive decision to find out
+              it was never available — say it before the click instead.
+            */
             description={
-              pendingDelete
-                ? `Delete ${pendingDelete.code} — ${pendingDelete.name}? This cannot be undone.`
-                : ''
+              !pendingDelete
+                ? ''
+                : pendingDelete.filledSeats > 0
+                  ? `${pendingDelete.filledSeats} ${pendingDelete.filledSeats === 1 ? 'delegate is' : 'delegates are'} allocated to ${pendingDelete.code} — ${pendingDelete.name}, so deleting it will be refused. Move them to another committee in Allocations first.`
+                  : `Delete ${pendingDelete.code} — ${pendingDelete.name}? Its country matrix and awards go with it. This cannot be undone.`
             }
             onConfirm={() => void confirmDelete()}
             loading={remove.isPending}

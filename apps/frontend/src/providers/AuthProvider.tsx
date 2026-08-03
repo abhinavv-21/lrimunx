@@ -6,6 +6,14 @@ import type { AuthUser, LoginResponse, Role } from '@/types/api'
 interface AuthContextValue {
   user: AuthUser | null
   status: 'loading' | 'authenticated' | 'anonymous'
+  /**
+   * True when the session ended on its own rather than by signing out.
+   *
+   * Without it, an expired token dropped the operator onto a blank sign-in
+   * screen mid-task with no explanation — indistinguishable from the hub having
+   * logged them out for no reason, or from having navigated somewhere wrong.
+   */
+  sessionExpired: boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
   /** Role check used to gate navigation and actions in the UI. */
@@ -17,6 +25,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [status, setStatus] = useState<AuthContextValue['status']>('loading')
+  const [sessionExpired, setSessionExpired] = useState(false)
 
   // Restore the session on load. A stored token may be expired or revoked, so
   // this is verified against the server rather than trusted.
@@ -39,6 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setUser(null)
           setStatus('anonymous')
+          // There WAS a token and the server rejected it — the same fact as an
+          // expiry mid-session, and worth the same one-line explanation rather
+          // than a sign-in screen that looks like the hub forgot them.
+          setSessionExpired(true)
         }
       }
     }
@@ -54,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpiredHandler(() => {
       setUser(null)
       setStatus('anonymous')
+      setSessionExpired(true)
     })
   }, [])
 
@@ -66,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokens.set(response.accessToken, response.refreshToken)
     setUser(response.user)
     setStatus('authenticated')
+    setSessionExpired(false)
   }, [])
 
   const logout = useCallback(async () => {
@@ -92,13 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(null)
     setStatus('anonymous')
+    // Signing out on purpose is not an expiry — no notice on the login screen.
+    setSessionExpired(false)
   }, [])
 
   const can = useCallback((...roles: Role[]) => (user ? roles.includes(user.role) : false), [user])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, logout, can }),
-    [user, status, login, logout, can],
+    () => ({ user, status, sessionExpired, login, logout, can }),
+    [user, status, sessionExpired, login, logout, can],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -3,7 +3,7 @@ import { AlertTriangle, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input, Select } from '@/components/ui/Field'
 import { SaveIndicator, type SaveState } from '@/components/ui/SaveIndicator'
-import { ApiError } from '@/lib/api'
+import { errorMessage } from '@/lib/api'
 import { useUpdateAward } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 import { AWARD_TITLES_LIST_ID } from './awards'
@@ -74,7 +74,7 @@ export function AwardRow({
       setTimeout(() => setState((s) => (s === 'saved' ? 'idle' : s)), 1600)
     } catch (caught) {
       setState('error')
-      setError(caught instanceof ApiError ? caught.message : 'Could not save this award.')
+      setError(errorMessage(caught, 'Could not save this award.'))
       // Back to the truth the server holds.
       setTitle(savedTitle)
       setDelegateId(savedDelegateId)

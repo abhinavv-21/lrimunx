@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { apiFetch } from './api'
 import type {
   AttendanceSummary,
@@ -22,6 +29,25 @@ import type {
   ResetResult,
   Settings,
 } from '@/types/api'
+
+/**
+ * A value that settles before it is used as a query key.
+ *
+ * Search boxes are typed into, and every keystroke was a new key and therefore
+ * a new request: a delegate roster is ~100KB, so finding one person at the
+ * check-in desk pulled the entire roster down once per character over whatever
+ * the venue calls wifi. The box itself stays immediate — only the fetch waits.
+ */
+export function useDebounced<T>(value: T, delay = 250): T {
+  const [settled, setSettled] = useState(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+
+  return settled
+}
 
 function qs(params: Record<string, string | number | boolean | undefined | null>): string {
   const search = new URLSearchParams()
@@ -56,10 +82,23 @@ export interface DelegateFilters {
   pageSize?: number
 }
 
+/*
+  Why every filtered list keeps the previous page's rows.
+
+  A filter change is a new query key, and a new key has no data — so `isPending`
+  went true and the whole list was replaced by skeleton rows. Search boxes are
+  not debounced, so typing a delegate's name at the check-in desk tore the list
+  down and rebuilt it once per keystroke: five characters, five collapses, and
+  the row you were reaching for jumping under your finger each time. Holding the
+  last result until the new one lands makes the list settle instead of flicker,
+  and callers show `isFetching` where the wait is worth admitting.
+*/
+
 export function useDelegates(filters: DelegateFilters = {}) {
   return useQuery({
     queryKey: ['delegates', filters],
     queryFn: () => apiFetch<Paginated<Delegate>>(`/delegates${qs({ ...filters, pageSize: filters.pageSize ?? 200 })}`),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -213,6 +252,7 @@ export function useLogistics(filters: LogisticsFilters = {}) {
   return useQuery({
     queryKey: ['logistics', filters],
     queryFn: () => apiFetch<Paginated<LogisticsRequest>>(`/logistics-requests${qs({ ...filters, pageSize: 200 })}`),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -292,6 +332,7 @@ export function useRegistrations(filters: RegistrationFilters = {}) {
     queryKey: ['registrations', filters],
     queryFn: () =>
       apiFetch<Paginated<Registration>>(`/registrations${qs({ ...filters, pageSize: 200 })}`),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -349,6 +390,7 @@ export function useAuditLog(filters: { entityType?: string; action?: string; sea
   return useQuery({
     queryKey: ['audit', filters],
     queryFn: () => apiFetch<Paginated<AuditEntry>>(`/audit-logs${qs({ ...filters, pageSize: 100 })}`),
+    placeholderData: keepPreviousData,
   })
 }
 

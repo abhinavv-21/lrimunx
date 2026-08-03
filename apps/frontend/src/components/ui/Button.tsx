@@ -42,18 +42,22 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     className,
   )
 
-  // Slot merges its props onto exactly one element child, so the spinner and
-  // `children` cannot both be passed to it directly. Slottable marks which
-  // child is the real one, letting the spinner sit beside it either way.
-  const content = (
-    <>
-      {loading ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
-      {asChild ? <Slottable>{children}</Slottable> : children}
-    </>
-  )
+  /*
+    The spinner and `children` are passed as two separate children, not as one
+    fragment.
 
-  // `disabled` is meaningless on the anchors and links asChild renders, so it
-  // is only forwarded to a real button element.
+    Slot looks through its own children for a `Slottable` to hand its props to.
+    Wrapping them in a fragment first made Slot see exactly one child — the
+    fragment — never find the `Slottable` inside it, and fall back to treating
+    the fragment as the slot target. React drops every prop on a fragment, so
+    the className went nowhere: every `<Button asChild>` in the hub rendered a
+    completely unstyled `<a>`. That is the primary action on the Allocations,
+    Committees, Matrix and Logistics empty states, and the "View all" links on
+    the dashboard — all of them bare text where a button belongs.
+
+    `disabled` is meaningless on the anchors and links asChild renders, so it
+    is only forwarded to a real button element.
+  */
   return (
     <Component
       ref={ref}
@@ -63,7 +67,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={classes}
       {...props}
     >
-      {content}
+      {loading ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+      {asChild ? <Slottable>{children}</Slottable> : children}
     </Component>
   )
 })

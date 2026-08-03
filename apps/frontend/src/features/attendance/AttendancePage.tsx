@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Search, UserCheck, UserX } from 'lucide-react'
 import { useOffline } from '@/providers/OfflineProvider'
 import { useToast } from '@/providers/ToastProvider'
-import { useAttendanceSummary, useCommittees, useDelegates } from '@/lib/hooks'
+import { useAttendanceSummary, useCommittees, useDebounced, useDelegates } from '@/lib/hooks'
 import { ApiError, apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +18,7 @@ export function AttendancePage() {
   const [committeeId, setCommitteeId] = useState('')
   const [attendanceStatus, setAttendanceStatus] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
+  const debouncedSearch = useDebounced(search)
 
   const { isOnline, queue } = useOffline()
   const toast = useToast()
@@ -28,17 +29,17 @@ export function AttendancePage() {
 
   const filters = useMemo(
     () => ({
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
       ...(committeeId ? { committeeId } : {}),
       ...(attendanceStatus ? { attendanceStatus } : {}),
       // Committee first, then alphabetical within it — the order the desk works.
       sortBy: 'committee',
       sortDir: 'asc' as const,
     }),
-    [search, committeeId, attendanceStatus],
+    [debouncedSearch, committeeId, attendanceStatus],
   )
 
-  const { data, isPending, isError, error, refetch } = useDelegates(filters)
+  const { data, isPending, isFetching, isError, error, refetch } = useDelegates(filters)
 
   /** Committee-ordered groups, unplaced delegates last. */
   const groups = useMemo(() => {
@@ -103,9 +104,20 @@ export function AttendancePage() {
         method: 'POST',
         body: { delegateId: delegate.id, status: next },
       })
-      await queryClient.invalidateQueries({ queryKey: ['delegates'] })
-      await queryClient.invalidateQueries({ queryKey: ['attendance'] })
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+
+      /*
+        The desk is told as soon as the server has it, not when three lists
+        have finished reloading.
+
+        These were awaited in sequence, and one of them is the whole roster —
+        about 100KB at conference size. So the button stayed spinning and the
+        next person in the queue waited through a full refetch that changes one
+        badge. Fired and left to land: the row updates a moment later either
+        way, and the person in front of the desk moves on now.
+      */
+      void queryClient.invalidateQueries({ queryKey: ['delegates'] })
+      void queryClient.invalidateQueries({ queryKey: ['attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 
       toast.success(
         next === 'CHECKED_IN' ? 'Checked in' : 'Marked absent',
@@ -226,6 +238,26 @@ export function AttendancePage() {
         />
       ) : (
         <div className="flex flex-col gap-8">
+          <div>
+            <p className="font-mono text-data text-ink-secondary" aria-live="polite">
+              {data.total} {data.total === 1 ? 'delegate' : 'delegates'} on this list
+              {isFetching ? ' · updating…' : ''}
+            </p>
+
+            {/*
+              The roster comes back capped and this screen has no next page. A
+              desk with a queue in front of it must not be able to reach the
+              bottom of the list, fail to find someone, and turn them away —
+              when the only problem is that they are row 214.
+            */}
+            {data.items.length < data.total ? (
+              <p className="mt-3 rounded-control border border-warning bg-warning-wash p-3 text-body-sm text-ink">
+                Only the first {data.items.length} are shown. Search for anyone you cannot see here,
+                or filter by their committee — they are on the roster, just below the cut.
+              </p>
+            ) : null}
+          </div>
+
           {groups.map((group) => {
             const present = group.delegates.filter((d) => d.attendanceStatus === 'CHECKED_IN').length
             return (

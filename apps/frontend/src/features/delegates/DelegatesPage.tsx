@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Download, Pencil, Plus, Search, Trash2, Upload, Users } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useToast } from '@/providers/ToastProvider'
-import { useCommittees, useDelegates, useDeleteDelegate } from '@/lib/hooks'
+import { useCommittees, useDebounced, useDelegates, useDeleteDelegate } from '@/lib/hooks'
 import { downloadExport } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -25,6 +25,7 @@ export function DelegatesPage() {
   const [attendanceStatus, setAttendanceStatus] = useState('')
   const [committeeId, setCommitteeId] = useState('')
   const [sortBy, setSortBy] = useState('fullName')
+  const debouncedSearch = useDebounced(search)
 
   const [editing, setEditing] = useState<Delegate | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -33,15 +34,15 @@ export function DelegatesPage() {
 
   const filters = useMemo(
     () => ({
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
       ...(attendanceStatus ? { attendanceStatus } : {}),
       ...(committeeId ? { committeeId } : {}),
       sortBy,
     }),
-    [search, attendanceStatus, committeeId, sortBy],
+    [debouncedSearch, attendanceStatus, committeeId, sortBy],
   )
 
-  const { data, isPending, isError, error, refetch } = useDelegates(filters)
+  const { data, isPending, isFetching, isError, error, refetch } = useDelegates(filters)
   const { data: committees } = useCommittees()
   const remove = useDeleteDelegate()
 
@@ -291,7 +292,21 @@ export function DelegatesPage() {
           <p className="mb-3 font-mono text-data text-ink-secondary" aria-live="polite">
             {data.total} {data.total === 1 ? 'delegate' : 'delegates'}
             {hasFilters ? ' matching your filters' : ''}
+            {isFetching ? ' · updating…' : ''}
           </p>
+
+          {/*
+            The API returns at most 200 rows and there is no next page, so past
+            that the count above described a roster the table was not showing.
+            Somebody looking for a delegate who is simply beyond row 200 would
+            search for them, find nothing, and conclude they are not registered.
+          */}
+          {data.items.length < data.total ? (
+            <p className="mb-3 rounded-control border border-warning bg-warning-wash p-3 text-body-sm text-ink">
+              Showing the first {data.items.length} of {data.total}. Search or filter to reach the
+              rest — the table cannot show more than {data.items.length} rows at once.
+            </p>
+          ) : null}
 
           <DataTable
             data={data.items}

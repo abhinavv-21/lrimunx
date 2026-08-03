@@ -68,6 +68,49 @@ export function parseCsv(csv: string): Record<string, unknown>[] {
 }
 
 /**
+ * Columns that describe where a delegate SITS, which this importer does not read.
+ *
+ * A bare `committee` heading is not an alias of `committee preference` — a
+ * preference is a wish and a committee is a placement — so it falls through
+ * `normaliseHeader` unchanged and is then dropped by the row schema. That is
+ * deliberate: importing must not allocate, because a placement has to clear
+ * seat capacity, the unique country per committee, and the country matrix,
+ * none of which this path enforces. Approving a registration leaves placement
+ * unset for exactly the same reason.
+ *
+ * What was wrong was doing it in silence. An operator exporting the roster,
+ * editing it in a spreadsheet and importing it back got `created: n` and no
+ * hint that every allocation in the file had been discarded — the delegates
+ * come back unplaced and nothing anywhere says why. Naming the columns costs
+ * one line and turns silent data loss into a decision.
+ */
+const PLACEMENT_HEADERS = new Set([
+  'committee', 'committee code', 'country', 'allocation', 'allocated committee',
+  'allocated country', 'assigned committee', 'assigned country', 'delegation',
+])
+
+export function reportIgnoredPlacementColumns(rows: unknown[], result: IngestResult): void {
+  const headers = new Set<string>()
+  rows.forEach((row) => {
+    if (row && typeof row === 'object') {
+      Object.keys(row as Record<string, unknown>).forEach((key) => headers.add(key.trim().toLowerCase()))
+    }
+  })
+
+  const ignored = [...headers].filter((header) => PLACEMENT_HEADERS.has(header))
+  if (ignored.length === 0) return
+
+  result.issues.push({
+    row: 0,
+    reason:
+      `${ignored.map((h) => `"${h}"`).join(' and ')} ${ignored.length === 1 ? 'was' : 'were'} ignored. ` +
+      'Importing adds delegates but never places them, because a placement has to be ' +
+      'checked against seat capacity and the country matrix. Set committees and countries ' +
+      'in Allocations after the import.',
+  })
+}
+
+/**
  * Ingests delegate rows from Google Sheets/Forms or a pasted CSV.
  *
  * Email is the identity key — it is unique in the schema, so a repeat email
@@ -78,6 +121,8 @@ export function parseCsv(csv: string): Record<string, unknown>[] {
  */
 export async function ingestDelegates(rows: unknown[], upsert: boolean): Promise<IngestResult> {
   const result: IngestResult = { created: 0, updated: 0, skipped: 0, issues: [], phoneCollisions: [] }
+
+  reportIgnoredPlacementColumns(rows, result)
 
   const valid: IngestRow[] = []
   const seenEmails = new Map<string, number>()

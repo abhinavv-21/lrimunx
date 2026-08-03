@@ -78,10 +78,30 @@ function Prompt({
   )
 }
 
+/**
+ * "Not now" used to mean "not for the next few seconds".
+ *
+ * Dismissing only cleared component state, and the browser permission stays
+ * `default` when you decline our card rather than the browser's own prompt — so
+ * the offer came back on every reload, over the bottom of whatever screen you
+ * were on. At a check-in desk, where the hub is reloaded all day, that is the
+ * same interruption dozens of times for an answer already given.
+ */
+const PUSH_DECLINED_KEY = 'munx.pushDeclined'
+
 export function UpdatePrompt() {
   const { user } = useAuth()
   const [pushOffered, setPushOffered] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
+
+  function declinePush() {
+    try {
+      localStorage.setItem(PUSH_DECLINED_KEY, '1')
+    } catch {
+      // Private mode or a full quota — the offer simply returns next time.
+    }
+    setPushOffered(false)
+  }
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -92,8 +112,16 @@ export function UpdatePrompt() {
 
   useEffect(() => {
     if (!user || !pushSupported()) return
-    // Only offer if the user has neither granted nor explicitly denied.
-    if (Notification.permission === 'default') setPushOffered(true)
+    // Only offer if the user has neither granted nor explicitly denied — and
+    // has not already said no to this card.
+    if (Notification.permission !== 'default') return
+    let declined = false
+    try {
+      declined = localStorage.getItem(PUSH_DECLINED_KEY) === '1'
+    } catch {
+      declined = false
+    }
+    if (!declined) setPushOffered(true)
   }, [user])
 
   async function enablePush() {
@@ -132,7 +160,7 @@ export function UpdatePrompt() {
         dismissLabel="Not now"
         confirmLabel="Enable"
         busy={pushBusy}
-        onDismiss={() => setPushOffered(false)}
+        onDismiss={declinePush}
         onConfirm={() => void enablePush()}
       />
     )

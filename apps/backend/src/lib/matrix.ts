@@ -41,6 +41,11 @@ export interface MatrixParseResult {
   issues: MatrixIssue[]
   /** True when the sheet was read as Committee,Country rows rather than wide. */
   longForm: boolean
+  /**
+   * Set when the file cannot be trusted at all, and nothing in it may be
+   * written. `columns` is empty whenever this is present.
+   */
+  fatal?: string
 }
 
 const COMMITTEE_HEADERS = new Set(['committee', 'committee code', 'code', 'body', 'forum'])
@@ -100,6 +105,42 @@ export function parseMatrixCsv(csv: string): MatrixParseResult {
     .forEach((error) => {
       issues.push({ row: (error.row ?? 0) + 1, reason: error.message })
     })
+
+  /*
+    A quote error stops the import dead, rather than being reported beside a
+    partial result.
+
+    Every other complaint in this parser is local: one row is wrong and the
+    rest of the sheet is still true. A runaway quote is not local. The field
+    swallows everything after it — delimiters, line breaks and all — so what
+    Papa hands back is not a damaged version of the sheet, it is a different
+    sheet. Importing
+
+        UNSC,DISEC
+        "France,India
+        China,Egypt
+
+    used to succeed with `added: 1`, and gave UNSC a country literally named
+    `France,India China,Egypt` while DISEC's entire column vanished, reported
+    only as "This column has no countries in it." That country then appeared
+    in the allocation pick-list, where it looks like a real choice.
+
+    There is no way to tell from here which half of the file was intended, so
+    the honest answer is to write nothing and say where the quote is.
+  */
+  const quoteError = parsed.errors.find((error) => /quote/i.test(error.code ?? ''))
+  if (quoteError) {
+    return {
+      columns: [],
+      issues,
+      longForm: false,
+      fatal:
+        `There is an unclosed quotation mark near row ${(quoteError.row ?? 0) + 1}. ` +
+        'Everything after it was read as part of one field, so the rest of the sheet ' +
+        'could not be trusted and nothing was imported. Close the quote, or remove it, ' +
+        'and import the file again.',
+    }
+  }
 
   const rows = (parsed.data ?? []).filter((row) => Array.isArray(row) && row.some((c) => clean(c)))
   if (rows.length === 0) {

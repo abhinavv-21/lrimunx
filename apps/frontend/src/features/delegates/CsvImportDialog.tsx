@@ -4,7 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, Textarea } from '@/components/ui/Field'
 import { useCsvImport } from '@/lib/hooks'
-import { ApiError } from '@/lib/api'
+import { errorMessage } from '@/lib/api'
 import type { IngestResult } from '@/types/api'
 
 /** Columns the importer reads. Everything else in the sheet is ignored. */
@@ -46,7 +46,7 @@ export function CsvImportDialog({
     try {
       setResult(await importCsv.mutateAsync({ csv, upsert }))
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'The import failed.')
+      setError(errorMessage(caught, 'The import failed.'))
     }
   }
 
@@ -65,6 +65,7 @@ export function CsvImportDialog({
       onOpenChange={handleClose}
       title="Import delegates"
       description="Paste a CSV or choose a file exported from the registration sheet."
+      holdsInput
     >
       <div className="flex flex-col gap-4">
         {error ? (

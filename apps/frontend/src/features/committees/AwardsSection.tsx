@@ -5,7 +5,7 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { Input, Select } from '@/components/ui/Field'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/States'
-import { ApiError } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import { useCreateAward, useDeleteAward } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import { AwardRow } from './AwardRow'
@@ -49,7 +49,7 @@ export function AwardsSection({
       setNewTitle('')
       setNewDelegateId('')
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Could not add this award.')
+      setError(errorMessage(caught, 'Could not add this award.'))
     }
   }
 

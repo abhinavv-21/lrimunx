@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardList, Landmark, Search, Users } from 'lucide-react'
-import { useCommittees, useDelegates } from '@/lib/hooks'
+import { useCommittees, useDashboard, useDebounced, useDelegates } from '@/lib/hooks'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select } from '@/components/ui/Field'
@@ -17,26 +17,38 @@ export function AllocationsPage() {
   const [search, setSearch] = useState('')
   const [committeeFilter, setCommitteeFilter] = useState('')
   const [onlyUnallocated, setOnlyUnallocated] = useState(false)
+  const debouncedSearch = useDebounced(search)
 
   const filters = useMemo(
     () => ({
-      ...(search ? { search } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
       ...(committeeFilter ? { committeeId: committeeFilter } : {}),
       ...(onlyUnallocated ? { unassigned: true } : {}),
       sortBy: 'fullName',
       pageSize: 200,
     }),
-    [search, committeeFilter, onlyUnallocated],
+    [debouncedSearch, committeeFilter, onlyUnallocated],
   )
 
   const { data, isPending, isError, error, refetch } = useDelegates(filters)
   const { data: committees, isPending: committeesPending } = useCommittees()
 
-  // Totals come from the unfiltered roster so the headline numbers do not
-  // change as you narrow the list.
-  const { data: everyone } = useDelegates({ pageSize: 200 })
-  const allocated = everyone?.items.filter((d) => d.assignment).length ?? 0
-  const total = everyone?.total ?? 0
+  /*
+    Totals come from the dashboard summary, not from a second copy of the
+    roster.
+
+    They have to be unfiltered — the headline numbers must not move as you
+    narrow the list — but fetching every delegate to count them meant a second
+    ~100KB payload of names, emails and phone numbers on every visit, and again
+    on every filter change, in order to render two integers. It also could not
+    count past 200: on a 340-delegate conference the "Allocated" figure was
+    whatever happened to be in the first page. The dashboard endpoint already
+    returns both numbers, is invalidated by the same writes, and is a few
+    hundred bytes.
+  */
+  const { data: summary } = useDashboard()
+  const total = summary?.totalDelegates ?? 0
+  const allocated = Math.max(0, total - (summary?.unassigned ?? 0))
 
   const committeeList = committees?.items ?? []
   const noCommittees = !committeesPending && committeeList.length === 0
@@ -205,6 +217,19 @@ export function AllocationsPage() {
                 <ClipboardList size={16} aria-hidden />
                 Showing {data.items.length} of {data.total}. A country must be unique within its committee.
               </p>
+
+              {/*
+                There is no next page. "Showing 200 of 340" on its own reads as
+                a paging control that is simply out of sight — say what to do
+                instead, or the last 140 delegates are never placed.
+              */}
+              {data.items.length < data.total ? (
+                <p className="mt-3 rounded-control border border-warning bg-warning-wash p-3 text-body-sm text-ink">
+                  The other {data.total - data.items.length} are not on this page and there is no way
+                  to scroll to them. Tick “Only unallocated”, or filter by committee, to bring them
+                  into view.
+                </p>
+              ) : null}
             </>
           )}
         </>

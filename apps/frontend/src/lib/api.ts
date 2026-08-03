@@ -22,6 +22,66 @@ export class ApiError extends Error {
   }
 }
 
+/** Field labels for the payload keys the API validates, in operator language. */
+const FIELD_LABELS: Record<string, string> = {
+  fullName: 'Full name',
+  schoolName: 'School',
+  phone: 'Contact number',
+  email: 'Email',
+  grade: 'Academic level',
+  munsAttended: 'MUNs attended',
+  awardsWon: 'Awards won',
+  country: 'Country',
+  committeeId: 'Committee',
+  totalSeats: 'Total seats',
+  code: 'Code',
+  name: 'Full name',
+  username: 'Username',
+  password: 'Password',
+  role: 'Role',
+  title: 'What is needed',
+  description: 'Details',
+  category: 'Category',
+  reason: 'Reason',
+  csv: 'CSV',
+  passphrase: 'Passphrase',
+}
+
+/**
+ * A message a person can act on.
+ *
+ * The API answers a rejected payload with `"Request validation failed"` and puts
+ * the actual problem in `details` — so every form in the hub used to show a red
+ * box naming no field, no rule and no fix, for a mistake as ordinary as a
+ * mistyped email. This unpacks it: "Email — Enter a valid email address."
+ */
+export function errorMessage(caught: unknown, fallback = 'Something went wrong.'): string {
+  if (!(caught instanceof ApiError)) {
+    return caught instanceof Error && caught.message ? caught.message : fallback
+  }
+
+  const details = caught.details
+  if (Array.isArray(details)) {
+    const lines = details
+      .filter(
+        (issue): issue is { path?: unknown; message?: unknown } =>
+          typeof issue === 'object' && issue !== null,
+      )
+      .map((issue) => {
+        const path = typeof issue.path === 'string' ? issue.path : ''
+        const message = typeof issue.message === 'string' ? issue.message : ''
+        if (message === '') return ''
+        const label = FIELD_LABELS[path] ?? (path && path !== '(root)' ? path : '')
+        return label ? `${label} — ${message}` : message
+      })
+      .filter((line) => line !== '')
+
+    if (lines.length > 0) return lines.join('. ')
+  }
+
+  return caught.message || fallback
+}
+
 export const tokens = {
   access: () => localStorage.getItem(ACCESS_KEY),
   refresh: () => localStorage.getItem(REFRESH_KEY),

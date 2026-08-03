@@ -23,6 +23,7 @@ export function Modal({
   description,
   children,
   footer,
+  holdsInput = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -30,12 +31,28 @@ export function Modal({
   description?: string
   children: ReactNode
   footer?: ReactNode
+  /**
+   * Set on any dialog a person types into.
+   *
+   * A dialog closes when you click the page behind it, and every form in the
+   * hub clears itself on close — so a mis-aimed click while a two-hundred-row
+   * matrix CSV was pasted, or halfway through a delegate's details, threw all
+   * of it away with no warning and no way back. A stray click is not a decision
+   * to discard, so these dialogs ignore it. Escape, Cancel and the close button
+   * are all deliberate and still work.
+   */
+  holdsInput?: boolean
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={OVERLAY} />
-        <Dialog.Content className={PANEL}>
+        <Dialog.Content
+          className={PANEL}
+          {...(holdsInput
+            ? { onInteractOutside: (event: Event) => event.preventDefault() }
+            : {})}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <Dialog.Title className="font-heading text-h2 text-ink">{title}</Dialog.Title>

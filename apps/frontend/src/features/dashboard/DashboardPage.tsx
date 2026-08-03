@@ -31,8 +31,13 @@ export function DashboardPage() {
         Registrations arrive from the public site with nobody watching. A count
         buried behind a nav item is a count nobody reads, so a waiting queue
         says so here and links straight to it.
+
+        Admins only: approving and rejecting are ADMIN-only, so telling a
+        contributor to "review and add them to the roster" sent them to a screen
+        where every control they were asked to use is absent — the loudest thing
+        on their board being the one job they cannot do.
       */}
-      {pendingRegistrations > 0 ? (
+      {isAdmin && pendingRegistrations > 0 ? (
         <Link
           to="/registrations"
           className="mb-6 flex min-h-tap items-center gap-3 rounded-card border border-accent bg-accent-wash p-4 text-body text-ink transition-colors duration-micro hover:bg-surface"
@@ -76,7 +81,15 @@ export function DashboardPage() {
             <Card>
               <CardHeader
                 title="Committee capacity"
-                description="Seats filled across the six committees."
+                // Counted, not asserted. This read "across the six committees"
+                // whatever was actually configured, so a conference running
+                // four or nine of them was told the wrong number by the header
+                // sitting directly above the list that disproved it.
+                description={
+                  data.capacity.length === 1
+                    ? 'Seats filled in the one committee.'
+                    : `Seats filled across the ${data.capacity.length} committees.`
+                }
                 actions={
                   <Button asChild variant="ghost" size="sm">
                     <Link to="/committees">View all</Link>

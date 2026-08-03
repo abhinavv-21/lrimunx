@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { ApiError } from '@/lib/api'
+import { errorMessage } from '@/lib/api'
 import { useCommittees, useCreateDelegate, useUpdateDelegate } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import type { Delegate, DelegateInput } from '@/types/api'
@@ -122,12 +122,24 @@ export function DelegateForm({
       }
       onOpenChange(false)
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Could not save this delegate.')
+      setError(errorMessage(caught, 'Could not save this delegate.'))
     }
   }
 
   const saving = create.isPending || update.isPending
   const noCommittees = (committees?.items.length ?? 0) === 0
+
+  /*
+    A committee with an imported matrix accepts only the countries on it, and
+    the server enforces that. This box did not say so and offered no list, so
+    the only way to discover that DISEC has no "Narnia" was to fill the whole
+    form, submit, and be refused. The countries are already in hand — offer
+    them, and name the rule in the hint.
+  */
+  const selectedCommittee = committees?.items.find((c) => c.id === form.committeeId)
+  const matrixCountries = selectedCommittee?.matrixCountries ?? []
+  const takenCountries = selectedCommittee?.takenCountries ?? []
+  const countryListId = 'delegate-form-countries'
 
   return (
     <Modal
@@ -135,6 +147,7 @@ export function DelegateForm({
       onOpenChange={onOpenChange}
       title={delegate ? 'Edit delegate' : 'Add delegate'}
       description={delegate ? delegate.email : undefined}
+      holdsInput
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (
@@ -236,17 +249,43 @@ export function DelegateForm({
           <Field
             label="Country"
             required={form.committeeId !== ''}
-            hint={form.committeeId === '' ? 'Choose a committee first.' : 'Must be unique within the committee.'}
+            hint={
+              form.committeeId === ''
+                ? 'Choose a committee first.'
+                : matrixCountries.length > 0
+                  ? `Must be one of ${selectedCommittee?.code}’s ${matrixCountries.length} matrix countries, and not already taken.`
+                  : 'Must be unique within the committee.'
+            }
           >
             {({ id }) => (
-              <Input
-                id={id}
-                value={form.country}
-                onChange={(e) => set('country', e.target.value)}
-                placeholder="France"
-                disabled={form.committeeId === ''}
-                required={form.committeeId !== ''}
-              />
+              <>
+                <Input
+                  id={id}
+                  value={form.country}
+                  onChange={(e) => set('country', e.target.value)}
+                  placeholder={matrixCountries[0] ?? 'France'}
+                  disabled={form.committeeId === ''}
+                  required={form.committeeId !== ''}
+                  list={form.committeeId === '' ? undefined : countryListId}
+                />
+                <datalist id={countryListId}>
+                  {(matrixCountries.length > 0
+                    ? matrixCountries
+                    : takenCountries.map((t) => t.country)
+                  ).map((name) => {
+                    const holder = takenCountries.find(
+                      (t) => t.country.toLowerCase() === name.toLowerCase(),
+                    )
+                    return (
+                      <option key={name} value={name}>
+                        {holder && holder.delegateId !== delegate?.id
+                          ? `taken — ${holder.delegateName}`
+                          : 'free'}
+                      </option>
+                    )
+                  })}
+                </datalist>
+              </>
             )}
           </Field>
         </div>
