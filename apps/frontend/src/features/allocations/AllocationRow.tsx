@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Check } from 'lucide-react'
 import { Select, Input } from '@/components/ui/Field'
 import { SaveIndicator, type SaveState } from '@/components/ui/SaveIndicator'
@@ -11,6 +11,29 @@ type RowState = SaveState
 
 /** Countries are the same country however they were typed. */
 const fold = (value: string) => value.trim().toLowerCase()
+
+/**
+ * Who already holds `value` in `committee`, ignoring this delegate's own
+ * allocation so that re-typing a country's casing is not a clash with itself.
+ *
+ * Takes the value rather than reading component state, because `save` has to
+ * ask about the country it is ABOUT to send. Asking about the rendered state
+ * answered for the previous country: the select sets state and calls save in
+ * the same tick, so the guard was one edit behind and waved through exactly
+ * the requests it exists to stop.
+ */
+function findClash(
+  committee: Committee | undefined,
+  value: string,
+  delegateId: string,
+): { country: string; delegateName: string } | null {
+  if (!committee || value.trim() === '') return null
+  return (
+    committee.takenCountries?.find(
+      (taken) => fold(taken.country) === fold(value) && taken.delegateId !== delegateId,
+    ) ?? null
+  )
+}
 
 /**
  * One delegate, allocated in place.
@@ -34,7 +57,6 @@ export function AllocationRow({
   const [country, setCountry] = useState(delegate.assignment?.country ?? '')
   const [state, setState] = useState<RowState>('idle')
   const [error, setError] = useState<string | null>(null)
-  const countryRef = useRef<HTMLInputElement>(null)
 
   const update = useUpdateDelegate()
 
@@ -51,19 +73,11 @@ export function AllocationRow({
 
   const selected = committees.find((c) => c.id === committeeId)
 
-  /**
-   * Who already holds the typed country in the selected committee — excluding
-   * this delegate, so renaming a country's casing is not reported as a clash
-   * with itself.
-   */
-  const clash = useMemo(() => {
-    if (!selected || country.trim() === '') return null
-    return (
-      selected.takenCountries?.find(
-        (taken) => fold(taken.country) === fold(country) && taken.delegateId !== delegate.id,
-      ) ?? null
-    )
-  }, [selected, country, delegate.id])
+  /** Who already holds the country now in the field, for the banner below. */
+  const clash = useMemo(
+    () => findClash(selected, country, delegate.id),
+    [selected, country, delegate.id],
+  )
 
   // Entering a committee they are not already in consumes a seat.
   const movingIn = committeeId !== '' && committeeId !== savedCommitteeId
@@ -71,8 +85,10 @@ export function AllocationRow({
 
   async function save(nextCommitteeId: string, nextCountry: string) {
     if (nextCommitteeId === savedCommitteeId && nextCountry.trim() === savedCountry) return
-    // Never send a request the data already says will fail.
-    if (nextCommitteeId !== '' && clash) return
+    // Never send a request the data already says will fail — asked about the
+    // committee and country being saved, not the ones currently rendered.
+    const target = committees.find((committee) => committee.id === nextCommitteeId)
+    if (nextCommitteeId !== '' && findClash(target, nextCountry, delegate.id)) return
 
     setState('saving')
     setError(null)
@@ -104,12 +120,22 @@ export function AllocationRow({
       void save(next, country)
       return
     }
-    // Needs a country before it can be saved — send them straight there.
-    // `countryRef` is only attached to the free-text input; with a matrix the
-    // control is a <select>, so it is found by id instead.
-    const target =
-      countryRef.current ?? document.getElementById(`country-${delegate.id}`)
-    if (target instanceof HTMLElement) target.focus()
+    /*
+      Needs a country before it can be saved — send them straight there.
+
+      Deferred past the render this change causes, and looked up by id rather
+      than through the ref. Picking a committee can swap the country control
+      from the free-text input to the matrix pick-list, and at this point in
+      the event the OLD input is still mounted: focusing the input's own ref
+      put the caret into an element React was about to unmount, so focus ended
+      up on <body> and the `??` fallback never ran. Both controls carry the
+      same id, so one lookup after the swap works for either.
+    */
+    const id = `country-${delegate.id}`
+    requestAnimationFrame(() => {
+      const target = document.getElementById(id)
+      if (target instanceof HTMLElement) target.focus()
+    })
   }
 
   const countryListId = `taken-${delegate.id}`
@@ -133,8 +159,18 @@ export function AllocationRow({
     return map
   }, [selected, delegate.id])
 
+  /**
+   * The matrix entry this row's country refers to, spelled the way the matrix
+   * spells it — which is what the `<option>` values are.
+   *
+   * Matching is case- and space-insensitive so that a country saved before the
+   * matrix was imported still finds its row, but the SELECTED value has to be
+   * the exact option string or the browser silently selects nothing.
+   */
+  const matrixMatch = matrixCountries.find((name) => fold(name) === fold(country))
+
   /** Whether what is currently in the field is a country this committee has. */
-  const onMatrix = matrixCountries.some((name) => fold(name) === fold(country))
+  const onMatrix = matrixMatch !== undefined
 
   const openOnMatrix = matrixCountries.filter((name) => !takenBy.has(name)).length
 
@@ -249,7 +285,22 @@ export function AllocationRow({
         {hasMatrix ? (
           <Select
             id={`country-${delegate.id}`}
-            value={onMatrix || country === '' ? country : ''}
+            /*
+              Every branch here has to name an option that actually exists, or
+              the select falls back to its first one and reads "Unallocated"
+              over a delegate who is placed.
+
+              - on the matrix   → the matrix's own spelling, which is the option
+              - off the matrix  → the saved country, which the extra option below
+                                  is rendered with
+              - nothing set     → the empty option
+
+              This used to be `onMatrix || country === '' ? country : ''`, which
+              sent the off-matrix case to '' — so a delegate holding a country
+              the matrix does not list showed as unallocated, contradicting both
+              the committee column beside it and the database.
+            */
+            value={country === '' ? '' : (matrixMatch ?? country)}
             disabled={committeeId === '' || state === 'saving'}
             onChange={(event) => {
               setCountry(event.target.value)
@@ -280,7 +331,6 @@ export function AllocationRow({
         ) : (
           <Input
             id={`country-${delegate.id}`}
-            ref={countryRef}
             value={country}
             list={selected ? countryListId : undefined}
             placeholder={committeeId === '' ? 'Pick a committee' : 'Country'}

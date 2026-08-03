@@ -1,6 +1,20 @@
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
+/*
+  The ESM build, explicitly.
+
+  jspdf-autotable's default entry point is a UMD bundle. Under the native ESM
+  this server actually runs on, `import autoTable from 'jspdf-autotable'` binds
+  the CommonJS `module.exports` OBJECT rather than the function — the callable
+  ends up at `.default.default` — so every PDF export threw "autoTable is not a
+  function" and came back as a 500.
+
+  It passed its unit test throughout: Vitest transforms the dependency itself
+  and hands back the interop shape TypeScript predicts, so the bug was only
+  ever reachable through the running API. The `./es` subpath is the same
+  library's .mjs build, and exports the function as a real ESM default.
+*/
+import autoTable from 'jspdf-autotable/es'
 
 export interface ExportTable {
   title: string

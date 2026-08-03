@@ -118,8 +118,34 @@ matrixRouter.post(
     const touched: string[] = []
     const kept: Array<{ committee: string; country: string; delegateName: string }> = []
 
+    /*
+      Which heading already claimed each committee.
+
+      A committee is addressable by its code OR its name, so two different
+      headings can resolve to the same room — "WHO" and "World Health
+      Organization" are one committee, and the duplicate-heading check in the
+      parser cannot see that because the two strings are genuinely different.
+
+      In `replace` mode that was silent data loss: the first column set the
+      matrix, and the second replaced it, deleting everything the first had
+      just written. The second column is refused and reported instead.
+    */
+    const claimedBy = new Map<string, string>()
+
     for (const column of parsed.columns) {
       const committee = byKey.get(column.committee.toLowerCase())
+      if (committee) {
+        const first = claimedBy.get(committee.id)
+        if (first !== undefined) {
+          issues.push({
+            row: 1,
+            column: column.committee,
+            reason: `"${column.committee}" and "${first}" are both ${committee.code}. Only "${first}" was used — merge them into one column.`,
+          })
+          continue
+        }
+        claimedBy.set(committee.id, column.committee)
+      }
       if (!committee) {
         issues.push({
           row: 1,

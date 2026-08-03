@@ -63,6 +63,17 @@ export function useDelegates(filters: DelegateFilters = {}) {
   })
 }
 
+/*
+  Why every delegate write also invalidates ['matrix']:
+
+  The matrix screen names the delegate holding each country and counts how many
+  seats are still open, all derived from assignments — so any write that places,
+  moves or removes a delegate makes it wrong. With a 30s staleTime it does not
+  refetch on its own, so an operator who allocates and then opens the matrix to
+  check their work is shown the state from before they started. `invalidateMatrix`
+  already covers the other direction; these are the return leg.
+*/
+
 /** Committee and country are part of the delegate payload — see DelegateInput. */
 export function useCreateDelegate() {
   const queryClient = useQueryClient()
@@ -73,6 +84,7 @@ export function useCreateDelegate() {
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['committees'] })
       void queryClient.invalidateQueries({ queryKey: ['attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['matrix'] })
     },
   })
 }
@@ -87,6 +99,7 @@ export function useUpdateDelegate() {
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['committees'] })
       void queryClient.invalidateQueries({ queryKey: ['attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['matrix'] })
     },
   })
 }
@@ -99,6 +112,7 @@ export function useDeleteDelegate() {
       void queryClient.invalidateQueries({ queryKey: ['delegates'] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['committees'] })
+      void queryClient.invalidateQueries({ queryKey: ['matrix'] })
     },
   })
 }

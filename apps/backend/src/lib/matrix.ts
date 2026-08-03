@@ -118,6 +118,19 @@ export function parseMatrixCsv(csv: string): MatrixParseResult {
 
   if (committeeAt !== -1 && countryAt !== -1) {
     const byCommittee = new Map<string, string[]>()
+    /*
+      Repeats are reported and skipped, exactly as they are in the wide form.
+
+      Without this a sheet that names the same pair twice — trivially produced
+      by sorting a database export, or by pasting a column in twice — reached
+      the importer with a duplicate in the list. The importer creates each
+      country in turn against a snapshot of what already exists, so the second
+      copy hit the (committeeId, country) unique constraint and came back as a
+      409 phrased in terms of ALLOCATIONS, having already committed the
+      committees earlier in the file. A duplicated row is an author's slip, not
+      a half-finished import.
+    */
+    const seenPerCommittee = new Map<string, Set<string>>()
 
     body.forEach((row, index) => {
       const committee = clean(row[committeeAt])
@@ -131,6 +144,19 @@ export function parseMatrixCsv(csv: string): MatrixParseResult {
         issues.push({ row: index + 2, column: committee, reason: 'No country in this row.' })
         return
       }
+
+      const seen = seenPerCommittee.get(norm(committee)) ?? new Set<string>()
+      if (seen.has(norm(country))) {
+        issues.push({
+          row: index + 2,
+          column: committee,
+          reason: `"${country}" is listed twice under ${committee}.`,
+        })
+        return
+      }
+      seen.add(norm(country))
+      seenPerCommittee.set(norm(committee), seen)
+
       const list = byCommittee.get(committee) ?? []
       list.push(country)
       byCommittee.set(committee, list)
