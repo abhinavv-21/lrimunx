@@ -15,12 +15,24 @@ export function createApp(): Express {
   app.set('trust proxy', env.TRUST_PROXY)
 
   app.use(helmet())
-  app.use(
-    cors({
-      origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()),
-      credentials: true,
-    }),
-  )
+  /*
+    Trailing slashes are stripped, because pasting one in is the easy mistake
+    and it fails silently.
+
+    An Origin header is scheme + host + port and never carries a path, so
+    `https://site.example/` matches nothing a browser will ever send. Copying a
+    URL out of the address bar — which is where anybody configuring this gets
+    it — includes that slash. The result is not an error anywhere: the API
+    starts, answers, and simply omits the CORS header, so the site loads and
+    every request from it is blocked by the browser with nothing in the server
+    log to explain why. Being forgiving here costs nothing and removes a whole
+    class of "it deployed fine and registration is broken".
+  */
+  const allowedOrigins = env.CORS_ORIGIN.split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+
+  app.use(cors({ origin: allowedOrigins, credentials: true }))
 
   // The Google Sheets webhook can post sizeable batches; everything else is small.
   app.use(express.json({ limit: '2mb' }))
