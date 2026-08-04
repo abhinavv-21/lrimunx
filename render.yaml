@@ -89,6 +89,13 @@ services:
       - key: CORS_ORIGIN
         sync: false
 
+      # Required with no default, so the service refuses to boot without it —
+      # even though the Google Sheets webhook may never be used. At least 16
+      # characters; generate one the same way as the JWT secrets. It only has to
+      # match the Apps Script in integrations/ if you actually wire that up.
+      - key: GOOGLE_SHEETS_WEBHOOK_SECRET
+        sync: false
+
       - key: DANGER_RESET_PASSPHRASE
         sync: false
 
