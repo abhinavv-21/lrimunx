@@ -64,45 +64,31 @@ const envSchema = z.object({
 
   /*
     ---------------------------------------------------------------------------
-    Vercel Blob — the store that holds payment screenshots.
+    Object storage — where payment screenshots live.
 
-    Empty is a supported state rather than a misconfiguration: local development
-    has no blob store, and the registration form is expected to work without
-    one — the upload route answers 503 and the screenshot field is simply not
-    filled in.
+    S3-compatible on purpose rather than tied to one provider: Supabase today,
+    R2 if there is ever a budget, MinIO on the school's own box later. All three
+    speak S3, so moving is these four values and no code. See lib/storage.ts.
 
-    Two ways to authenticate, and Vercel picks for you when the store is
-    created:
-
-      · BLOB_STORE_ID + the runtime's VERCEL_OIDC_TOKEN — what a store created
-        today gets. Nothing long-lived is stored anywhere.
-      · BLOB_READ_WRITE_TOKEN — the older static credential.
-
-    The SDK resolves whichever is present; both reach the same store. The store
-    linked to this project is OIDC, so BLOB_READ_WRITE_TOKEN is normally empty.
+    Empty is a supported state, not a misconfiguration: local development has no
+    bucket, and the registration form is expected to work without one — the
+    upload route answers 503 and the applicant simply attaches nothing.
     ---------------------------------------------------------------------------
   */
-  BLOB_READ_WRITE_TOKEN: z.string().default(''),
-  BLOB_STORE_ID: z.string().default(''),
-
   /**
-   * Public key the blob service signs its upload-completed callbacks with.
-   * Injected alongside BLOB_STORE_ID. The SDK reads it from process.env on its
-   * own; it is declared here so a deployment missing it is visible in one place
-   * rather than as a runtime throw inside the upload route.
+   * Includes the provider's S3 path prefix where it has one. Supabase is
+   * `https://<project>.supabase.co/storage/v1/s3`, R2 is
+   * `https://<account>.r2.cloudflarestorage.com`.
    */
-  BLOB_WEBHOOK_PUBLIC_KEY: z.string().default(''),
-
+  S3_ENDPOINT: z.string().default(''),
+  S3_BUCKET: z.string().default(''),
+  S3_ACCESS_KEY_ID: z.string().default(''),
+  S3_SECRET_ACCESS_KEY: z.string().default(''),
   /**
-   * Whether the store serves its objects to anyone holding the URL.
-   *
-   * Payment screenshots are transaction records, so the store is PRIVATE and
-   * that is the default: objects live on `<store>.private.blob.vercel-storage.com`
-   * and are unreadable without a short-lived signed URL, which only the ops hub
-   * can ask for. Set to `public` only against a store actually created public —
-   * the two serve from different hosts and the URL check keys off this value.
+   * SigV4 puts a region in every signature even where the provider ignores it.
+   * Supabase publishes one per project; R2 and MinIO accept `auto`.
    */
-  BLOB_ACCESS: z.enum(['public', 'private']).default('private'),
+  S3_REGION: z.string().default('auto'),
 
   /**
    * Passphrase that gates the bulk conference reset.
@@ -115,7 +101,10 @@ const envSchema = z.object({
   DANGER_RESET_PASSPHRASE: z.string().default(''),
 })
 
-export type Env = z.infer<typeof envSchema> & { pushEnabled: boolean; blobUploadsEnabled: boolean }
+export type Env = z.infer<typeof envSchema> & {
+  pushEnabled: boolean
+  s3UploadsEnabled: boolean
+}
 
 function loadEnv(): Env {
   const parsed = envSchema.safeParse(process.env)
@@ -133,13 +122,20 @@ function loadEnv(): Env {
     console.warn('[env] VAPID keys are not set — Web Push notifications are disabled. Generate them with: npx web-push generate-vapid-keys')
   }
 
-  // Not warned about. A machine with no blob store is the normal local case,
-  // and the upload route says so in its own response. Either credential is
-  // enough; a store created today supplies the store id and nothing else.
-  const blobUploadsEnabled =
-    parsed.data.BLOB_READ_WRITE_TOKEN.length > 0 || parsed.data.BLOB_STORE_ID.length > 0
+  /*
+    All four or none. A half-configured store is worse than no store: the
+    upload endpoint would answer as though it worked and then fail at the far
+    end, where the applicant reads it as "the site is broken" rather than as
+    the supported "uploads are off here" path.
+  */
+  const s3UploadsEnabled = Boolean(
+    parsed.data.S3_ENDPOINT &&
+      parsed.data.S3_BUCKET &&
+      parsed.data.S3_ACCESS_KEY_ID &&
+      parsed.data.S3_SECRET_ACCESS_KEY,
+  )
 
-  return { ...parsed.data, pushEnabled, blobUploadsEnabled }
+  return { ...parsed.data, pushEnabled, s3UploadsEnabled }
 }
 
 export const env = loadEnv()

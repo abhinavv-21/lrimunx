@@ -1,8 +1,7 @@
 import { Router } from 'express'
 import { Prisma, RegistrationStatus, Role } from '@prisma/client'
-import { issueSignedToken, presignUrl } from '@vercel/blob'
 import { env } from '../config/env.js'
-import { blobAuth } from '../lib/blob.js'
+import { keyFromUrl, presignGet } from '../lib/storage.js'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { auditRequest, recordAudit } from '../lib/audit.js'
@@ -193,29 +192,24 @@ registrationsRouter.get(
     const stored = registration.paymentProofUrl
     if (!stored) throw ApiError.notFound('This registration has no payment screenshot')
 
-    if (env.BLOB_ACCESS === 'public') {
-      res.json({ url: stored, expiresAt: null })
-      return
-    }
-
-    // The pathname is derived from the stored URL rather than kept in its own
+    // The key is derived from the stored URL rather than kept in its own
     // column: the URL is what the applicant's browser reported and what every
     // other part of the system already treats as the record. Two sources for
     // one fact is one source that goes stale.
-    const pathname = decodeURIComponent(new URL(stored).pathname).replace(/^\//, '')
+    //
+    // Null means the stored URL is not on our bucket — which, since the schema
+    // has refused anything else since the field existed, means it predates the
+    // move off Vercel Blob rather than that somebody smuggled one in.
+    const key = keyFromUrl(stored)
+    if (!key) {
+      throw ApiError.unprocessable(
+        'This screenshot was uploaded to the old store and can no longer be opened here.',
+        { paymentProofUrl: stored },
+      )
+    }
 
     const validUntil = Date.now() + PROOF_URL_TTL_MS
-    const signed = await issueSignedToken({
-      ...blobAuth(),
-      pathname,
-      operations: ['get'],
-      validUntil,
-    })
-    const { presignedUrl } = await presignUrl(signed, {
-      operation: 'get',
-      pathname,
-      access: 'private',
-    })
+    const presignedUrl = await presignGet(key, PROOF_URL_TTL_MS)
 
     // No caching anywhere: the body is a credential with a clock on it.
     res.setHeader('Cache-Control', 'no-store')

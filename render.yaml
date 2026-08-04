@@ -96,6 +96,29 @@ services:
       - key: GOOGLE_SHEETS_WEBHOOK_SECRET
         sync: false
 
+      # Object storage for payment screenshots. S3-compatible rather than tied
+      # to a provider — Supabase now, R2 or MinIO later with no code change.
+      #
+      # Leave all five blank and uploads are simply off: the endpoint answers
+      # 503, the form says so, and a delegate can still register without a
+      # screenshot. That is a supported state, not a broken one.
+      #
+      # S3_ENDPOINT is Supabase's Storage S3 endpoint, which includes the path:
+      #   https://<project-ref>.supabase.co/storage/v1/s3
+      # The bucket must be PRIVATE — these are financial records with names on
+      # them, and the hub signs a short-lived URL when a reviewer opens one.
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      # Supabase publishes a region per project; R2 and MinIO accept `auto`.
+      - key: S3_REGION
+        sync: false
+
       - key: DANGER_RESET_PASSPHRASE
         sync: false
 

@@ -89,33 +89,31 @@ Short list, and only one item is real work:
 
 ## 4. Storage is the one piece of real work
 
-`@vercel/blob` holds the payment screenshots, and it is the only part of the
-codebase that cannot simply be pointed somewhere else.
+**Already done.** Screenshots now live on S3-compatible storage — see
+`apps/backend/src/lib/storage.ts` — so the school box needs MinIO and four
+environment variables, not a rewrite.
 
 **Write it against the S3 API, not against any one provider.** MinIO speaks S3
 and is what you would run on a school box. So does every other object store you
 might ever be handed. Do it once and the same code runs on Vercel today and in
 the server room later with a different `S3_ENDPOINT` and nothing else changed.
 
-```bash
-npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner --workspace apps/backend
-npm uninstall @vercel/blob --workspace apps/backend --workspace apps/website
+Signing uses `aws4fetch` (80 KB, no dependencies) rather than `@aws-sdk/client-s3`,
+which is roughly fifteen megabytes for the two operations this needs.
+
+What you would set:
+
+```
+S3_ENDPOINT           http://localhost:9000     (MinIO on the same box)
+S3_BUCKET             lrimunx-payment-proofs
+S3_ACCESS_KEY_ID      from MinIO
+S3_SECRET_ACCESS_KEY  from MinIO
+S3_REGION             auto
 ```
 
-Three places change:
-
-1. **`apps/backend/src/lib/blob.ts`** — becomes an S3 client built from
-   `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
-2. **`POST /api/v1/public/blob-upload`** in `public.routes.ts` — returns a
-   presigned PUT URL instead of Vercel's presigned envelope. The two-event
-   protocol (`blob.generate-presigned-url` / `blob.upload-completed`) goes away;
-   S3 presigning is a single step.
-3. **`isBlobStorageUrl`** in `schemas/index.ts` — currently checks the hostname
-   ends with `.blob.vercel-storage.com`. It becomes a check against your own
-   bucket host. **Keep this check.** It is what stops somebody pasting an
-   arbitrary URL into `paymentProofUrl` and getting a reviewer to open it.
-
-On the school box, run MinIO on the same machine and point `S3_ENDPOINT` at it.
+Keep the bucket **private**. `isStorageUrl` in `lib/storage.ts` pins accepted
+URLs to your own bucket and prefix — that is what stops somebody pasting an
+arbitrary URL into `paymentProofUrl` and getting a reviewer to click it.
 
 > A simpler alternative worth considering: since the API and the storage are now
 > the same machine, you could skip object storage entirely and write screenshots

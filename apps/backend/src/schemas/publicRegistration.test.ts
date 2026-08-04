@@ -10,7 +10,7 @@ import { isBlobStorageUrl, publicRegistrationSchema, rejectRegistrationSchema } 
  * decides which one this accepts.
  */
 const BLOB_URL =
-  'https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
+  'https://testproject.supabase.co/storage/v1/s3/lrimunx-test/payment-proofs/9Kq2LmR4.png'
 
 /** A submission the conference website would actually send. */
 function validPayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -215,13 +215,14 @@ describe('publicRegistrationSchema', () => {
 
     it.each([
       ['somebody else’s host', 'https://evil.example/x.png'],
-      ['the blob host as a path', 'https://evil.example/private.blob.vercel-storage.com/x.png'],
-      ['the blob host in a fragment', 'https://evil.example/x.png#.private.blob.vercel-storage.com'],
-      ['the blob host as userinfo', 'https://k3mq.private.blob.vercel-storage.com@evil.example/x.png'],
-      ['a lookalike host', 'https://evilprivate.blob.vercel-storage.com/x.png'],
-      ['the bare blob domain with no store', 'https://private.blob.vercel-storage.com/x.png'],
-      ['plain http', 'http://k3mq.private.blob.vercel-storage.com/x.png'],
-      ['the public host, on a private store', 'https://k3mq.public.blob.vercel-storage.com/x.png'],
+      ["our bucket path on somebody else's host", 'https://evil.example/storage/v1/s3/lrimunx-test/payment-proofs/x.png'],
+      ['our whole URL in a fragment', 'https://evil.example/x.png#https://testproject.supabase.co/storage/v1/s3/lrimunx-test/payment-proofs/x.png'],
+      ['our host as userinfo', 'https://testproject.supabase.co@evil.example/x.png'],
+      ['a lookalike host', 'https://testproject.supabase.co.evil.example/storage/v1/s3/lrimunx-test/payment-proofs/x.png'],
+      ["somebody else's project", 'https://otherproject.supabase.co/storage/v1/s3/lrimunx-test/payment-proofs/x.png'],
+      ['plain http', 'http://testproject.supabase.co/storage/v1/s3/lrimunx-test/payment-proofs/x.png'],
+      ['a different bucket on our host', 'https://testproject.supabase.co/storage/v1/s3/other-bucket/payment-proofs/x.png'],
+      ['outside the payment-proofs prefix', 'https://testproject.supabase.co/storage/v1/s3/lrimunx-test/elsewhere/x.png'],
       ['a javascript URL', 'javascript:alert(1)'],
       ['a data URL', 'data:image/png;base64,iVBORw0KGgo='],
       ['not a URL at all', 'payment.png'],
@@ -244,9 +245,14 @@ describe('publicRegistrationSchema', () => {
 })
 
 describe('isBlobStorageUrl', () => {
-  it('accepts any store on the blob host when none is configured', () => {
+  it('accepts an object in the configured bucket', () => {
     expect(isBlobStorageUrl(BLOB_URL)).toBe(true)
-    expect(isBlobStorageUrl('https://abc.private.blob.vercel-storage.com/a/b/c.webp')).toBe(true)
+  })
+
+  it('refuses the store this project used to be on', () => {
+    // Payment proofs uploaded before the move off Vercel Blob are no longer
+    // ours to vouch for, and the field is a link a reviewer is told to click.
+    expect(isBlobStorageUrl('https://abc.private.blob.vercel-storage.com/a/b/c.webp')).toBe(false)
   })
 
   it('does not throw on input that is not a URL', () => {
@@ -268,33 +274,59 @@ describe('isBlobStorageUrl', () => {
  * `env` is read at module load, so each case re-imports the module under a
  * different environment rather than mutating one that has already been parsed.
  */
-describe('isBlobStorageUrl, pinned to a configured store', () => {
+describe('isBlobStorageUrl, pinned to our own bucket', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.resetModules()
   })
 
-  async function withStore(storeId: string, access = 'private') {
+  const ENDPOINT = 'https://abcdefgh.supabase.co/storage/v1/s3'
+  const BUCKET = 'payment-proofs'
+
+  async function withStore(endpoint = ENDPOINT, bucket = BUCKET) {
     vi.resetModules()
-    vi.stubEnv('BLOB_STORE_ID', storeId)
-    vi.stubEnv('BLOB_ACCESS', access)
+    vi.stubEnv('S3_ENDPOINT', endpoint)
+    vi.stubEnv('S3_BUCKET', bucket)
+    vi.stubEnv('S3_ACCESS_KEY_ID', 'test-key')
+    vi.stubEnv('S3_SECRET_ACCESS_KEY', 'test-secret')
     return (await import('./index.js')).isBlobStorageUrl
   }
 
-  it('accepts the configured store and refuses every other one', async () => {
-    const check = await withStore('store_9mlCqNa8wYTM')
+  it('accepts an object in our bucket and refuses every other host', async () => {
+    const check = await withStore()
 
-    // The host is the id lowercased with the prefix dropped.
-    expect(check('https://9mlcqna8wytm.private.blob.vercel-storage.com/proof.png')).toBe(true)
-    expect(check('https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/proof.png')).toBe(false)
-    expect(check('https://9mlcqna8wytm.public.blob.vercel-storage.com/proof.png')).toBe(false)
+    expect(check(`${ENDPOINT}/${BUCKET}/payment-proofs/9f1c.png`)).toBe(true)
+    // Somebody else's Supabase project, which anyone can create in a minute.
+    expect(check(`https://zzzzzzzz.supabase.co/storage/v1/s3/${BUCKET}/payment-proofs/9f1c.png`)).toBe(false)
+    // Our host, somebody else's bucket.
+    expect(check(`${ENDPOINT}/other-bucket/payment-proofs/9f1c.png`)).toBe(false)
   })
 
-  it('follows BLOB_ACCESS to the right host', async () => {
-    const check = await withStore('store_9mlCqNa8wYTM', 'public')
+  it('refuses anything outside the payment-proofs prefix', async () => {
+    const check = await withStore()
 
-    expect(check('https://9mlcqna8wytm.public.blob.vercel-storage.com/proof.png')).toBe(true)
-    expect(check('https://9mlcqna8wytm.private.blob.vercel-storage.com/proof.png')).toBe(false)
+    expect(check(`${ENDPOINT}/${BUCKET}/somewhere-else/9f1c.png`)).toBe(false)
+    expect(check(`${ENDPOINT}/${BUCKET}/payment-proofs/../../etc/passwd`)).toBe(false)
+  })
+
+  it('refuses a lookalike that only contains our host', async () => {
+    const check = await withStore()
+
+    // Parsing with URL rather than matching the string is what stops these.
+    expect(check(`https://evil.example/x.png#${ENDPOINT}/${BUCKET}/payment-proofs/a.png`)).toBe(false)
+    expect(check(`http://abcdefgh.supabase.co/storage/v1/s3/${BUCKET}/payment-proofs/a.png`)).toBe(false)
+    expect(check('not a url at all')).toBe(false)
+  })
+
+  it('refuses everything when no bucket is configured', async () => {
+    vi.resetModules()
+    vi.stubEnv('S3_ENDPOINT', '')
+    vi.stubEnv('S3_BUCKET', '')
+    const check = (await import('./index.js')).isBlobStorageUrl
+
+    // With no store there is no such thing as one of our URLs, and an open
+    // field here is an attack on the reviewer.
+    expect(check(`${ENDPOINT}/${BUCKET}/payment-proofs/9f1c.png`)).toBe(false)
   })
 })
 

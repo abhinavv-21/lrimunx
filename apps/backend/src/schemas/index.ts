@@ -7,6 +7,7 @@ import {
   Role,
 } from '@prisma/client'
 import { env } from '../config/env.js'
+import { isStorageUrl } from '../lib/storage.js'
 
 /* -------------------------------------------------------------------------- */
 /* Primitives                                                                  */
@@ -69,47 +70,21 @@ const countAnswer = (max: number) =>
 export const EXPERIENCE_MAX = 99
 
 /**
- * The host Vercel Blob serves uploads from:
- * `<store>.public.blob.vercel-storage.com` for a public store, and
- * `<store>.private.blob.vercel-storage.com` for a private one.
- *
- * The leading dot is load-bearing. Without it `evil-private.blob.vercel-storage.com`
- * — or worse, a bare `private.blob.vercel-storage.com` — would satisfy the check.
- */
-const BLOB_HOST_SUFFIX = `.${env.BLOB_ACCESS}.blob.vercel-storage.com`
-
-/**
- * The exact host of the configured store, when there is one.
- *
- * Vercel derives it from the store id, lowercased and with the `store_` prefix
- * dropped: store_9mlCqNa8wYTM → 9mlcqna8wytm.private.blob.vercel-storage.com.
- * Pinning to it means a URL on somebody ELSE'S Vercel Blob store — which any
- * account can create in a minute — is not accepted here. Empty when no store is
- * configured, and then the suffix check stands alone.
- */
-const BLOB_HOST = env.BLOB_STORE_ID
-  ? `${env.BLOB_STORE_ID.replace(/^store_/, '').toLowerCase()}${BLOB_HOST_SUFFIX}`
-  : ''
-
-/**
- * Is this a URL on our blob store, rather than any URL at all?
+ * Is this a URL on our own object store, rather than any URL at all?
  *
  * The field it guards is rendered in the review queue as a link an admin
  * clicks, so accepting arbitrary URLs would turn a public, unauthenticated form
  * into a way to put an attacker-chosen destination in front of the one account
- * that can approve registrations and create users. Parsing with `URL` rather
- * than matching the string is what stops
- * `https://evil.example/x.png#.private.blob.vercel-storage.com` from passing.
+ * that can approve registrations and create users.
+ *
+ * The check itself lives in lib/storage.ts, next to the code that builds the
+ * URLs, so the two can never drift apart — a guard that describes a bucket
+ * layout from a different file is a guard that stops matching the day the
+ * layout changes. It parses with `URL` rather than matching the string, which
+ * is what stops `https://evil.example/x.png#our-bucket` from passing.
  */
 export function isBlobStorageUrl(value: string): boolean {
-  let url: URL
-  try {
-    url = new URL(value)
-  } catch {
-    return false
-  }
-  if (url.protocol !== 'https:') return false
-  return BLOB_HOST ? url.hostname === BLOB_HOST : url.hostname.endsWith(BLOB_HOST_SUFFIX)
+  return isStorageUrl(value)
 }
 
 export const paginationQuery = z.object({

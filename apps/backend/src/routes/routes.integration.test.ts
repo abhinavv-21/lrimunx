@@ -57,7 +57,10 @@ const PUSH_ENDPOINT = `${NS.pushEndpoint}contributor-device`
  * A screenshot URL shaped exactly as Vercel Blob returns one. Nothing is ever
  * fetched from it — only the host is load-bearing.
  */
-const BLOB_URL = 'https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/payment-proof-9Kq2LmR4.png'
+const BLOB_URL =
+  process.env['S3_ENDPOINT'] && process.env['S3_BUCKET']
+    ? `${process.env['S3_ENDPOINT'].replace(/\/+$/, '')}/${process.env['S3_BUCKET']}/payment-proofs/9Kq2LmR4.png`
+    : null
 
 /**
  * Whether this machine has a blob store. Local development does not, and the
@@ -65,7 +68,7 @@ const BLOB_URL = 'https://k3mq1zfwvbdxpnl8.private.blob.vercel-storage.com/payme
  * that pin one answer skip in the other.
  */
 const blobConfigured = Boolean(
-  process.env['BLOB_READ_WRITE_TOKEN'] || process.env['BLOB_STORE_ID'],
+  process.env['S3_ENDPOINT'] && process.env['S3_BUCKET'],
 )
 
 /** A submission the public form would produce, with a namespaced address. */
@@ -82,7 +85,7 @@ function submission(email: string): Record<string, unknown> {
     munsAttended: '4',
     awardsWon: '1',
     referralCode: 'RIDGE-MUNSOC',
-    paymentProofUrl: BLOB_URL,
+    ...(BLOB_URL ? { paymentProofUrl: BLOB_URL } : {}),
     dietaryNotes: 'Vegetarian meals only',
     // An untouched optional field arrives as "" from a browser, not as absent.
     accessibilityNotes: '',
@@ -105,7 +108,7 @@ async function pendingRegistration(local: string): Promise<{ id: string; email: 
       munsAttended: 6,
       awardsWon: 2,
       referralCode: 'RIDGE-MUNSOC',
-      paymentProofUrl: BLOB_URL,
+      ...(BLOB_URL ? { paymentProofUrl: BLOB_URL } : {}),
     },
     select: { id: true, email: true },
   })
@@ -316,7 +319,7 @@ describe.skipIf(!boot.ready)('API integration', () => {
       // application, not about the person, so they stay on the row that is
       // still linked rather than being copied onto the roster.
       expect(after.referralCode).toBe('RIDGE-MUNSOC')
-      expect(after.paymentProofUrl).toBe(BLOB_URL)
+      expect(after.paymentProofUrl).toBe(BLOB_URL ?? null)
 
       // CLAUDE.md rule 2 — an admin write leaves a trail.
       const trail = await prisma.auditLog.findMany({ where: { userId: fixtures.adminId } })
@@ -781,7 +784,7 @@ describe.skipIf(!boot.ready)('API integration', () => {
       expect(row.munsAttended).toBe(4)
       expect(row.awardsWon).toBe(1)
       expect(row.referralCode).toBe('RIDGE-MUNSOC')
-      expect(row.paymentProofUrl).toBe(BLOB_URL)
+      expect(row.paymentProofUrl).toBe(BLOB_URL ?? null)
       // Blank still means blank, not an empty string nobody can query for.
       expect(row.accessibilityNotes).toBeNull()
     })

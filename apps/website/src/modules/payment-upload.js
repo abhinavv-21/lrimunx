@@ -1,17 +1,16 @@
 /**
  * payment-upload.js — the payment screenshot control on step 2.
  *
- * The file goes STRAIGHT from the browser to Vercel Blob and only its URL is
- * posted to the API. That is not an optimisation, it is the only workable
- * shape: a screenshot off a modern phone routinely clears the 4.5 MB a
- * serverless function body caps at, and pushing it through a JSON API would
- * mean base64 (+33%) on top of that. A direct upload also means the reader
- * sees real progress rather than a spinner.
+ * The file goes STRAIGHT from the browser to the object store and only its URL
+ * is posted to the API. That is not an optimisation, it is the only workable
+ * shape: a screenshot off a modern phone is several megabytes, pushing it
+ * through a JSON API would mean base64 (+33%) on top of that, and the API runs
+ * on an instance with a fraction of a CPU that has better things to do. A
+ * direct upload also means the reader sees real progress rather than a spinner.
  *
- * The client library is loaded ON DEMAND rather than imported at the top of
- * the page. It is ~110 KB that nobody who abandons on step 1 should ever
- * download, and it is warmed the moment step 2 opens, so by the time a file is
- * chosen the chunk is already there.
+ * Two steps: ask the API for a signed URL, then PUT the file at it. There is no
+ * client library any more — dropping @vercel/blob took a 113 KB chunk off the
+ * registration page.
  *
  * States: idle · invalid · uploading · uploaded · failed. Every failure keeps
  * the reader on step 2 with everything they typed intact, and none of them
@@ -44,31 +43,35 @@ const COPY = {
     'This device looks offline, so the screenshot could not be uploaded. Everything you have typed is still here — try again once you are back online.',
 }
 
-/** Loaded once, shared by both calls, and never awaited before it is needed. */
-let blobClient = null
-function loadBlobClient() {
-  blobClient ??= import('@vercel/blob/client')
-  return blobClient
-}
-
 /**
- * A pathname the store can live with, derived from whatever the phone gave us.
+ * PUT the file at a signed URL, reporting progress.
  *
- * Phone galleries produce names like `Screenshot 2026-08-01 at 14.02.11.png`,
- * and an IME produces worse. Anything outside a–z, 0–9, dot and dash is
- * collapsed so the resulting URL needs no escaping; the extension is preserved,
- * because the store derives the content type from it. Collisions are not this
- * function's problem — the upload route sets addRandomSuffix.
+ * XMLHttpRequest rather than fetch, for one reason: fetch cannot report UPLOAD
+ * progress. On a phone on Nepali mobile data an eight-megabyte photo is a long
+ * silence, and a progress bar that does not move is indistinguishable from a
+ * page that has hung.
+ *
+ * `contentType` is the value the SERVER validated, not `file.type` read again
+ * here. It is what the object gets stored as, and taking it from the response
+ * means the type the API approved is the type that lands in the bucket.
  */
-function safeName(name) {
-  const fallback = 'payment-screenshot.png'
-  const cleaned = String(name || fallback)
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(-64)
-  return cleaned.includes('.') ? cleaned : fallback
+function putSignedFile(uploadUrl, file, contentType, onProgress) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    request.open('PUT', uploadUrl, true)
+    request.setRequestHeader('Content-Type', contentType)
+
+    request.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) onProgress((event.loaded / event.total) * 100)
+    })
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 300) resolve()
+      else reject(new Error(`Store refused the upload (${request.status})`))
+    })
+    request.addEventListener('error', () => reject(new Error('Network error during upload')))
+    request.addEventListener('abort', () => reject(new Error('Upload aborted')))
+    request.send(file)
+  })
 }
 
 function formatSize(bytes) {
@@ -100,11 +103,11 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
   /**
    * Consecutive failed attempts.
    *
-   * A blob upload that fails looks identical from here whatever caused it —
-   * `@vercel/blob` throws the same bare error for a 503 with no store
-   * configured, a 429, and a dropped connection. Rather than guess, the page
-   * counts failures and offers a way through after the second, which is the
-   * one response that is correct for all three.
+   * An upload that fails looks much the same from here whatever caused it — a
+   * 503 with no bucket configured, a 429, an expired signature and a dropped
+   * connection are not worth telling apart in front of a fifteen-year-old on
+   * mobile data. Rather than guess, the page counts failures and offers a way
+   * through after the second, which is the one response correct for all four.
    */
   let failures = 0
   let locked = false
@@ -158,7 +161,7 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
   function showResult(file) {
     if (!result) return
     dropPreview()
-    // A local object URL rather than blob.url: the thumbnail appears instantly,
+    // A local object URL rather than the stored one: the thumbnail appears instantly,
     // costs no second round trip, and does not depend on the store having
     // finished making the object publicly readable.
     preview = URL.createObjectURL(file)
@@ -207,28 +210,32 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
 
     try {
       /*
-        `uploadPresigned`, not `upload`.
+        Two steps, and the file never touches our own server.
 
-        The store is private, and a private store is reached with a presigned
-        URL the server signs rather than with a client token. Same shape from
-        here — ask our own endpoint, PUT the file straight at the store, never
-        route eight megabytes of photo through a serverless function — but the
-        credential is scoped to this one pathname and expires.
+        Ask our API where to put it — it validates the type and the size, picks
+        a key nobody can guess, and signs a URL that is good for that one object
+        for half an hour. Then PUT the photo straight at the store. Eight
+        megabytes of image has no business passing through an API instance with
+        a fraction of a CPU, and on the free tier it would compete with whoever
+        is trying to sign in at the same moment.
 
-        `access: 'private'` is what puts the object on the private host. The
-        resulting URL is not loadable by itself; the ops hub asks the API for a
-        short-lived signed one when a reviewer opens the screenshot.
+        The bucket is private, so the URL that comes back is not loadable on its
+        own. The ops hub asks the API for a short-lived signed one when a
+        reviewer actually opens the screenshot.
       */
-      const { uploadPresigned } = await loadBlobClient()
-      const blob = await uploadPresigned(safeName(file.name), file, {
-        access: 'private',
-        handleUploadUrl: endpoint,
-        contentType: file.type,
-        onUploadProgress: ({ percentage }) => setProgress(percentage),
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contentType: file.type, size: file.size }),
       })
+      if (!response.ok) throw new Error(`Upload could not be started (${response.status})`)
 
-      url = typeof blob?.url === 'string' ? blob.url : ''
-      if (!url) throw new Error('No blob URL returned')
+      const { uploadUrl, fileUrl, contentType } = await response.json()
+      if (!uploadUrl || !fileUrl) throw new Error('Upload endpoint returned no URL')
+
+      await putSignedFile(uploadUrl, file, contentType || file.type, setProgress)
+
+      url = fileUrl
 
       setBusy(false)
       hideProgress()
@@ -308,11 +315,29 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
       return failures
     },
 
-    /** Called when step 2 opens: pull the client down before it is needed. */
+    /**
+     * Called when step 2 opens: wake the API before it is needed.
+     *
+     * There is no longer a client library to preload — the upload is a POST and
+     * a PUT. What this buys now is a cold start spent while the delegate is
+     * reading the payment details rather than while they are waiting on their
+     * own submit. The API sleeps after fifteen idle minutes and takes about a
+     * minute to come back, so on a quiet evening the first person to reach step
+     * 2 is very often the one paying for that.
+     *
+     * `/health` because it touches no database and no auth, and failure is
+     * ignored on purpose: this is an optimisation, and the real request coming
+     * later reports its own problems.
+     */
     warm() {
-      loadBlobClient().catch(() => {
-        /* Retried, and reported, at the moment a file is actually chosen. */
-      })
+      try {
+        const health = new URL(endpoint, window.location.href)
+        health.pathname = '/health'
+        health.search = ''
+        void fetch(health.toString(), { method: 'GET', mode: 'cors' }).catch(() => {})
+      } catch {
+        /* A malformed endpoint is reported by the upload itself, not here. */
+      }
     },
 
     focus() {
