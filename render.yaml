@@ -87,10 +87,13 @@ services:
   # ---------------------------------------------------------------------------
   # The public site + the ops hub
   # ---------------------------------------------------------------------------
+  # No `plan:` here, deliberately. A static site is served from the CDN and
+  # never runs an instance, so it has no instance type to choose — Render
+  # rejects the blueprint outright if you give it one. It is also why this half
+  # cannot sleep and costs no instance hours.
   - type: web
     name: lrimunx-site
     runtime: static
-    plan: free
     branch: main
 
     # VITE_API_BASE_URL is baked into the bundle at BUILD time, not read at
