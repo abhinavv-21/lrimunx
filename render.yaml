@@ -65,9 +65,17 @@ services:
       - key: DATABASE_URL
         sync: false
 
-      # COPY THESE FROM VERCEL rather than generating new ones, or every OC
-      # session invalidates the moment you cut over. Harmless, confusing,
-      # avoidable.
+      # Two DIFFERENT random strings, at least 32 characters each:
+      #
+      #   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+      #
+      # Copying Vercel's is not required, and is impossible anyway if they were
+      # stored as Sensitive there — Vercel cannot read those back. Generating
+      # fresh ones costs exactly one thing: everybody signs in again, once.
+      # Passwords are bcrypt hashes in the database and have nothing to do with
+      # these; no data is touched. This deployment runs alongside Vercel rather
+      # than replacing it mid-flight, so the two not sharing sessions is a
+      # non-issue.
       - key: JWT_SECRET
         sync: false
       - key: JWT_REFRESH_SECRET
