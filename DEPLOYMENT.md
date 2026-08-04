@@ -9,7 +9,7 @@ lrimun.lrischool.edu.np/api/v1/*  the API (serverless)         apps/backend
 ```
 
 The site and the hub are static bundles composed into `dist/` by
-`scripts/build-vercel.mjs`. The API is a single serverless function at
+`scripts/compose-static.mjs`. The API is a single serverless function at
 `api/index.ts` that wraps the same Express app used in local development.
 Routing between the three is in `vercel.json`.
 

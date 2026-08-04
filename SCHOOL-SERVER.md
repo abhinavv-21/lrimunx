@@ -82,7 +82,7 @@ Short list, and only one item is real work:
 | `@vercel/blob` | `apps/backend/src/lib/blob.ts`, `routes/public.routes.ts`, `routes/registrations.routes.ts`, `apps/website/src/modules/payment-upload.js` | **The only real lock-in.** See §4. |
 | Serverless entry | `api/index.ts` → `apps/backend/dist/serverless.js` | Stop using it. `index.ts` already exists. |
 | Routing and headers | `vercel.json` | Rewrite as nginx/Caddy rules. See §6. |
-| Static composition | `scripts/build-vercel.mjs` | Reuse as-is; it just copies files. |
+| Static composition | `scripts/compose-static.mjs` | Reuse as-is; it just copies files. |
 | Client IP | `x-vercel-forwarded-for` in `public.routes.ts` | One line. See §7. |
 
 ---
@@ -171,7 +171,7 @@ npx prisma migrate deploy          # never `migrate dev` on a live database
 sudo systemctl restart lrimunx
 ```
 
-`npm run build` already builds all three workspaces. `scripts/build-vercel.mjs`
+`npm run build` already builds all three workspaces. `scripts/compose-static.mjs`
 composes them into `dist/` — it only copies files, so it works unchanged; point
 your web server at `dist/`.
 

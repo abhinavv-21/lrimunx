@@ -1,0 +1,150 @@
+# Render Blueprint — the whole conference, on two free services.
+#
+#   lrimunx-site   static, on a CDN. The public site at / and the ops hub at
+#                  /admin. Static sites do NOT spin down and do not consume
+#                  instance hours, so the registration form is always instant
+#                  even when the API is asleep.
+#   lrimunx-api    the Express server. Free instances sleep after 15 minutes of
+#                  inactivity and take ~1 minute to wake, so point an uptime
+#                  pinger at /health every 5 minutes.
+#
+# The database is NOT defined here on purpose. It already exists on Prisma
+# Postgres and is independent of any host — see DATABASE_URL below. Render's own
+# free Postgres expires after 30 days, which is not something to discover during
+# registration week.
+#
+# Anything marked `sync: false` is a secret: Render prompts for it once and
+# stores it, and it never enters this repository.
+
+services:
+  # ---------------------------------------------------------------------------
+  # The API
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: lrimunx-api
+    runtime: node
+    plan: free
+    # Closest region to Kathmandu. Oregon and Frankfurt are both roughly twice
+    # as far in round-trip terms.
+    region: singapore
+    branch: main
+
+    # `--include=dev` because the build needs TypeScript and Prisma's CLI, and
+    # Render sets NODE_ENV=production, which otherwise skips devDependencies.
+    #
+    # `migrate deploy` and never `migrate dev`: deploy replays existing
+    # migrations and refuses to invent new ones, which is the only safe verb to
+    # point at a live database.
+    buildCommand: >-
+      npm install --include=dev &&
+      npx prisma generate &&
+      npx prisma migrate deploy &&
+      npm run build --workspace apps/backend
+
+    startCommand: node apps/backend/dist/index.js
+
+    # Doubles as the keep-warm target. It touches no database and no auth, so
+    # pinging it every five minutes costs essentially nothing.
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+
+      # Node now sits behind Render's proxy rather than being the edge itself.
+      # Without this every request looks like it came from 127.0.0.1 and the
+      # rate limiters treat the entire internet as one visitor.
+      - key: TRUST_PROXY
+        value: "1"
+
+      # The existing Prisma Postgres connection string. Paste the DIRECT
+      # postgres:// URL — a long-lived server holds one pool and does not need
+      # the serverless pooling parameters.
+      - key: DATABASE_URL
+        sync: false
+
+      # COPY THESE FROM VERCEL rather than generating new ones, or every OC
+      # session invalidates the moment you cut over. Harmless, confusing,
+      # avoidable.
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+
+      # The origin the browser will be on — the static site's URL, e.g.
+      # https://lrimunx-site.onrender.com. Set this AFTER the first deploy,
+      # when Render has assigned the site its hostname. Until it is right,
+      # every API call from the site is blocked by the browser and nobody can
+      # register. Comma-separated if you need more than one.
+      - key: CORS_ORIGIN
+        sync: false
+
+      - key: DANGER_RESET_PASSPHRASE
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # The public site + the ops hub
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: lrimunx-site
+    runtime: static
+    plan: free
+    branch: main
+
+    # VITE_API_BASE_URL is baked into the bundle at BUILD time, not read at
+    # runtime, so it has to be composed here. API_HOST below is filled in by
+    # Render from the API service, which is why this is a shell expression
+    # rather than a literal — the hostname is not known until Render assigns it.
+    buildCommand: >-
+      npm install --include=dev &&
+      VITE_API_BASE_URL="https://$API_HOST/api/v1" npm run render-build
+
+    staticPublishPath: ./dist
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_HOST
+        fromService:
+          type: web
+          name: lrimunx-api
+          property: host
+
+    # Rewrites, not redirects: status 200 means the URL in the address bar does
+    # not change. A redirect would put ".html" back in front of the delegate,
+    # which is the thing these exist to remove. Render serves a real file when
+    # one exists at the path, so /admin/* cannot swallow /admin/assets/....
+    routes:
+      - type: rewrite
+        source: /register
+        destination: /register.html
+      - type: rewrite
+        source: /admin
+        destination: /admin/index.html
+      - type: rewrite
+        source: /admin/*
+        destination: /admin/index.html
+
+    headers:
+      # The ops hub is not a public document: out of search results, and out of
+      # frames so a copy of it cannot be dressed up as something else.
+      - path: /admin/*
+        name: X-Robots-Tag
+        value: noindex, nofollow
+      - path: /admin/*
+        name: X-Frame-Options
+        value: DENY
+      - path: /admin/*
+        name: Referrer-Policy
+        value: same-origin
+
+      # Fingerprinted bundles: the filename changes whenever the contents do,
+      # so these can be cached for a year and never revalidated.
+      - path: /assets/build/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /admin/assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

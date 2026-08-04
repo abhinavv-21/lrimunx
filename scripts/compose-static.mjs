@@ -1,11 +1,14 @@
 /**
- * Composes the three workspaces into the single static tree Vercel serves.
+ * Composes the two browser bundles into the single static tree that gets served.
  *
  *   dist/            the public conference site   (apps/website)
  *   dist/admin/      the OC operations hub        (apps/frontend)
  *
- * The API is not here — it is a serverless function under `api/`, routed by
- * the rewrites in vercel.json. Only the two browser bundles are static.
+ * Platform-neutral on purpose, and shared by both deploys: Vercel reaches it
+ * through `vercel-build`, Render through `render-build`. It only copies files —
+ * there was never anything Vercel-specific in here, and the old name implied
+ * otherwise. Where the API lives is somebody else's problem; on Vercel it is a
+ * serverless function under `api/`, on Render a separate web service.
  *
  * Ordering matters: the website is copied first and the ops hub second, into a
  * subdirectory. Copying in the other order would let the website's root-level
