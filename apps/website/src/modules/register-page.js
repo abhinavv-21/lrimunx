@@ -48,9 +48,18 @@ const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(
 const ENDPOINT = `${API_BASE}/public/register`
 const UPLOAD_ENDPOINT = `${API_BASE}/public/blob-upload`
 
-// A request with no ceiling is indistinguishable from a hung one. 20s, then it
-// is reported as a connection failure — which, from the reader's side, it is.
-const REQUEST_TIMEOUT_MS = 20000
+/*
+  A request with no ceiling is indistinguishable from a hung one, so there is
+  still an abort — but it has to be long enough to survive a cold start.
+
+  The API sleeps after fifteen idle minutes and takes about a minute to wake.
+  At twenty seconds this abort was guaranteed to lose that race, and the
+  delegate was told their connection had dropped when it had not. The page
+  warms the API the moment it loads (see below), so reaching this at all should
+  now mean something is genuinely wrong — but if the warm request was the one
+  that woke it, the submit must be willing to wait.
+*/
+const REQUEST_TIMEOUT_MS = 75000
 
 /* The page's reveal language, unchanged: 26px of travel on expo.out. The only
    number that differs is the duration — 1.2s is right for something arriving as
@@ -243,7 +252,7 @@ const SUMMARY = {
   },
   offline: {
     title: 'That did not go through',
-    copy: 'Your registration could not reach the secretariat — the connection dropped, or this device is offline. Nothing has been sent and everything you typed is still in the form. Try again once you are back online.',
+    copy: 'Your registration did not reach the secretariat. Nothing has been sent and everything you typed is still in the form. If you are online, the server may have been asleep — wait a few seconds and press Send again.',
   },
   server: {
     title: 'Something went wrong at our end',
@@ -1131,6 +1140,17 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
     dirty = false
     window.removeEventListener('beforeunload', onBeforeUnload)
   }
+
+  /*
+    Wake the API as soon as the page loads, not when step 2 opens.
+
+    Filling in step 1 takes a minute or more, which is exactly the cold start.
+    Warming later meant the presigned-upload request on step 2 was often the
+    first real call — and the upload module counts two failures before it gives
+    up on screenshots entirely, so a sleeping instance could talk a delegate out
+    of attaching their proof of payment for no reason at all.
+  */
+  upload?.warm()
 
   syncPreferences()
   applyQueryPreselect()

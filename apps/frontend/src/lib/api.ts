@@ -156,6 +156,30 @@ async function toApiError(response: Response): Promise<ApiError> {
   }
 }
 
+/**
+ * Wake the API without waiting for it.
+ *
+ * A free instance sleeps after fifteen idle minutes and takes about a minute
+ * to come back. Whoever opens the sign-in screen first each morning was paying
+ * for that with their own sign-in — and, because a waking instance answers with
+ * a CORS-less 502, paying for it as an error rather than a wait.
+ *
+ * Called when the sign-in screen mounts, so the instance is warming while the
+ * password is being typed. `/health` touches no database and no auth. Failure
+ * is ignored on purpose: this is an optimisation, and the real request that
+ * follows reports its own problems.
+ */
+export function warmApi(): void {
+  try {
+    const url = new URL(BASE_URL, window.location.href)
+    url.pathname = '/health'
+    url.search = ''
+    void fetch(url.toString(), { method: 'GET', mode: 'cors', cache: 'no-store' }).catch(() => {})
+  } catch {
+    /* A malformed base URL is reported by the first real request, not here. */
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, anonymous, headers, ...rest } = options
 
@@ -176,8 +200,28 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   try {
     response = await send()
   } catch {
-    // Network unreachable — code 0 lets callers distinguish offline from a 5xx.
-    throw new ApiError({ error: 'You appear to be offline. The request was not sent.', code: 0 })
+    /*
+      `fetch` only throws for a network-level failure, and there are two of
+      them. Reporting both as "you are offline" sent people to check their wifi
+      while the wifi was fine.
+
+      The second one is the common case on a free instance: it sleeps after
+      fifteen idle minutes, and while it wakes, the platform answers with its
+      own 502 page — which carries no CORS headers, so the browser blocks the
+      response and fetch throws exactly as it would with no network at all.
+      Indistinguishable from here except by asking the browser whether it
+      believes it has a connection.
+
+      Code 0 either way, because callers use it to mean "the request never
+      reached the API" and both of these are that.
+    */
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+    throw new ApiError({
+      error: offline
+        ? 'You appear to be offline. The request was not sent.'
+        : 'The server did not respond. It may be starting up after being idle — wait a few seconds and try again.',
+      code: 0,
+    })
   }
 
   if (response.status === 401 && !anonymous) {

@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { AlertTriangle, Clock } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
-import { ApiError } from '@/lib/api'
+import { ApiError, warmApi } from '@/lib/api'
 import { asset } from '@/lib/utils'
 
 export function LoginPage() {
@@ -12,6 +12,11 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  // Start the API waking while the password is being typed — see warmApi.
+  useEffect(() => {
+    warmApi()
+  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
