@@ -134,24 +134,32 @@ services:
     runtime: static
     branch: main
 
-    # VITE_API_BASE_URL is baked into the bundle at BUILD time, not read at
-    # runtime, so it has to be composed here. API_HOST below is filled in by
-    # Render from the API service, which is why this is a shell expression
-    # rather than a literal — the hostname is not known until Render assigns it.
-    buildCommand: >-
-      npm install --include=dev &&
-      VITE_API_BASE_URL="https://$API_HOST/api/v1" npm run render-build
+    buildCommand: npm install --include=dev && npm run render-build
 
     staticPublishPath: ./dist
 
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: API_HOST
-        fromService:
-          type: web
-          name: lrimunx-api
-          property: host
+
+      # Set BY HAND, and deliberately not derived from the API service.
+      #
+      # This was `fromService: { name: lrimunx-api, property: host }` composed
+      # into "https://$API_HOST/api/v1". That resolves to Render's INTERNAL
+      # service name — literally `lrimunx-api` — so every browser got
+      # https://lrimunx-api/api/v1, which is ENOTFOUND outside Render's private
+      # network. The site and the hub both built and deployed green while being
+      # completely non-functional for every real visitor.
+      #
+      # It is the PUBLIC url that is needed, it is stable once assigned, and
+      # there is no fromService property that returns it. So it is typed in:
+      #   https://lrimunx-api.onrender.com/api/v1
+      # Include the scheme and /api/v1; omit any trailing slash.
+      #
+      # Baked in at BUILD time, not read at runtime, so changing it needs a
+      # redeploy of THIS service, not just the API.
+      - key: VITE_API_BASE_URL
+        sync: false
 
     # Rewrites, not redirects: status 200 means the URL in the address bar does
     # not change. A redirect would put ".html" back in front of the delegate,
