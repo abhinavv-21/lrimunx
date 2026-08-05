@@ -1,0 +1,67 @@
+# Keeps the free tiers from going to sleep on us.
+#
+# Two different clocks, one job:
+#
+#   Render   sleeps after 15 minutes idle and takes ~1 minute to wake. That one
+#            is better handled by an uptime pinger every 5 minutes — GitHub's
+#            scheduler is regularly 10+ minutes late under load, which is longer
+#            than the window. It is pinged here anyway as a backstop.
+#
+#   Supabase pauses a free project after 7 days of low DATABASE activity, and
+#            deletes it if it stays paused. That is the one this file exists
+#            for: a daily touch is ample, and lateness does not matter.
+#
+# Why not UptimeRobot for Supabase: the only endpoint that genuinely reads from
+# Postgres — /storage/v1/bucket, which queries storage.buckets — requires the
+# key in a HEADER, and custom headers are a paid UptimeRobot feature. The
+# endpoints that accept ?apikey= in the URL (like /auth/v1/health) only return a
+# version string and never touch the database, so they would keep the monitor
+# green while the project paused underneath it.
+#
+# SETUP: add one repository secret —
+#   SUPABASE_ANON_KEY   Supabase → Settings → API → "anon public"
+# The anon key is designed to be public (it normally ships inside browser
+# bundles); it is a secret here for hygiene, not because it grants anything.
+#
+# NOTE FOR WHOEVER INHERITS THIS: GitHub disables scheduled workflows after 60
+# days with no repository activity. It emails first. If registrations start
+# failing after a long quiet spell, check here.
+
+name: Keep free tiers awake
+
+on:
+  schedule:
+    # 06:20 UTC daily. Deliberately not on the hour — GitHub queues those.
+    - cron: '20 6 * * *'
+  workflow_dispatch: # so it can be run by hand to test
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the API
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
+            https://lrimunx-api.onrender.com/health)
+          echo "Render /health -> $code"
+          # A cold start can take a minute; anything other than 200 after that
+          # is a real problem worth failing the run over.
+          [ "$code" = "200" ]
+
+      - name: Touch the Supabase database
+        env:
+          ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$ANON_KEY" ]; then
+            echo "SUPABASE_ANON_KEY is not set — the project will pause in 7 days."
+            exit 1
+          fi
+          # /storage/v1/bucket reads storage.buckets out of Postgres, which is
+          # what the inactivity timer actually watches. The empty [] it returns
+          # under the anon key is fine — the read is the point, not the result.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            -H "apikey: $ANON_KEY" \
+            -H "Authorization: Bearer $ANON_KEY" \
+            https://emvpipogmmkwmgixmspw.supabase.co/storage/v1/bucket)
+          echo "Supabase /storage/v1/bucket -> $code"
+          [ "$code" = "200" ]
