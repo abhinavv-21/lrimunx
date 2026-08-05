@@ -586,6 +586,79 @@ describe.skipIf(!boot.ready)('API integration', () => {
   /* 3. The public endpoint's contract                                        */
   /* ======================================================================== */
 
+  describe('managing accounts is narrower than ADMIN', () => {
+    /*
+      The fixture admin is created with canManageUsers at its default of false,
+      so it stands in for the ordinary admin this feature exists to exclude —
+      somebody who runs the conference but does not hand out accounts.
+    */
+    const asAdmin = (method: HttpMethod, url: string) =>
+      api.request(method, url, { token: adminToken })
+
+    it('refuses an ADMIN who does not have the flag', async () => {
+      for (const [method, url] of [
+        ['get', '/api/v1/users'],
+        ['post', '/api/v1/users'],
+        ['patch', `/api/v1/users/${fixtures.contributorId}`],
+        ['delete', `/api/v1/users/${fixtures.contributorId}`],
+      ] as Array<[HttpMethod, string]>) {
+        const response = await asAdmin(method, url).send({})
+        expect(response.status).toBe(403)
+        expect((response.body as ApiErrorBody).error).toContain('restricted')
+      }
+    })
+
+    it('lets the same admin through once the flag is granted, and shuts again when it is taken away', async () => {
+      await prisma.user.update({
+        where: { id: fixtures.adminId },
+        data: { canManageUsers: true },
+      })
+      expect((await asAdmin('get', '/api/v1/users')).status).toBe(200)
+
+      await prisma.user.update({
+        where: { id: fixtures.adminId },
+        data: { canManageUsers: false },
+      })
+      // Read fresh from the database on every request, not from the token —
+      // otherwise revoking would not take effect until the token expired.
+      expect((await asAdmin('get', '/api/v1/users')).status).toBe(403)
+    })
+
+    it('will not let the last holder give it up', async () => {
+      await prisma.user.update({
+        where: { id: fixtures.adminId },
+        data: { canManageUsers: true },
+      })
+      const others = await prisma.user.count({
+        where: { canManageUsers: true, id: { not: fixtures.adminId } },
+      })
+
+      const response = await asAdmin('patch', `/api/v1/users/${fixtures.adminId}`)
+        .send({ canManageUsers: false })
+
+      if (others === 0) {
+        // Nobody could grant it back, and the screen that would grant it is the
+        // one being locked. SQL would be the only way out.
+        expect(response.status).toBe(409)
+        expect((response.body as ApiErrorBody).error).toContain('at least one account')
+      } else {
+        // Another holder exists on this database, so giving it up is safe.
+        expect(response.status).toBe(200)
+      }
+
+      await prisma.user.update({
+        where: { id: fixtures.adminId },
+        data: { canManageUsers: false },
+      })
+    })
+
+    it('tells the client, so the hub can hide the tab', async () => {
+      const me = await asAdmin('get', '/api/v1/auth/me').send()
+      expect(me.status).toBe(200)
+      expect(me.body).toHaveProperty('canManageUsers', false)
+    })
+  })
+
   describe('signing out actually ends the session', () => {
     /*
       The guarantee under test is the one a stateless refresh token could not

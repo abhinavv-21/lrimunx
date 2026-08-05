@@ -44,7 +44,13 @@ authRouter.post(
       throw ApiError.unauthorized('Incorrect username or password')
     }
 
-    const authUser = { id: user.id, username: user.username, fullName: user.fullName, role: user.role }
+    const authUser = {
+      id: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      role: user.role,
+      canManageUsers: user.canManageUsers,
+    }
 
     // Recorded before it is handed over: a token the client holds but the
     // server has no row for is one that cannot be revoked.
@@ -79,7 +85,13 @@ authRouter.post(
     const user = await prisma.user.findUnique({ where: { id: payload.sub } })
     if (!user) throw ApiError.unauthorized('Account no longer exists')
 
-    const authUser = { id: user.id, username: user.username, fullName: user.fullName, role: user.role }
+    const authUser = {
+      id: user.id,
+      username: user.username,
+      fullName: user.fullName,
+      role: user.role,
+      canManageUsers: user.canManageUsers,
+    }
 
     const nextRefreshToken = signRefreshToken(user.id)
     await rotateSession(session.id, user.id, nextRefreshToken)
@@ -99,7 +111,14 @@ authRouter.get(
     const { id } = currentUser(req)
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, username: true, fullName: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        role: true,
+        canManageUsers: true,
+        createdAt: true,
+      },
     })
     if (!user) throw ApiError.unauthorized('Account no longer exists')
     res.json(user)

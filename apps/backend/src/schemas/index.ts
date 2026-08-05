@@ -125,6 +125,9 @@ export const updateUserSchema = z
     fullName: trimmed(2, 120).optional(),
     role: z.nativeEnum(Role).optional(),
     password: z.string().min(10).max(200).optional(),
+    /* Granting account administration. Only somebody who already has it can
+       send this at all — the route is gated on it. */
+    canManageUsers: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, 'Provide at least one field to update')
 

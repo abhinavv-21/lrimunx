@@ -18,10 +18,27 @@ import { AuditPage } from '@/features/audit/AuditPage'
 import { NotFoundPage } from '@/features/misc/NotFoundPage'
 import type { Role } from '@/types/api'
 
-function AdminOnly({ children, what }: { children: React.ReactNode; what: string }) {
+function AdminOnly({
+  children,
+  what,
+  requires,
+}: {
+  children: React.ReactNode
+  what: string
+  /**
+   * A second gate for the few screens that are narrower than ADMIN. The API
+   * enforces the same rule — this only stops the page rendering behind a URL
+   * somebody typed, which would otherwise show an empty table and a row of
+   * buttons that all 403.
+   */
+  requires?: 'canManageUsers'
+}) {
   const { user } = useAuth()
   const role: Role | undefined = user?.role
   if (role !== 'ADMIN') return <PermissionDenied what={what} />
+  if (requires === 'canManageUsers' && user?.canManageUsers !== true) {
+    return <PermissionDenied what={what} />
+  }
   return <>{children}</>
 }
 
@@ -82,7 +99,14 @@ export function App() {
         <Route path="integrations" element={<Navigate to="/settings" replace />} />
         {/* The old assignments screen is now Allocations. */}
         <Route path="assignments" element={<Navigate to="/allocations" replace />} />
-        <Route path="users" element={<AdminOnly what="User administration"><UsersPage /></AdminOnly>} />
+        <Route
+          path="users"
+          element={
+            <AdminOnly what="User administration" requires="canManageUsers">
+              <UsersPage />
+            </AdminOnly>
+          }
+        />
         <Route path="audit" element={<AdminOnly what="The audit log"><AuditPage /></AdminOnly>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

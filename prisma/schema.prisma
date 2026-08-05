@@ -37,20 +37,34 @@ enum RegistrationStatus {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  username      String         @unique
-  passwordHash  String
-  fullName      String
-  role          Role           @default(CONTRIBUTOR)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  assignments   Assignment[]   @relation("AssignedBy")
-  createdReqs   LogisticsReq[] @relation("CreatedBy")
-  resolvedReqs  LogisticsReq[] @relation("ResolvedBy")
-  auditLogs     AuditLog[]
-  subscriptions PushSub[]
-  reviewedRegs  Registration[] @relation("ReviewedBy")
-  sessions      Session[]
+  id             String         @id @default(uuid())
+  username       String         @unique
+  passwordHash   String
+  fullName       String
+  role           Role           @default(CONTRIBUTOR)
+  /// May create, edit and delete ACCOUNTS. Deliberately a flag and not a role.
+  ///
+  /// Managing who can sign in is a different kind of power from running the
+  /// conference, and the two do not belong on the same axis: an ADMIN allocates
+  /// delegates and approves registrations, which is the job; handing out
+  /// accounts is not. Adding an OWNER role above ADMIN would have meant
+  /// auditing every `role === ADMIN` check in the codebase, and an owner who
+  /// silently lost the rest of their admin powers is a worse bug than the one
+  /// being fixed.
+  ///
+  /// Because it is data rather than configuration, it can be granted or revoked
+  /// without a deployment — and the routes enforce it, so hiding the tab in the
+  /// UI is presentation, not security.
+  canManageUsers Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  assignments    Assignment[]   @relation("AssignedBy")
+  createdReqs    LogisticsReq[] @relation("CreatedBy")
+  resolvedReqs   LogisticsReq[] @relation("ResolvedBy")
+  auditLogs      AuditLog[]
+  subscriptions  PushSub[]
+  reviewedRegs   Registration[] @relation("ReviewedBy")
+  sessions       Session[]
 }
 
 /// One live sign-in, so that signing out can actually end it.

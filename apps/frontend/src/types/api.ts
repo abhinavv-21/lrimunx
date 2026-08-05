@@ -23,6 +23,8 @@ export interface AuthUser {
   username: string
   fullName: string
   role: Role
+  /** May administer ACCOUNTS. Narrower than ADMIN — see schema.prisma. */
+  canManageUsers?: boolean
 }
 
 export interface LoginResponse {

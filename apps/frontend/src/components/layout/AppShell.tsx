@@ -89,7 +89,7 @@ export function AppShell() {
 
   if (!user) return null
 
-  const items = navFor(user.role)
+  const items = navFor(user)
   const primary = items.filter((item) => item.primary)
   const overflow = items.filter((item) => !item.primary)
 

@@ -12,6 +12,12 @@ export interface NavItem {
   roles: Role[]
   /** Shown in the mobile tab bar; the rest live behind "More". */
   primary?: boolean
+  /**
+   * A second gate, narrower than role, for destinations most admins should not
+   * see. Presentation only — the API enforces the same rule, because hiding a
+   * link stops nobody who can type a URL.
+   */
+  requires?: 'canManageUsers'
 }
 
 /**
@@ -30,10 +36,16 @@ export const NAV_ITEMS: NavItem[] = [
   // "is Brazil in DISEC?". Every write inside is ADMIN-only.
   { to: '/matrix', label: 'Country matrix', icon: Globe2, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'] },
-  { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'] },
+  // ADMIN and then some: running the conference and deciding who can sign in
+  // are different powers. See canManageUsers in prisma/schema.prisma.
+  { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'], requires: 'canManageUsers' },
   { to: '/audit', label: 'Audit log', icon: FileClock, roles: ['ADMIN'] },
 ]
 
-export function navFor(role: Role): NavItem[] {
-  return NAV_ITEMS.filter((item) => item.roles.includes(role))
+export function navFor(user: { role: Role; canManageUsers?: boolean }): NavItem[] {
+  return NAV_ITEMS.filter(
+    (item) =>
+      item.roles.includes(user.role) &&
+      (item.requires !== 'canManageUsers' || user.canManageUsers === true),
+  )
 }
