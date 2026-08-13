@@ -1,0 +1,330 @@
+export type Role = 'ADMIN' | 'CONTRIBUTOR'
+export type AttendanceStatus = 'ABSENT' | 'CHECKED_IN'
+export type RequestCategory = 'PLACARD' | 'STATIONERY' | 'AWARDS' | 'LOGISTICS'
+export type RequestStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
+
+export interface ApiErrorBody {
+  error: string
+  code: number
+  details?: unknown
+}
+
+export interface Paginated<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface AuthUser {
+  id: string
+  username: string
+  fullName: string
+  role: Role
+
+  canManageUsers?: boolean
+}
+
+export interface LoginResponse {
+  accessToken: string
+  refreshToken: string
+  user: AuthUser
+}
+
+export interface CommitteeRef {
+  id: string
+  name: string
+  code: string
+}
+
+export interface TakenCountry {
+  country: string
+  delegateId: string
+  delegateName: string
+}
+
+export interface Committee extends CommitteeRef {
+  totalSeats: number
+  filledSeats: number
+  seatsRemaining: number
+
+  openRequests?: number
+  awardCount?: number
+
+  takenCountries?: TakenCountry[]
+
+  matrixCountries?: string[]
+}
+
+export interface MatrixCountry {
+  id: string
+  country: string
+  delegateId: string | null
+  delegateName: string | null
+}
+
+export interface MatrixCommittee {
+  id: string
+  code: string
+  name: string
+  totalSeats: number
+  countries: MatrixCountry[]
+
+  offMatrix: Array<{ country: string; delegateId: string; delegateName: string }>
+}
+
+export interface MatrixImportResult {
+  mode: 'merge' | 'replace'
+  committees: string[]
+  added: number
+  removed: number
+  unchanged: number
+
+  kept: Array<{ committee: string; country: string; delegateName: string }>
+  issues: Array<{ row: number; column?: string; reason: string }>
+  longForm: boolean
+}
+
+export interface CommitteeSeat {
+  id: string
+  country: string
+  delegate: {
+    id: string
+    fullName: string
+    schoolName: string
+    email: string
+    phone: string
+    attendanceStatus: AttendanceStatus
+  }
+}
+
+export interface Award {
+  id: string
+  title: string
+
+  rank: number
+  note: string | null
+  createdAt: string
+  updatedAt: string
+
+  delegate: { id: string; fullName: string; schoolName: string } | null
+}
+
+export interface AwardInput {
+  title: string
+  delegateId: string | null
+  note: string | null
+}
+
+export interface CommitteeDetail extends Committee {
+  assignments: CommitteeSeat[]
+  requests: LogisticsRequest[]
+  awards: Award[]
+
+  totalRequests: number
+}
+
+export interface DelegateAssignment {
+  id: string
+  country: string
+  updatedAt: string
+  committee: CommitteeRef
+}
+
+export interface Delegate {
+  id: string
+  fullName: string
+  email: string
+  phone: string
+  schoolName: string
+  grade: string
+
+  committeePreference: string | null
+
+  committeePreference2: string | null
+
+  munsAttended: number | null
+  awardsWon: number | null
+  dietaryNotes: string | null
+  accessibilityNotes: string | null
+  attendanceStatus: AttendanceStatus
+  assignment: DelegateAssignment | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DelegateInput {
+  fullName: string
+  email: string
+  phone: string
+  schoolName: string
+  grade: string
+  committeePreference: string | null
+  committeePreference2: string | null
+  munsAttended: number | null
+  awardsWon: number | null
+  dietaryNotes: string | null
+  accessibilityNotes: string | null
+  committeeId: string | null
+  country: string | null
+}
+
+export interface Assignment {
+  id: string
+  country: string
+  updatedAt: string
+  delegate: { id: string; fullName: string; schoolName: string; attendanceStatus: AttendanceStatus }
+  committee: { id: string; name: string; code: string; totalSeats: number }
+  assignedBy: { id: string; fullName: string }
+}
+
+export interface LogisticsRequest {
+  id: string
+  title: string
+  category: RequestCategory
+  description: string
+  status: RequestStatus
+  createdAt: string
+  updatedAt: string
+  committee: CommitteeRef | null
+  createdBy: { id: string; fullName: string }
+  resolvedBy: { id: string; fullName: string } | null
+
+  deduplicated?: boolean
+}
+
+export type RegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface Registration {
+  id: string
+
+  reference: string
+  fullName: string
+  email: string
+  phone: string
+  schoolName: string
+  grade: string
+  committeePreference: string | null
+  committeePreference2: string | null
+  munsAttended: number | null
+  awardsWon: number | null
+
+  referralCode: string | null
+
+  paymentProofUrl: string | null
+  dietaryNotes: string | null
+  accessibilityNotes: string | null
+  status: RegistrationStatus
+  rejectionReason: string | null
+  reviewedAt: string | null
+  reviewedBy: { id: string; fullName: string } | null
+  delegateId: string | null
+  createdAt: string
+}
+
+export interface RegistrationStats {
+  pending: number
+  approved: number
+  rejected: number
+  total: number
+}
+
+export interface AuditEntry {
+  id: string
+  action: string
+  entityType: string
+  entityId: string
+  payloadBefore: unknown
+  payloadAfter: unknown
+  timestamp: string
+  user: { id: string; fullName: string; username?: string; role?: Role }
+}
+
+export interface AttendanceSummary {
+  checkedIn: number
+  absent: number
+  total: number
+  committees: Array<{
+    id: string
+    code: string
+    name: string
+    assigned: number
+    checkedIn: number
+    totalSeats: number
+  }>
+}
+
+export interface DashboardData {
+  role: Role
+  totalDelegates: number
+  checkedIn: number
+  absent: number
+  openRequests: number
+  inProgressRequests: number
+  capacity: Array<{
+    id: string
+    code: string
+    name: string
+    totalSeats: number
+    filledSeats: number
+    seatsRemaining: number
+  }>
+  recentRequests: Array<{
+    id: string
+    title: string
+    category: RequestCategory
+    status: RequestStatus
+    createdAt: string
+    committee: { code: string } | null
+  }>
+
+  unassigned?: number
+  recentAudit?: Array<{
+    id: string
+    action: string
+    entityType: string
+    entityId: string
+    timestamp: string
+    user: { fullName: string }
+  }>
+}
+
+export interface IngestResult {
+  created: number
+  updated: number
+  skipped: number
+  issues: Array<{ row: number; email?: string; reason: string }>
+  phoneCollisions: Array<{ phone: string; emails: string[] }>
+}
+
+export interface Settings {
+  googleFormUrl: string
+  googleSheetUrl: string
+}
+
+export interface ResetCounts {
+  awards: number
+  assignments: number
+  registrations: number
+  logisticsRequests: number
+  delegates: number
+  committees: number
+}
+
+export interface ResetPreview {
+  deleted: ResetCounts
+  total: number
+
+  configured: boolean
+}
+
+export interface ResetResult {
+  deleted: ResetCounts
+  total: number
+}
+
+export interface MailResult {
+  sent: boolean
+  skipped: boolean
+  error?: string
+}

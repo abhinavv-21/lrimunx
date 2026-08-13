@@ -1,0 +1,307 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  CONTRIBUTOR
+}
+
+enum AttendanceStatus {
+  ABSENT
+  CHECKED_IN
+}
+
+enum RequestCategory {
+  PLACARD
+  STATIONERY
+  AWARDS
+  LOGISTICS
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String         @id @default(uuid())
+  username       String         @unique
+  passwordHash   String
+  fullName       String
+  role           Role           @default(CONTRIBUTOR)
+  /// May create, edit and delete ACCOUNTS. Deliberately a flag and not a role.
+  ///
+  /// Managing who can sign in is a different kind of power from running the
+  /// conference, and the two do not belong on the same axis: an ADMIN allocates
+  /// delegates and approves registrations, which is the job; handing out
+  /// accounts is not. Adding an OWNER role above ADMIN would have meant
+  /// auditing every `role === ADMIN` check in the codebase, and an owner who
+  /// silently lost the rest of their admin powers is a worse bug than the one
+  /// being fixed.
+  ///
+  /// Because it is data rather than configuration, it can be granted or revoked
+  /// without a deployment — and the routes enforce it, so hiding the tab in the
+  /// UI is presentation, not security.
+  canManageUsers Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  assignments    Assignment[]   @relation("AssignedBy")
+  createdReqs    LogisticsReq[] @relation("CreatedBy")
+  resolvedReqs   LogisticsReq[] @relation("ResolvedBy")
+  auditLogs      AuditLog[]
+  subscriptions  PushSub[]
+  reviewedRegs   Registration[] @relation("ReviewedBy")
+  sessions       Session[]
+}
+
+/// One live sign-in, so that signing out can actually end it.
+///
+/// Refresh tokens used to be purely stateless: the server checked the signature
+/// and the expiry and asked nothing else, which meant it had no way to say no to
+/// one it had already issued. Signing out cleared the browser and nothing more,
+/// so a copy taken from a shared school machine kept minting access tokens for
+/// the rest of its lifetime and there was no way to stop it — not by signing
+/// out, not by changing the password.
+///
+/// The token itself is never stored. `tokenHash` is a SHA-256 of it, so this
+/// table cannot be read back into a working credential, and it is the lookup
+/// key rather than the id because that is what arrives on the request.
+model Session {
+  id         String    @id @default(uuid())
+  userId     String
+  /// SHA-256 (hex) of the refresh token. Never the token.
+  tokenHash  String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Copied from the token's own exp, so expired rows can be swept.
+  expiresAt  DateTime
+  /// Set when the session is ended — by signing out, or by being rotated away.
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Delegate {
+  id                   String           @id @default(uuid())
+  fullName             String
+  email                String           @unique
+  phone                String
+  schoolName           String
+  grade                String
+  /// What the delegate asked for on the registration form, as they typed it.
+  /// Free text rather than a Committee relation on purpose: a form answer is
+  /// a wish, not a placement, and it frequently names a committee that does
+  /// not exist or is spelled differently. Read only on the Allocations screen.
+  committeePreference  String?
+  /// The fallback the applicant named when their first choice is full. Same
+  /// free-text reasoning as above; it is what makes a reallocation a decision
+  /// rather than a guess.
+  committeePreference2 String?
+  /// Prior MUN experience, carried over from the registration form. The
+  /// secretariat weighs it when deciding which room a delegate goes into —
+  /// a first-timer in UNSC and a veteran in an unmoderated caucus are both
+  /// mistakes that are only visible if the numbers are on the screen.
+  munsAttended         Int?
+  awardsWon            Int?
+  dietaryNotes         String?
+  accessibilityNotes   String?
+  attendanceStatus     AttendanceStatus @default(ABSENT)
+  assignment           Assignment?
+  awards               Award[]
+  registration         Registration?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+}
+
+/// A registration submitted from the public conference site.
+///
+/// Deliberately a separate model from Delegate rather than a Delegate with a
+/// status flag: an application is a claim by a member of the public, and a
+/// Delegate is a person the OC has accepted. Approval is what turns one into
+/// the other, and nothing on this table ever produces a User — the only way
+/// into the ops hub is an account an admin creates.
+///
+/// `email` is intentionally NOT unique. A rejected applicant may legitimately
+/// reapply, and a school secretary can submit for two students from one inbox.
+/// The duplicate rule that matters — one live application per address — is a
+/// PENDING/APPROVED lookup in the route, not a database constraint.
+///
+/// `submittedIp` and `userAgent` exist for abuse review after the fact, since
+/// the endpoint is unauthenticated and rate limiting only sees one instance.
+model Registration {
+  id                   String             @id @default(uuid())
+  /// Human-quotable handle an applicant can read down the phone. LMX-XXXXXX.
+  reference            String             @unique
+  fullName             String
+  email                String
+  phone                String
+  schoolName           String
+  grade                String
+  committeePreference  String?
+  committeePreference2 String?
+  munsAttended         Int?
+  awardsWon            Int?
+  /// Free text from the "who told you about LRI MUN X" question. Never a
+  /// relation: it is whatever the applicant typed, including a name nobody on
+  /// the OC recognises.
+  referralCode         String?
+  /// Where the applicant's payment screenshot landed on Vercel Blob. The file
+  /// goes browser → blob store directly, so this column is the only record the
+  /// API holds of it. Validated against the blob host on the way in — an
+  /// arbitrary URL here is a link an admin clicks from the review queue.
+  paymentProofUrl      String?
+  dietaryNotes         String?
+  accessibilityNotes   String?
+  status               RegistrationStatus @default(PENDING)
+  reviewedById         String?
+  reviewedAt           DateTime?
+  rejectionReason      String?
+  delegateId           String?            @unique
+  submittedIp          String?
+  userAgent            String?
+  reviewedBy           User?              @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  delegate             Delegate?          @relation(fields: [delegateId], references: [id])
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model Committee {
+  id          String             @id @default(uuid())
+  name        String             @unique // e.g. UNSC, DISEC, UNHRC
+  totalSeats  Int
+  code        String             @unique
+  assignments Assignment[]
+  requests    LogisticsReq[]
+  awards      Award[]
+  countries   CommitteeCountry[]
+}
+
+/// One country on one committee's matrix — the list of who is IN the room,
+/// which is a different fact from who has been allocated to it.
+///
+/// Until this existed, `Assignment.country` was free text: the system could
+/// tell you a country was taken but not whether it was ever on offer, so
+/// "Fance" saved cleanly and surfaced as a placard.
+///
+/// Deliberately NOT merged into Assignment. A matrix is authored before any
+/// delegate is placed and outlives every allocation — clearing an assignment
+/// must free the country, not delete it from the room.
+///
+/// A committee with no rows here keeps the old free-text behaviour. That is
+/// what lets one committee's matrix be imported without freezing the other
+/// five, and it is enforced in applyAssignment, not just in the UI.
+model CommitteeCountry {
+  id          String    @id @default(uuid())
+  committeeId String
+  country     String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([committeeId, country])
+  @@index([committeeId])
+}
+
+model Assignment {
+  id           String    @id @default(uuid())
+  delegateId   String    @unique
+  committeeId  String
+  country      String
+  assignedById String
+  delegate     Delegate  @relation(fields: [delegateId], references: [id], onDelete: Cascade)
+  committee    Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  assignedBy   User      @relation("AssignedBy", fields: [assignedById], references: [id])
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([committeeId, country])
+}
+
+model LogisticsReq {
+  id           String          @id @default(uuid())
+  title        String
+  category     RequestCategory
+  description  String
+  committeeId  String?
+  status       RequestStatus   @default(OPEN)
+  createdById  String
+  resolvedById String?
+  committee    Committee?      @relation(fields: [committeeId], references: [id])
+  createdBy    User            @relation("CreatedBy", fields: [createdById], references: [id])
+  resolvedBy   User?           @relation("ResolvedBy", fields: [resolvedById], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+/// One award slot in one committee's ceremony.
+///
+/// `delegateId` is nullable on purpose: the secretariat decides which awards a
+/// committee will give long before it knows who wins them, so an award exists
+/// as an unfilled slot first. Postgres treats NULLs as distinct in a unique
+/// index, so any number of slots can sit unassigned while the composite unique
+/// still stops one delegate collecting two awards in the same committee.
+///
+/// `rank` drives ceremony order — announced last to first — and is derived
+/// server-side from the title. Unrecognised (conference-specific) titles fall
+/// to the end rather than being rejected.
+model Award {
+  id          String    @id @default(uuid())
+  committeeId String
+  title       String
+  rank        Int       @default(90)
+  delegateId  String?
+  note        String?
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  delegate    Delegate? @relation(fields: [delegateId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([committeeId, delegateId])
+  @@index([committeeId])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  userId        String
+  action        String
+  entityType    String
+  entityId      String
+  payloadBefore Json?
+  payloadAfter  Json?
+  timestamp     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+/// Small key/value store for conference-level configuration entered in the
+/// app — currently the registration form link.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model PushSub {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  keysP256  String
+  keysAuth  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

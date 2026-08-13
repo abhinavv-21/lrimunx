@@ -1,0 +1,210 @@
+.cselect {
+  position: relative;
+}
+
+.cselect__control {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-block-size: 3.25rem;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-ui);
+  font-size: var(--fs-400);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--on-ground);
+  cursor: pointer;
+}
+
+.cselect__value {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  text-align: start;
+
+  overflow-wrap: anywhere;
+}
+
+.cselect.is-empty .cselect__value {
+  font-weight: 400;
+  color: var(--on-ground-muted);
+}
+
+.cselect__chevron {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--accent-on-ground);
+  transition: transform var(--dur-base) var(--ease-expo);
+}
+
+.cselect.is-open .cselect__chevron {
+  transform: rotate(180deg);
+}
+
+.cselect__list {
+  position: absolute;
+  z-index: var(--z-raised);
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--sp-2));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-block-size: 19rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-none);
+}
+
+.cselect.is-above .cselect__list {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--sp-2));
+}
+
+.cselect__list:focus {
+  outline: none;
+}
+
+.cselect__option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5.25rem 1fr;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+
+  min-block-size: 3rem;
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-5);
+  cursor: pointer;
+  border-block-end: 1px solid var(--hairline);
+  transition: background-color 160ms var(--ease-house);
+}
+
+.cselect__option:last-child {
+  border-block-end: 0;
+}
+
+.cselect__option--empty,
+.cselect__option--plain {
+  grid-template-columns: 1fr;
+}
+
+.cselect__option--plain .cselect__option-reason {
+  grid-column: 1;
+}
+
+.cselect__option-code {
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--accent-on-ground);
+}
+
+.cselect__option-name {
+  font-size: var(--fs-300);
+  line-height: 1.4;
+  color: var(--on-ground);
+}
+
+.cselect__option--empty .cselect__option-name {
+  font-weight: 500;
+  color: var(--on-ground-muted);
+}
+
+.cselect__option-reason {
+  grid-column: 2;
+  font-size: var(--fs-200);
+  line-height: 1.4;
+  color: var(--on-ground-muted);
+}
+
+.cselect__option--empty .cselect__option-reason {
+  grid-column: 1;
+}
+
+.cselect__option.is-active {
+  background-color: var(--color-primary-tint);
+}
+
+.cselect__option.is-active::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 3px;
+  background-color: var(--accent-on-ground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cselect__option:hover {
+    background-color: var(--color-blush);
+  }
+}
+
+.cselect__option.is-selected::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 1.15rem;
+  inset-inline-start: var(--sp-3);
+  inline-size: 5px;
+  block-size: 5px;
+  background-color: var(--accent-on-ground);
+  transform: rotate(45deg);
+}
+
+.cselect__option.is-blocked {
+  cursor: not-allowed;
+}
+
+.cselect__option.is-blocked .cselect__option-code {
+  color: var(--on-ground-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.cselect__option.is-blocked .cselect__option-name {
+  color: var(--on-ground-muted);
+}
+
+.cselect__option.is-blocked.is-active {
+  background-color: var(--color-blush);
+}
+
+.cselect__option.is-blocked.is-active::before {
+  background-color: var(--on-ground-muted);
+}
+
+.cselect__control[aria-disabled='true'] {
+  cursor: progress;
+}
+
+@media (forced-colors: active) {
+  .cselect__list {
+    border-color: CanvasText;
+  }
+
+  .cselect__option.is-active {
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .cselect__option.is-active .cselect__option-code,
+  .cselect__option.is-active .cselect__option-name,
+  .cselect__option.is-active .cselect__option-reason {
+    color: HighlightText;
+  }
+
+  .cselect__option.is-selected::after,
+  .cselect__option.is-active::before {
+    background-color: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cselect__chevron {
+    transition: none;
+  }
+}

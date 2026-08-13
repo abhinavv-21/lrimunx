@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#2B0A21" />
+
+    <title>Register as a delegate — LRI Model UN X</title>
+    <meta
+      name="description"
+      content="Delegate registration for LRI Model UN X, the tenth edition of LRI School's Model United Nations conference in Kalanki, Kathmandu. Two steps: delegate details, then payment."
+    />
+
+    <meta name="robots" content="noindex, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Register as a delegate — LRI Model UN X" />
+    <meta
+      property="og:description"
+      content="Delegate registration for the tenth edition. LRI School, Kalanki, Kathmandu."
+    />
+    <meta property="og:image" content="/assets/og-image.jpg" />
+    <meta property="og:url" content="https://example.org/mun/register" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/assets/lri-mun-logo.png" type="image/png" />
+
+    <style>
+      html {
+        background: #2b0a21;
+      }
+      body {
+        margin: 0;
+        background: #2b0a21;
+        font-family: 'General Sans', Inter, system-ui, sans-serif;
+      }
+    </style>
+
+    <script>
+      /* base.css holds the document back until `app-ready` is on <html>, because
+         on the landing page that class is what the preloader hands over with.
+         There is no preloader here, so the class is set inline, before first
+         paint. Written as a blocking script rather than as a rule in the style
+         block above so the two files keep one relationship: base.css owns the
+         gate, and this page simply opens it immediately.
+
+         It also means a scripting failure downstream cannot leave a blank page. */
+      document.documentElement.classList.add('app-ready')
+    </script>
+
+    <link
+      rel="preload"
+      href="/assets/fonts/Fraunces-Variable-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/assets/fonts/GeneralSans-500.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <script type="module" src="/src/register-main.js"></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to the form</a>
+
+    <header class="nav" data-nav>
+      <div class="nav__inner shell">
+        <a class="nav__lockup" href="./">
+          <img
+            class="nav__emblem"
+            src="/assets/lri-mun-logo.png"
+            alt=""
+            width="512"
+            height="418"
+          />
+          <span class="nav__wordmark" aria-hidden="true">
+            LRI Model UN <span class="nav__wordmark-x">X</span>
+          </span>
+          <span class="u-visually-hidden">LRI Model UN X — back to the conference site</span>
+        </a>
+
+        <a
+          class="nav__school"
+          href="https://www.lrischool.edu.np/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="nav__school-text">LRI School</span>
+          <svg class="nav__school-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path
+              d="M5.5 10.5 10.5 5.5M6 5.5h4.5V10"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="u-visually-hidden">— main school website, opens in a new tab</span>
+        </a>
+
+        <nav class="nav__links" aria-label="Section navigation">
+          <ul class="nav__list">
+            <li><a class="nav__link" href="./#committees">Committees</a></li>
+            <li><a class="nav__link" href="./#secretariat">Secretariat</a></li>
+            <li><a class="nav__link" href="./#editions">Past Editions</a></li>
+            <li><a class="nav__link" href="./register" aria-current="true">Register</a></li>
+          </ul>
+        </nav>
+
+        <div class="nav__actions">
+
+          <button
+            class="nav__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="nav-overlay"
+            data-nav-toggle
+          >
+            <span class="nav__toggle-label" data-nav-toggle-label>Menu</span>
+            <span class="nav__toggle-bars" aria-hidden="true"><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav-overlay" id="nav-overlay" data-nav-overlay hidden>
+      <div class="nav-overlay__inner shell">
+        <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
+        <ul class="nav-overlay__list">
+          <li>
+            <a href="./#committees" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
+              >Committees</a
+            >
+          </li>
+          <li>
+            <a href="./#secretariat" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
+              >Secretariat</a
+            >
+          </li>
+          <li>
+            <a href="./#editions" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
+              Editions</a
+            >
+          </li>
+          <li>
+            <a href="./register" aria-current="true" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Register</a
+            >
+          </li>
+        </ul>
+        <div class="nav-overlay__foot">
+          <p class="body-copy nav-overlay__contact">
+
+            LRI School, Kalanki, Kathmandu<br />
+            <a href="mailto:placeholder@example.org">placeholder@example.org</a>
+          </p>
+          <div class="nav-overlay__actions">
+            <a
+              class="nav-overlay__school"
+              href="https://www.lrischool.edu.np/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Visit the school site ↗</a
+            >
+
+            <a class="btn nav-overlay__cta" href="./#committees" data-nav-overlay-link
+              >See the committees<span class="btn__mount" aria-hidden="true"></span></a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main id="main">
+
+      <section class="regpage__head ground-ink" id="top" aria-labelledby="regpage-title">
+        <div class="shell grid">
+          <div class="regpage__head-inner">
+            <a class="regpage__back" href="./#register">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path
+                  d="M14 8H3M7 4L3 8l4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="square"
+                />
+              </svg>
+              Back to the conference site
+            </a>
+
+            <p class="section__eyebrow label regpage__eyebrow" data-reveal>
+              LRI Model UN X · Tenth edition
+            </p>
+            <h1 class="regpage__title" id="regpage-title" data-reveal>Register as a delegate.</h1>
+            <p class="lede regpage__lede" data-reveal>
+              Two steps — your details, then payment. It takes a couple of minutes, and you will
+              need a screenshot of the payment to finish. Nothing reaches the secretariat until you
+              send it at the end.
+            </p>
+
+            <dl class="regpage__facts" data-reveal>
+              <div class="regpage__fact">
+                <dt class="label">Delegate fee</dt>
+
+                <dd>To be announced</dd>
+              </div>
+              <div class="regpage__fact">
+                <dt class="label">Deadline</dt>
+
+                <dd>To be announced</dd>
+              </div>
+              <div class="regpage__fact">
+                <dt class="label">Allocations</dt>
+                <dd>By email, once registration closes</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="regpage__body ground-paper" aria-label="Delegate registration form">
+        <div class="shell grid">
+          <div class="regpage__col">
+            <div class="regform" data-register>
+
+              <ol class="regsteps" aria-label="Registration progress" data-steps>
+                <li class="regsteps__item is-current" data-step-marker="1" aria-current="step">
+                  <span class="regsteps__rule" aria-hidden="true"></span>
+                  <span class="regsteps__index">01</span>
+                  <span class="regsteps__label">Delegate details</span>
+                  <span class="regsteps__state" data-step-state>In progress</span>
+                </li>
+                <li class="regsteps__item" data-step-marker="2">
+                  <span class="regsteps__rule" aria-hidden="true"></span>
+                  <span class="regsteps__index">02</span>
+                  <span class="regsteps__label">Payment</span>
+                  <span class="regsteps__state" data-step-state>Not started</span>
+                </li>
+              </ol>
+
+              <form
+                class="regform__form"
+                id="register-form"
+                action="/api/v1/public/register"
+                method="post"
+                data-register-form
+              >
+
+                <div class="regform__hp" aria-hidden="true">
+                  <label for="hp_website">Website</label>
+                  <input
+                    type="text"
+                    id="hp_website"
+                    name="hp_website"
+                    tabindex="-1"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div
+                  class="regform__summary"
+                  role="group"
+                  aria-labelledby="regform-summary-title"
+                  tabindex="-1"
+                  hidden
+                  data-register-summary
+                >
+                  <p
+                    class="regform__summary-title"
+                    id="regform-summary-title"
+                    data-register-summary-title
+                  ></p>
+                  <p class="regform__summary-copy" data-register-summary-copy></p>
+                  <ul class="regform__summary-list" data-register-summary-list></ul>
+                </div>
+
+                <fieldset class="regstep" data-step-panel="1">
+                  <legend class="regstep__legend" tabindex="-1" data-step-legend="1">
+                    <span class="regstep__legend-index label">Step 1 of 2</span>
+                    <span class="regstep__legend-title">Delegate details</span>
+                  </legend>
+
+                  <p class="regstep__intro">
+                    All of this goes to the LRI MUN X secretariat and is used only for delegate
+                    allocation and conference logistics. Anything marked optional can be left empty.
+                  </p>
+
+                  <div class="regform__grid">
+                    <div class="regfield regfield--half" data-field="fullName">
+                      <label class="regfield__label" for="rp-fullName">Full name</label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-fullName"
+                          name="fullName"
+                          type="text"
+                          required
+                          minlength="2"
+                          maxlength="120"
+                          autocomplete="name"
+                          aria-describedby="rp-hint-fullName rp-error-fullName"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-fullName">
+                        As it should appear on your placard.
+                      </p>
+                      <p class="regfield__error" id="rp-error-fullName" data-error-for="fullName"></p>
+                    </div>
+
+                    <div class="regfield regfield--half" data-field="email">
+                      <label class="regfield__label" for="rp-email">Email</label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-email"
+                          name="email"
+                          type="email"
+                          inputmode="email"
+                          required
+                          maxlength="160"
+                          autocomplete="email"
+                          placeholder="you@example.com"
+                          aria-describedby="rp-hint-email rp-error-email"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-email">
+                        Allocations, the delegate handbook and the schedule are all sent here.
+                      </p>
+                      <p class="regfield__error" id="rp-error-email" data-error-for="email"></p>
+                    </div>
+
+                    <div class="regfield regfield--half" data-field="phone">
+                      <label class="regfield__label" for="rp-phone">Phone</label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-phone"
+                          name="phone"
+                          type="tel"
+                          inputmode="tel"
+                          required
+                          minlength="6"
+                          maxlength="24"
+                          autocomplete="tel"
+                          placeholder="+977 9XXXXXXXXX"
+                          aria-describedby="rp-hint-phone rp-error-phone"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-phone">
+                        Reachable on conference days. Include the country code if you are outside
+                        Nepal.
+                      </p>
+                      <p class="regfield__error" id="rp-error-phone" data-error-for="phone"></p>
+                    </div>
+
+                    <div class="regfield regfield--half" data-field="schoolName">
+                      <label class="regfield__label" for="rp-schoolName">School</label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-schoolName"
+                          name="schoolName"
+                          type="text"
+                          required
+                          minlength="2"
+                          maxlength="160"
+                          autocomplete="organization"
+                          aria-describedby="rp-hint-schoolName rp-error-schoolName"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-schoolName">
+                        The full name of the institution you are representing.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-schoolName"
+                        data-error-for="schoolName"
+                      ></p>
+                    </div>
+
+                    <div class="regfield regfield--third" data-field="grade">
+                      <span class="regfield__label" id="cs-grade-label">Academic level</span>
+                      <div
+                        class="cselect"
+                        data-cselect
+                        data-cselect-id="cs-grade"
+                        data-cselect-empty="Choose one"
+                      >
+                        <button
+                          class="regfield__control cselect__control"
+                          type="button"
+                          id="cs-grade-button"
+                          role="combobox"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          aria-controls="cs-grade-list"
+                          aria-labelledby="cs-grade-label cs-grade-value"
+                          aria-describedby="rp-hint-grade rp-error-grade"
+                          data-cselect-button
+                        >
+                          <span class="cselect__value" id="cs-grade-value" data-cselect-value
+                            >Choose one</span
+                          >
+                          <svg
+                            class="cselect__chevron"
+                            viewBox="0 0 16 16"
+                            aria-hidden="true"
+                            focusable="false"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                          <span class="regfield__mount" aria-hidden="true"></span>
+                        </button>
+                        <ul
+                          class="cselect__list"
+                          id="cs-grade-list"
+                          role="listbox"
+                          aria-labelledby="cs-grade-label"
+                          tabindex="-1"
+                          hidden
+                          data-cselect-list
+                          data-lenis-prevent
+                        ></ul>
+                        <input type="hidden" name="grade" value="" data-cselect-input />
+                      </div>
+                      <p class="regfield__notice" hidden data-cselect-notice></p>
+                      <p class="regfield__hint" id="rp-hint-grade">
+                        Where you are studying now, not the year you finish.
+                      </p>
+                      <p class="regfield__error" id="rp-error-grade" data-error-for="grade"></p>
+                    </div>
+
+                    <div class="regfield regfield--third" data-field="munsAttended">
+                      <label class="regfield__label" for="rp-munsAttended">
+                        MUNs attended
+                        <span class="regfield__optional">Optional</span>
+                      </label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-munsAttended"
+                          name="munsAttended"
+                          type="text"
+                          inputmode="numeric"
+                          autocomplete="off"
+                          placeholder="0"
+                          aria-describedby="rp-hint-munsAttended rp-error-munsAttended"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+
+                      <p class="regfield__hint" id="rp-hint-munsAttended">
+                        How many conferences you have sat in before this one. First-timers are
+                        welcome — put 0, or leave it blank.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-munsAttended"
+                        data-error-for="munsAttended"
+                      ></p>
+                    </div>
+
+                    <div class="regfield regfield--third" data-field="awardsWon">
+                      <label class="regfield__label" for="rp-awardsWon">
+                        Awards won
+                        <span class="regfield__optional">Optional</span>
+                      </label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-awardsWon"
+                          name="awardsWon"
+                          type="text"
+                          inputmode="numeric"
+                          autocomplete="off"
+                          placeholder="0"
+                          aria-describedby="rp-hint-awardsWon rp-error-awardsWon"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+
+                      <p class="regfield__hint" id="rp-hint-awardsWon">
+                        How many you have won. Best Delegate, High Commendation and Verbal Mention
+                        all count.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-awardsWon"
+                        data-error-for="awardsWon"
+                      ></p>
+                    </div>
+
+                    <div class="regfield regfield--half" data-field="committeePreference">
+                      <span class="regfield__label" id="cs-committeePreference-label">
+                        Committee preference
+                        <span class="regfield__optional">Optional</span>
+                      </span>
+                      <div
+                        class="cselect"
+                        data-cselect
+                        data-cselect-id="cs-committeePreference"
+                        data-cselect-empty="No preference"
+                      >
+                        <button
+                          class="regfield__control cselect__control"
+                          type="button"
+                          id="cs-committeePreference-button"
+                          role="combobox"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          aria-controls="cs-committeePreference-list"
+                          aria-labelledby="cs-committeePreference-label cs-committeePreference-value"
+                          aria-describedby="rp-hint-committeePreference rp-error-committeePreference"
+                          data-cselect-button
+                        >
+                          <span
+                            class="cselect__value"
+                            id="cs-committeePreference-value"
+                            data-cselect-value
+                            >No preference</span
+                          >
+                          <svg
+                            class="cselect__chevron"
+                            viewBox="0 0 16 16"
+                            aria-hidden="true"
+                            focusable="false"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                          <span class="regfield__mount" aria-hidden="true"></span>
+                        </button>
+                        <ul
+                          class="cselect__list"
+                          id="cs-committeePreference-list"
+                          role="listbox"
+                          aria-labelledby="cs-committeePreference-label"
+                          tabindex="-1"
+                          hidden
+                          data-cselect-list
+                          data-lenis-prevent
+                        ></ul>
+                        <input
+                          type="hidden"
+                          name="committeePreference"
+                          value=""
+                          data-cselect-input
+                        />
+                      </div>
+                      <p class="regfield__notice" hidden data-cselect-notice></p>
+                      <p class="regfield__hint" id="rp-hint-committeePreference">
+                        Six committees are running. A preference is not an allocation — the
+                        secretariat allocates once registration closes.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-committeePreference"
+                        data-error-for="committeePreference"
+                      ></p>
+                    </div>
+
+                    <div class="regfield regfield--half" data-field="committeePreference2">
+                      <span class="regfield__label" id="cs-committeePreference2-label">
+                        Second preference
+                        <span class="regfield__optional">Optional</span>
+                      </span>
+                      <div
+                        class="cselect"
+                        data-cselect
+                        data-cselect-id="cs-committeePreference2"
+                        data-cselect-empty="No second preference"
+                      >
+                        <button
+                          class="regfield__control cselect__control"
+                          type="button"
+                          id="cs-committeePreference2-button"
+                          role="combobox"
+                          aria-haspopup="listbox"
+                          aria-expanded="false"
+                          aria-controls="cs-committeePreference2-list"
+                          aria-labelledby="cs-committeePreference2-label cs-committeePreference2-value"
+                          aria-describedby="rp-hint-committeePreference2 rp-error-committeePreference2"
+                          data-cselect-button
+                        >
+                          <span
+                            class="cselect__value"
+                            id="cs-committeePreference2-value"
+                            data-cselect-value
+                            >No second preference</span
+                          >
+                          <svg
+                            class="cselect__chevron"
+                            viewBox="0 0 16 16"
+                            aria-hidden="true"
+                            focusable="false"
+                          >
+                            <path
+                              d="M4 6l4 4 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                          <span class="regfield__mount" aria-hidden="true"></span>
+                        </button>
+                        <ul
+                          class="cselect__list"
+                          id="cs-committeePreference2-list"
+                          role="listbox"
+                          aria-labelledby="cs-committeePreference2-label"
+                          tabindex="-1"
+                          hidden
+                          data-cselect-list
+                          data-lenis-prevent
+                        ></ul>
+                        <input
+                          type="hidden"
+                          name="committeePreference2"
+                          value=""
+                          data-cselect-input
+                        />
+                      </div>
+                      <p class="regfield__notice" hidden data-cselect-notice></p>
+                      <p class="regfield__hint" id="rp-hint-committeePreference2">
+                        Used if your first preference fills up. It cannot be the same committee.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-committeePreference2"
+                        data-error-for="committeePreference2"
+                      ></p>
+                    </div>
+
+                    <div class="regfield regfield--third" data-field="referralCode">
+                      <label class="regfield__label" for="rp-referralCode">
+                        Referral code
+                        <span class="regfield__optional">Optional</span>
+                      </label>
+                      <span class="regfield__control">
+                        <input
+                          class="regfield__input"
+                          id="rp-referralCode"
+                          name="referralCode"
+                          type="text"
+                          maxlength="40"
+                          autocomplete="off"
+                          autocapitalize="characters"
+                          spellcheck="false"
+                          aria-describedby="rp-hint-referralCode rp-error-referralCode"
+                        />
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-referralCode">
+                        If a delegate or a school representative gave you one.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-referralCode"
+                        data-error-for="referralCode"
+                      ></p>
+                    </div>
+
+                    <div class="regfield" data-field="dietaryNotes">
+                      <label class="regfield__label" for="rp-dietaryNotes">
+                        Dietary notes
+                        <span class="regfield__optional">Optional</span>
+                      </label>
+                      <span class="regfield__control">
+                        <textarea
+                          class="regfield__input"
+                          id="rp-dietaryNotes"
+                          name="dietaryNotes"
+                          rows="3"
+                          maxlength="500"
+                          autocomplete="off"
+                          aria-describedby="rp-hint-dietaryNotes rp-error-dietaryNotes"
+                        ></textarea>
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-dietaryNotes">
+                        Allergies or requirements the catering team needs to plan around. Up to 500
+                        characters.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-dietaryNotes"
+                        data-error-for="dietaryNotes"
+                      ></p>
+                    </div>
+
+                    <div class="regfield" data-field="accessibilityNotes">
+                      <label class="regfield__label" for="rp-accessibilityNotes">
+                        Accessibility notes
+                        <span class="regfield__optional">Optional</span>
+                      </label>
+                      <span class="regfield__control">
+                        <textarea
+                          class="regfield__input"
+                          id="rp-accessibilityNotes"
+                          name="accessibilityNotes"
+                          rows="3"
+                          maxlength="500"
+                          autocomplete="off"
+                          aria-describedby="rp-hint-accessibilityNotes rp-error-accessibilityNotes"
+                        ></textarea>
+                        <span class="regfield__mount" aria-hidden="true"></span>
+                      </span>
+                      <p class="regfield__hint" id="rp-hint-accessibilityNotes">
+                        Anything the organizing committee should arrange so you can take part fully
+                        — seating, mobility, hearing, or medical needs. Up to 500 characters.
+                      </p>
+                      <p
+                        class="regfield__error"
+                        id="rp-error-accessibilityNotes"
+                        data-error-for="accessibilityNotes"
+                      ></p>
+                    </div>
+                  </div>
+
+                  <div class="regstep__foot">
+                    <button class="btn regstep__next" type="button" data-step-next>
+                      Continue to payment
+                      <svg
+                        class="btn__arrow"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path
+                          d="M2 8h11M9 4l4 4-4 4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="square"
+                        />
+                      </svg>
+                      <span class="btn__mount" aria-hidden="true"></span>
+                    </button>
+
+                    <p class="regstep__note label">
+                      Your answers are kept between steps — but not if you leave this page.
+                    </p>
+                  </div>
+                </fieldset>
+
+                <fieldset class="regstep" data-step-panel="2" hidden>
+                  <legend class="regstep__legend" tabindex="-1" data-step-legend="2">
+                    <span class="regstep__legend-index label">Step 2 of 2</span>
+                    <span class="regstep__legend-title">Payment</span>
+                  </legend>
+
+                  <p class="regstep__intro">
+                    Registration is confirmed once the delegate fee is paid. Pay with the QR code
+                    below, then upload the screenshot your payment app gives you — the secretariat
+                    checks each one by hand against the account.
+                  </p>
+
+                  <div class="regpay__recap">
+                    <dl class="regpay__account regpay__recap-list">
+                      <div>
+                        <dt class="label">Registering as</dt>
+                        <dd data-regpay-name>the name you gave in step 1</dd>
+                      </div>
+                      <div>
+                        <dt class="label">Everything is sent to</dt>
+                        <dd data-regpay-email>the email address you gave in step 1</dd>
+                      </div>
+                    </dl>
+                    <p class="regpay__recap-note">
+                      Your allocation, the handbook and the schedule all go to that address, and it
+                      is the only way the secretariat can reach you. If it is wrong, press
+                      <strong>Back to details</strong> at the foot of this step and correct it
+                      before you pay.
+                    </p>
+                  </div>
+
+                  <div class="regpay">
+
+                    <div class="regpay__block">
+                      <p class="regpay__index">01</p>
+                      <div class="regpay__content">
+                        <h3 class="regpay__title">What to pay</h3>
+                        <p class="regpay__copy">
+
+                          The delegate fee for LRI MUN X is
+                          <strong class="regpay__amount">to be announced</strong>. Pay the full
+                          amount in one transfer — a part payment cannot be matched to your
+                          registration.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="regpay__block">
+                      <p class="regpay__index">02</p>
+                      <div class="regpay__content">
+                        <h3 class="regpay__title">Scan and pay</h3>
+                        <p class="regpay__copy">
+                          Open your payment app, scan this code, and pay the delegate fee. If you
+                          cannot scan it, the account details are beside it.
+                        </p>
+
+                        <div class="regpay__pay">
+                          <figure class="regpay__qr">
+
+                            <img
+                              src="/assets/payment-qr.svg"
+                              alt="Placeholder — the real payment QR code has not been added yet. Use the account details beside this box."
+                              width="320"
+                              height="320"
+                              decoding="async"
+                            />
+                            <figcaption class="regpay__qr-caption">
+                              Placeholder code — not yet scannable
+                            </figcaption>
+                          </figure>
+
+                          <dl class="regpay__account">
+
+                            <div>
+                              <dt class="label">Account name</dt>
+                              <dd>To be announced</dd>
+                            </div>
+                            <div>
+                              <dt class="label">Account / wallet number</dt>
+                              <dd>To be announced</dd>
+                            </div>
+
+                            <div>
+                              <dt class="label">Reference to use</dt>
+                              <dd data-regpay-reference>Your full name, as entered in step 1</dd>
+                            </div>
+                          </dl>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="regpay__block">
+                      <p class="regpay__index">03</p>
+                      <div class="regpay__content">
+                        <h3 class="regpay__title">Upload the screenshot</h3>
+                        <p class="regpay__copy">
+                          A screenshot of the confirmation from your payment app — the one showing
+                          the amount and the date. PNG, JPEG or WebP, up to 8&nbsp;MB. It is stored
+                          with your registration, seen only by the secretariat, and never published.
+                        </p>
+
+                        <div class="regupload" data-upload>
+
+                          <input
+                            class="u-visually-hidden regupload__input"
+                            type="file"
+                            id="rp-paymentProof"
+                            accept="image/png,image/jpeg,image/webp"
+                            data-upload-input
+                            aria-describedby="rp-upload-hint rp-upload-status rp-upload-error"
+                          />
+                          <label
+                            class="regfield__control regupload__plate"
+                            for="rp-paymentProof"
+                            data-upload-plate
+                          >
+                            <span class="regupload__plate-inner">
+                              <span class="regupload__action">Choose a screenshot</span>
+                              <span class="regupload__aside">or drop the image here</span>
+                            </span>
+                            <span class="regfield__mount" aria-hidden="true"></span>
+                          </label>
+                          <p class="regfield__hint" id="rp-upload-hint">
+                            Taken on your phone is fine — large photos are handled.
+                          </p>
+
+                          <div class="regupload__status" id="rp-upload-status" data-upload-status>
+                            <p class="regupload__status-text" data-upload-text>
+                              No screenshot added yet.
+                            </p>
+                            <div
+                              class="regupload__progress"
+                              hidden
+                              aria-hidden="true"
+                              data-upload-progress
+                            >
+                              <span class="regupload__progress-bar" data-upload-bar></span>
+                            </div>
+                          </div>
+
+                          <div class="regupload__result" hidden data-upload-result>
+                            <img
+                              class="regupload__thumb"
+                              alt="Preview of the payment screenshot you uploaded"
+                              data-upload-thumb
+                            />
+                            <div class="regupload__result-body">
+                              <p class="regupload__filename" data-upload-filename></p>
+                              <button class="regupload__replace" type="button" data-upload-replace>
+                                Replace this screenshot
+                              </button>
+                            </div>
+                          </div>
+
+                          <p
+                            class="regfield__error"
+                            id="rp-upload-error"
+                            data-error-for="paymentProof"
+                          ></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="regstep__foot regstep__foot--pay">
+                    <button class="btn btn--ghost-dark regstep__back" type="button" data-step-back>
+                      <svg
+                        class="btn__arrow btn__arrow--back"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path
+                          d="M14 8H3M7 4L3 8l4 4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="square"
+                        />
+                      </svg>
+                      Back to details
+                      <span class="btn__mount" aria-hidden="true"></span>
+                    </button>
+
+                    <button
+                      class="btn btn--lg regform__submit"
+                      type="submit"
+                      aria-disabled="true"
+                      aria-describedby="rp-submit-note"
+                      data-register-submit
+                    >
+                      <span class="btn__label" data-register-submit-label
+                        ><span>Send my registration</span
+                        ><span aria-hidden="true">Send my registration</span></span
+                      >
+                      <svg
+                        class="btn__arrow"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path
+                          d="M2 8h11M9 4l4 4-4 4"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="square"
+                        />
+                      </svg>
+                      <span class="regform__progress" aria-hidden="true"></span>
+                      <span class="btn__mount" aria-hidden="true"></span>
+                    </button>
+
+                    <p class="regstep__note label" id="rp-submit-note" data-submit-note>
+                      Add your payment screenshot to finish.
+                    </p>
+                  </div>
+                </fieldset>
+
+                <noscript>
+                  <p class="regstep__intro">
+                    This form needs JavaScript — the payment screenshot is uploaded straight from
+                    your browser, and there is no way to do that without it. If JavaScript is
+                    switched off, email your name, school, academic level, phone number, committee
+                    preference and the payment screenshot to the address in the footer below and
+                    the secretariat will register you by hand.
+                  </p>
+                </noscript>
+              </form>
+
+              <p class="u-visually-hidden" aria-live="polite" data-register-live></p>
+
+              <div class="regdone" tabindex="-1" hidden data-register-done>
+                <p class="label regdone__eyebrow">Registration received</p>
+                <h2 class="regdone__title">You are on the list.</h2>
+
+                <p class="regdone__copy" data-regdone-copy>
+                  Your details and your payment screenshot are with the LRI MUN X secretariat.
+                  Nothing else is needed from you today.
+                </p>
+
+                <ol class="regdone__next">
+                  <li>
+                    <span class="regdone__next-index">01</span>
+                    <span class="regdone__next-body">
+                      <span class="regdone__next-title" data-regdone-proof-title
+                        >The secretariat checks your payment</span
+                      >
+
+                      <span class="regdone__next-copy" data-regdone-proof-copy
+                        >Screenshots are matched against the account by hand, usually within a few
+                        days of arriving.</span
+                      >
+                    </span>
+                  </li>
+                  <li>
+                    <span class="regdone__next-index">02</span>
+                    <span class="regdone__next-body">
+                      <span class="regdone__next-title">The secretariat gets in touch</span>
+
+                      <span class="regdone__next-copy"
+                        >Using the email and phone number you gave in step 1, if anything on your
+                        form needs checking.</span
+                      >
+                    </span>
+                  </li>
+                  <li>
+                    <span class="regdone__next-index">03</span>
+                    <span class="regdone__next-body">
+                      <span class="regdone__next-title">Allocations are released</span>
+                      <span class="regdone__next-copy"
+                        >Committee, country and the delegate handbook — all by email, once
+                        registration closes.</span
+                      >
+                    </span>
+                  </li>
+                </ol>
+
+                <p class="regdone__foot">
+                  Sending this form again with the same email address will not add a second entry —
+                  but it will not change what you have already sent either. If anything above needs
+                  correcting, or you think you registered twice, write to the secretariat at the
+                  address in the footer and quote the email address you used.
+                </p>
+
+                <a class="btn btn--ghost-dark regdone__cta" href="./#committees">
+                  Back to the conference site
+                  <span class="btn__mount" aria-hidden="true"></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer ground-ink" aria-label="Site footer">
+      <div class="shell footer__inner">
+        <div class="footer__brand">
+          <div class="footer__lockup">
+            <img
+              class="footer__emblem"
+              src="/assets/lri-mun-logo.png"
+              alt="LRI Model UN"
+              width="512"
+              height="418"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="footer__wordmark" aria-hidden="true">
+              LRI Model UN <span class="footer__wordmark-x">X</span>
+            </span>
+          </div>
+          <p class="footer__brandline">
+            The tenth edition of LRI School's Model United Nations conference.
+          </p>
+          <a
+            class="footer__endorse"
+            href="https://www.lrischool.edu.np/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="/assets/school-logo.png"
+              alt="Learning Realm International School"
+              width="256"
+              height="332"
+              class="footer__school-logo"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="footer__endorse-text">
+              <span class="label footer__endorse-label">Presented by</span>
+              <span class="footer__endorse-name">Learning Realm Int'l School ↗</span>
+            </span>
+          </a>
+        </div>
+
+        <nav class="footer__nav" aria-label="Footer navigation">
+          <h2 class="label footer__heading">Sections</h2>
+          <ul class="footer__list">
+            <li><a href="./">Home</a></li>
+            <li><a href="./#committees">Committees</a></li>
+            <li><a href="./#secretariat">Secretariat</a></li>
+            <li><a href="./#editions">Past editions</a></li>
+            <li><a href="./register" aria-current="true">Register</a></li>
+          </ul>
+        </nav>
+
+        <div class="footer__contact">
+          <h2 class="label footer__heading">Contact</h2>
+
+          <address class="footer__address">
+            LRI School<br />
+            Kalanki, Kathmandu, Nepal<br />
+            <a href="mailto:placeholder@example.org">placeholder@example.org</a><br />
+            <a href="tel:+000000000000">+000 000 000 000</a>
+          </address>
+
+          <a
+            class="footer__social"
+            href="https://www.instagram.com/PLACEHOLDER"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="footer__social-icon">
+              <rect
+                x="3"
+                y="3"
+                width="18"
+                height="18"
+                rx="5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" />
+            </svg>
+            <span>Instagram — @PLACEHOLDER</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="shell footer__base">
+        <p class="footer__copy label">
+          © <span data-footer-year>2026</span> LRI Model United Nations, LRI School. All rights
+          reserved.
+        </p>
+        <p class="footer__credit label">Designed and built by the LRI MUN organizing committee.</p>
+      </div>
+    </footer>
+
+    <button class="to-top" type="button" data-to-top hidden>
+      <svg class="to-top__ring" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+        <circle class="to-top__ring-track" cx="22" cy="22" r="20" />
+        <circle class="to-top__ring-bar" cx="22" cy="22" r="20" data-to-top-ring />
+      </svg>
+      <svg class="to-top__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path
+          d="M8 13V3M4 7l4-4 4 4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span class="u-visually-hidden">Back to top</span>
+    </button>
+  </body>
+</html>

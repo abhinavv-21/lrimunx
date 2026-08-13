@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+dev-dist/
+*.tsbuildinfo
+.vite/
+
+# Environment.
+#
+# The blanket `.env*` is deliberate: a new .env variant should be ignored by
+# default rather than tracked by default. The two negations below are the files
+# that are meant to be in the repository, and they have to come AFTER the
+# blanket rule or git never reaches them.
+.env*
+!.env.example
+!apps/site/.env.development
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local databases
+prisma/*.db
+prisma/*.db-journal
+
+# Test and coverage output
+coverage/
+
+# Deployment platform link files (machine-local, contain project ids)
+.vercel
+
+# Scratch space for browser-driven verification (headless profiles, screenshots)
+.verify-*/
+*.tmp.mjs
+
+# Editor and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code local overrides
+.claude/settings.local.json

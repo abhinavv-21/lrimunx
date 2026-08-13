@@ -1,0 +1,154 @@
+import { useState } from 'react'
+import { describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { Select } from './Select'
+import { Modal } from './Modal'
+import type { SelectOption } from './selectState'
+
+const COMMITTEES: SelectOption[] = [
+  { value: '', label: 'Unallocated' },
+  { value: 'unsc', label: 'UNSC', hint: '3 open' },
+  { value: 'disec', label: 'DISEC', hint: 'full', disabled: true },
+  { value: 'unhrc', label: 'UNHRC', hint: '7 open' },
+]
+
+function Controlled({
+  onChange,
+  ...rest
+}: { onChange?: (v: string) => void } & Partial<React.ComponentProps<typeof Select>>) {
+  const [value, setValue] = useState('')
+  return (
+    <Select
+      value={value}
+      onChange={(next) => {
+        setValue(next)
+        onChange?.(next)
+      }}
+      options={COMMITTEES}
+      aria-label="Committee"
+      {...rest}
+    />
+  )
+}
+
+describe('inside a form', () => {
+  it('commits on Enter without submitting the form', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault())
+    const onChange = vi.fn()
+
+    render(
+      <form onSubmit={onSubmit}>
+        <Controlled onChange={onChange} />
+        <button type="submit">Save</button>
+      </form>,
+    )
+
+    const trigger = screen.getByRole('combobox', { name: 'Committee' })
+    await user.click(trigger)
+    await user.keyboard('{ArrowDown}{Enter}')
+
+    expect(onChange).toHaveBeenCalledWith('unsc')
+
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+})
+
+describe('inside a dialog', () => {
+  function Harness() {
+    const [open, setOpen] = useState(true)
+    return (
+      <Modal open={open} onOpenChange={setOpen} title="Add delegate" holdsInput>
+        <Controlled />
+      </Modal>
+    )
+  }
+
+  it('Escape closes the menu and leaves the dialog open; a second Escape closes the dialog', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    const trigger = screen.getByRole('combobox', { name: 'Committee' })
+    await user.click(trigger)
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+describe('ARIA wiring and focus', () => {
+  it('wires the combobox to its listbox and always names a real option', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+
+    const trigger = screen.getByRole('combobox', { name: 'Committee' })
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+    const listbox = screen.getByRole('listbox')
+    expect(trigger.getAttribute('aria-controls')).toBe(listbox.id)
+
+    for (const _ of [0, 1, 2]) {
+      const active = trigger.getAttribute('aria-activedescendant')
+      expect(active).toBeTruthy()
+      expect(document.getElementById(active as string)).toBeInTheDocument()
+      await user.keyboard('{ArrowDown}')
+    }
+  })
+
+  it('marks the disabled option rather than hiding it, so the reason stays readable', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+
+    const disec = screen.getByRole('option', { name: /DISEC/ })
+    expect(disec).toHaveAttribute('aria-disabled', 'true')
+
+    expect(within(disec).getByText('full')).toBeInTheDocument()
+  })
+
+  it('keeps focus on the trigger after choosing with the mouse', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+
+    const trigger = screen.getByRole('combobox', { name: 'Committee' })
+    await user.click(trigger)
+    await user.click(screen.getByRole('option', { name: /UNHRC/ }))
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(document.activeElement).toBe(trigger)
+  })
+
+  it('reveals the menu only once floating-ui has placed it, and does reveal it', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+    const panel = screen.getByRole('listbox').parentElement as HTMLElement
+
+    await waitFor(() => expect(panel).toBeVisible())
+  })
+
+  it('shows a value that matches no option verbatim, instead of the placeholder', () => {
+    render(
+      <Select
+        value="Atlantis"
+        onChange={() => {}}
+        options={COMMITTEES}
+        placeholder="Pick one"
+        aria-label="Country"
+      />,
+    )
+    expect(screen.getByRole('combobox', { name: 'Country' })).toHaveTextContent('Atlantis')
+  })
+})
