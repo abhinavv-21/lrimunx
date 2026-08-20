@@ -8,7 +8,7 @@ import { Select, type SelectOption } from '@/components/ui/Select'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/States'
 import { ApiError, errorMessage } from '@/lib/api'
-import { useCreateAward, useDeleteAward } from '@/lib/hooks'
+import { useCreateAward, useCreateAwards, useDeleteAward } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import { AwardRow } from './AwardRow'
 import { AWARD_TITLES_LIST_ID, DEFAULT_AWARD_SET, STANDARD_AWARDS } from './awards'
@@ -46,6 +46,7 @@ export function AwardsSection({
   )
 
   const create = useCreateAward(committeeId)
+  const createMany = useCreateAwards(committeeId)
   const remove = useDeleteAward(committeeId)
   const toast = useToast()
 
@@ -71,10 +72,19 @@ export function AwardsSection({
     setSeeding(true)
     setError(null)
     try {
-      for (const title of DEFAULT_AWARD_SET) {
-        await create.mutateAsync({ title, delegateId: null, note: null })
+      const outcome = await createMany.mutateAsync(
+        DEFAULT_AWARD_SET.map((title) => ({ title, delegateId: null, note: null })),
+      )
+
+      if (outcome.created === outcome.total) {
+        toast.success('Standard awards added', `${outcome.total} slots ready for ${committeeCode}`)
+      } else if (outcome.created > 0) {
+        setError(
+          `Added ${outcome.created} of ${outcome.total}. Add the rest by hand, or delete these and try again.`,
+        )
+      } else {
+        throw outcome.error ?? new Error('none created')
       }
-      toast.success('Standard awards added', `${DEFAULT_AWARD_SET.length} slots ready for ${committeeCode}`)
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Could not add the standard set.')
     } finally {

@@ -235,6 +235,37 @@ export function useCreateAward(committeeId: string) {
   })
 }
 
+/**
+ * Creates several awards at once.
+ *
+ * The standard set used to be four awaited useCreateAward calls in a loop, and
+ * each one invalidated the committee on success. That is four POSTs and four
+ * refetches, strictly in sequence: eight round trips to write four rows, which
+ * on a remote database took long enough that people assumed it had hung.
+ *
+ * The requests go together and the cache is invalidated once at the end.
+ * allSettled rather than all, because a partial failure should still show the
+ * rows that were created rather than throwing them away visually.
+ */
+export function useCreateAwards(committeeId: string) {
+  const invalidate = useAwardInvalidation(committeeId)
+  return useMutation({
+    mutationFn: async (bodies: AwardInput[]) => {
+      const results = await Promise.allSettled(
+        bodies.map((body) =>
+          apiFetch<Award>(`/committees/${committeeId}/awards`, { method: 'POST', body }),
+        ),
+      )
+
+      const created = results.filter((r) => r.status === 'fulfilled').length
+      const failed = results.find((r) => r.status === 'rejected')
+
+      return { created, total: bodies.length, error: failed?.reason as unknown }
+    },
+    onSuccess: invalidate,
+  })
+}
+
 export function useUpdateAward(committeeId: string) {
   const invalidate = useAwardInvalidation(committeeId)
   return useMutation({
