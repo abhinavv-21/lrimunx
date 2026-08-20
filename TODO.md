@@ -12,7 +12,7 @@ already done and is not listed here.
 | 4 | [Email and uploads](#4-email-and-file-uploads) | approvals working properly |
 | 5 | [People and photographs](#5-people-and-photographs) | looking finished |
 | 6 | [Contact details](#6-contact-details) | anyone reaching you |
-| 7 | [Local database](#7-your-local-database) | running tests properly |
+| 7 | [Local database](#7-your-local-database) | done, nothing to do |
 | 8 | [Tidying](#8-tidying-up) | nothing |
 | 9 | [Oracle, later](#9-oracle-later) | the real launch |
 
@@ -402,40 +402,31 @@ icon, so the site is safe to launch with gaps here.
 
 # 7. Your local database
 
+**Done. Nothing left here.**
+
 PostgreSQL 17 is installed, the `munx` role and `lri_mun_x` database exist, every
-migration is applied. One thing left.
+migration is applied, and it is **registered as a Windows service with
+`AUTO_START`**, so it comes back on its own after a reboot.
 
-- [ ] **Register it as a Windows service**, or it will not survive a reboot. I
-      started it by hand. Run once, in **PowerShell opened as Administrator**
-      (not Git Bash):
+Verified:
 
-  ```powershell
-  & "C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe" register -N postgresql-x64-17 -D "C:\Program Files\PostgreSQL\17\data" -S auto
-  Start-Service postgresql-x64-17
-  ```
+```
+sc qc postgresql-x64-17   →  START_TYPE : 2  AUTO_START
+pg_isready                →  localhost:5432 - accepting connections
+```
 
-  Or start it manually each time:
+The superuser password is `postgres`. Nothing in the project uses it; the app
+connects as `munx`.
 
-  ```powershell
-  & "C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe" -D "C:\Program Files\PostgreSQL\17\data" -l "$env:TEMP\pg-lrimunx.log" start
-  ```
+## How to tell the tests are really running
 
-  Check:
-
-  ```bash
-  "/c/Program Files/PostgreSQL/17/bin/pg_isready" -h localhost -p 5432
-  ```
-
-  The superuser password is `postgres`. Nothing in the project uses it; the app
-  connects as `munx`.
-
-**How to know the tests really ran.** Run `npm run verify` and look for:
+Run `npm run verify` and look for this line:
 
 ```
 [integration] Skipping the API integration suite — PostgreSQL is unreachable
 ```
 
-If you see that, the database is down and **49 route tests did not run**, however
+If you see it, the database is down and **49 route tests did not run**, however
 green the summary looks. If the line is absent, they ran.
 
 Separately, the backend suite crashes on exit roughly one run in fifteen with
@@ -443,6 +434,12 @@ Separately, the backend suite crashes on exit roughly one run in fifteen with
 during teardown from Prisma 5.22 against Node 24. It does not affect anything you
 deploy, since Vercel and Oracle both run Node 20. Re-running is safe, but check
 the output says `Worker exited` rather than naming a failing test first.
+
+## If it ever stops
+
+```powershell
+Start-Service postgresql-x64-17
+```
 
 ---
 
