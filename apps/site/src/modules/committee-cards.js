@@ -56,14 +56,6 @@ function card(committee, index) {
 
   li.innerHTML = `
     <article class="committee__card${offPattern ? ' committee__card--offpattern' : ''}">
-      <img
-        class="committee__watermark"
-        src="${import.meta.env.BASE_URL}assets/icons/${committee.icon}.svg"
-        alt=""
-        aria-hidden="true"
-        loading="lazy"
-        decoding="async"
-      />
       <span class="numeral committee__index" aria-hidden="true">${pad(index + 1)}</span>
       <img
         class="committee__icon"

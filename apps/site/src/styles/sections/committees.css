@@ -177,26 +177,6 @@
   background-color: var(--color-primary-tint);
 }
 
-/* First child on purpose: it paints beneath its siblings without needing a
-   stacking rule, and the rule that used to do that job broke the reveal panel. */
-.committee__watermark {
-  position: absolute;
-  inset-block-end: -12%;
-  inset-inline-end: -8%;
-  inline-size: 62%;
-  block-size: auto;
-  z-index: 0;
-  opacity: 0.05;
-  pointer-events: none;
-  user-select: none;
-  transition: opacity var(--dur-slow) var(--ease-expo);
-}
-
-.committees__rail:not(.is-hover-synced) .committee:hover .committee__watermark,
-.committee.is-hovered .committee__watermark {
-  opacity: 0.09;
-}
-
 .committee__index {
   position: absolute;
   inset-block-start: var(--sp-4);

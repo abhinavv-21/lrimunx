@@ -45,22 +45,6 @@
   );
 }
 
-/* The faint conference mark behind the hero. Kept clear of two things: the
-   gold LRI on the left, and the seal on the right, which is the same wreath and
-   which this used to sit almost exactly on top of. */
-.hero__emblem {
-  position: absolute;
-  z-index: -1;
-
-  inset-block-end: -6%;
-  inset-inline-end: -6%;
-  inline-size: clamp(16rem, 30vw, 30rem);
-  block-size: auto;
-  opacity: 0.09;
-  pointer-events: none;
-  user-select: none;
-}
-
 .hero__grain {
   position: absolute;
   inset: 0;
@@ -155,41 +139,30 @@ html.has-motion .hero__title-line {
   text-wrap: pretty;
 }
 
+/* The conference's own mark, at full strength. It used to be a hand-drawn gold
+   wreath with an X in it, which is the wreath the logo already has, so the page
+   showed an imitation of the logo at 245px and the logo itself at 9% opacity
+   with three quarters of it off the corner. One mark, one place. */
 .hero__seal {
   position: relative;
   justify-self: center;
-  display: grid;
-  place-items: center;
-  inline-size: clamp(12rem, 17vw, 17rem);
-  aspect-ratio: 1;
-  color: var(--color-accent-gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  inline-size: clamp(14rem, 22vw, 22rem);
 }
 
-.hero__seal-wreath {
-  grid-area: 1 / 1;
+.hero__seal-mark {
   inline-size: 100%;
-  block-size: 100%;
-}
-
-.hero__seal-numeral {
-  grid-area: 1 / 1;
-  font-family: var(--font-display);
-
-  font-variation-settings: 'opsz' 144, 'WONK' 1;
-  font-weight: 500;
-  /* Was clamp(6rem, 10vw, 9.5rem) = 144px at 1440, against an h1 that caps at
-     108px. The largest glyph on the page was a decorative X. */
-  font-size: clamp(4rem, 6vw, 6rem);
-  line-height: 1;
-  color: var(--color-gold-light);
-
-  transform: translateY(0.02em);
+  block-size: auto;
+  /* The logo is drawn on white and its gold leaves sit close to the hero's own
+     gold. A soft dark halo separates it from the wash without a plate. */
+  filter: drop-shadow(0 1.5rem 2.5rem rgb(var(--rgb-ink) / 0.55));
 }
 
 .hero__seal-caption {
-  grid-area: 1 / 1;
-  align-self: end;
-  transform: translateY(1.5em);
+  margin: 0;
   font-size: var(--fs-100);
   font-weight: 600;
   letter-spacing: 0.28em;
@@ -387,20 +360,17 @@ html.has-motion .hero__title-line {
     text-align: center;
   }
 
-  /* The seal was the first thing a phone user saw, at 46vw, and it is a wreath
-     that duplicates the one already inside lri-mun-logo.png. The name should
-     land first on the smallest screen, not an ornament. */
+  /* Above the headline on a phone, small enough to read as a mark rather than
+     as the page's subject. The name still lands first. */
   .hero__seal {
     order: -1;
-    inline-size: 4.5rem;
+    inline-size: 5.5rem;
+    gap: var(--sp-2);
   }
 
-  .hero__seal-wreath {
-    display: none;
-  }
-
-  .hero__seal-numeral {
-    font-size: var(--fs-700);
+  .hero__seal-caption {
+    font-size: 0.625rem;
+    letter-spacing: 0.2em;
   }
 
   .hero__title {

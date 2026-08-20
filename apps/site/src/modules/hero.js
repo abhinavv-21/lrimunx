@@ -11,7 +11,7 @@ export function initHero({ gsap, reduced }) {
   const wash = hero.querySelector('.hero__wash')
   const lines = Array.from(hero.querySelectorAll('[data-hero-line] > *'))
   const seal = hero.querySelector('[data-hero-seal]')
-  const wreathPaths = Array.from(hero.querySelectorAll('.hero__seal-wreath path'))
+  const mark = hero.querySelector('.hero__seal-mark')
 
   const ribbon = new Ribbon(hero)
   ribbon.build()
@@ -42,14 +42,8 @@ export function initHero({ gsap, reduced }) {
   gsap.set(staged, { opacity: 0, y: 26 })
   staged.forEach((el) => el.removeAttribute('data-reveal'))
 
-  wreathPaths.forEach((path) => {
-    const len = path.getTotalLength()
-    gsap.set(path, { strokeDasharray: len, strokeDashoffset: len })
-  })
-
-  const numeral = hero.querySelector('.hero__seal-numeral')
   const caption = hero.querySelector('.hero__seal-caption')
-  if (numeral) gsap.set(numeral, { opacity: 0, scale: 0.94 })
+  if (mark) gsap.set(mark, { opacity: 0, scale: 0.92 })
   if (caption) gsap.set(caption, { opacity: 0 })
 
   function play() {
@@ -70,27 +64,11 @@ export function initHero({ gsap, reduced }) {
       )
     }
 
-    if (wreathPaths.length) {
-      tl.to(
-        wreathPaths,
-        {
-          strokeDashoffset: 0,
-          duration: 1.05,
-          ease: 'power2.inOut',
-          stagger: { each: 0.012, from: 'start' },
-          onComplete() {
-            gsap.set(wreathPaths, { strokeDasharray: 'none', strokeDashoffset: 0 })
-          },
-        },
-        '-=1.0'
-      )
-    }
-
-    if (numeral) {
-      tl.to(numeral, { opacity: 1, scale: 1, duration: 0.7 }, '-=0.62')
+    if (mark) {
+      tl.to(mark, { opacity: 1, scale: 1, duration: 0.9 }, '-=0.92')
     }
     if (caption) {
-      tl.to(caption, { opacity: 1, duration: 0.45 }, '-=0.36')
+      tl.to(caption, { opacity: 1, duration: 0.45 }, '-=0.4')
     }
 
     if (staged.length) {
