@@ -1,10 +1,14 @@
 import { Router } from 'express'
-import { LedgerCategory, Prisma, RegistrationStatus } from '@prisma/client'
+import { Prisma, RegistrationStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { auditRequest } from '../lib/audit.js'
 import { readTierPrices } from '../lib/conference.js'
-import { summariseLedger } from '../lib/ledger.js'
+import {
+  LEDGER_CATEGORY_SUGGESTIONS,
+  canonicalCategory,
+  summariseLedger,
+} from '../lib/ledger.js'
 import { asyncHandler, validate } from '../middleware/validate.js'
 import { currentUser } from '../middleware/auth.js'
 import { requireAdmin } from '../middleware/rbac.js'
@@ -39,7 +43,7 @@ interface LedgerListQuery {
   pageSize: number
   search?: string
   sortDir: 'asc' | 'desc'
-  category?: LedgerCategory
+  category?: string
   from?: Date
   to?: Date
 }
@@ -49,6 +53,28 @@ interface LedgerListQuery {
 // bank statement does not have. Pending and approved both count: the cash is in
 // the tin either way.
 const INCOME_STATUSES = [RegistrationStatus.PENDING, RegistrationStatus.APPROVED]
+
+/**
+ * The spelling this line will be filed under.
+ *
+ * The category is free text, so nothing stops a treasurer typing "venue" on
+ * Monday and "Venue" on Tuesday — and the summary groups on the column, so that
+ * is two rows for one thing. Matching case-insensitively against the
+ * suggestions and against what is already in the books settles it on one
+ * spelling. A genuinely new category is stored exactly as typed.
+ */
+async function settleCategory(typed: string): Promise<string> {
+  const inUse = await prisma.ledgerEntry.findMany({
+    distinct: ['category'],
+    select: { category: true },
+    orderBy: { category: 'asc' },
+  })
+
+  return canonicalCategory(typed, [
+    ...LEDGER_CATEGORY_SUGGESTIONS,
+    ...inUse.map((row) => row.category),
+  ])
+}
 
 ledgerRouter.get(
   '/summary',
@@ -144,7 +170,7 @@ ledgerRouter.post(
     const body = req.body as {
       entryDate: Date
       particular: string
-      category: LedgerCategory
+      category: string
       credit: number
       debit: number
       note?: string | null
@@ -152,7 +178,12 @@ ledgerRouter.post(
     const actor = currentUser(req)
 
     const created = await prisma.ledgerEntry.create({
-      data: { ...body, note: body.note ?? null, recordedById: actor.id },
+      data: {
+        ...body,
+        category: await settleCategory(body.category),
+        note: body.note ?? null,
+        recordedById: actor.id,
+      },
       select: entryView,
     })
 
@@ -176,7 +207,7 @@ ledgerRouter.patch(
     const body = req.body as Partial<{
       entryDate: Date
       particular: string
-      category: LedgerCategory
+      category: string
       credit: number
       debit: number
       note: string | null
@@ -197,7 +228,12 @@ ledgerRouter.patch(
       )
     }
 
-    const after = await prisma.ledgerEntry.update({ where: { id }, data: body, select: entryView })
+    const data =
+      body.category === undefined
+        ? body
+        : { ...body, category: await settleCategory(body.category) }
+
+    const after = await prisma.ledgerEntry.update({ where: { id }, data, select: entryView })
 
     await auditRequest(req, {
       action: 'UPDATE',

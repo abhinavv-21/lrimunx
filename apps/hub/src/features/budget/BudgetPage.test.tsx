@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { BudgetPage } from './BudgetPage'
 import type { LedgerPage, LedgerSummary } from '@/types/api'
@@ -161,5 +162,61 @@ describe('the ledger', () => {
     expect(screen.getByText('Rs 1,18,000')).toBeInTheDocument()
     // 250000 − 118000, netted for the filter rather than for the page.
     expect(screen.getByText('Rs 1,32,000')).toBeInTheDocument()
+  })
+})
+
+describe('the category filter', () => {
+  it('offers a category the ledger is using alongside the suggestions', async () => {
+    const user = userEvent.setup()
+    show(
+      {
+        data: {
+          ...SUMMARY,
+          ledger: {
+            ...SUMMARY.ledger,
+            byCategory: [
+              { category: 'Ambulance on standby', credit: 0, debit: 8000 },
+              { category: 'Venue', credit: 0, debit: 45000 },
+            ],
+          },
+        },
+      },
+      {},
+    )
+
+    await user.click(screen.getByRole('combobox', { name: /Category/ }))
+
+    const listbox = screen.getByRole('listbox')
+    expect(within(listbox).getByRole('option', { name: /Ambulance on standby/ })).toBeInTheDocument()
+    expect(within(listbox).getByRole('option', { name: /Hospitality/ })).toBeInTheDocument()
+    expect(within(listbox).getByRole('option', { name: /Every category/ })).toBeInTheDocument()
+  })
+
+  it('prints the category as it was typed, with no lookup table in between', () => {
+    show(
+      { data: SUMMARY },
+      {
+        data: {
+          ...EMPTY_LEDGER,
+          total: 1,
+          items: [
+            {
+              id: 'entry-2',
+              entryDate: '2026-08-14T00:00:00.000Z',
+              particular: 'Ambulance, day two',
+              category: 'Ambulance on standby',
+              credit: 0,
+              debit: 8000,
+              note: null,
+              createdAt: '2026-08-14T00:00:00.000Z',
+              updatedAt: '2026-08-14T00:00:00.000Z',
+              recordedBy: { id: 'u-1', fullName: 'Secretariat Desk' },
+            },
+          ],
+        },
+      },
+    )
+
+    expect(screen.getAllByText('Ambulance on standby').length).toBeGreaterThan(0)
   })
 })

@@ -1,3 +1,4 @@
+import { CATEGORY_SUGGESTIONS } from './money'
 import type { LedgerSummary, PriceTier } from '@/types/api'
 
 /**
@@ -35,4 +36,24 @@ export function tierRows(summary: LedgerSummary): TierRow[] {
 /** What the visible filter is worth: money in, less money out. */
 export function netOf(totals: { credit: number; debit: number }): number {
   return totals.credit - totals.debit
+}
+
+/**
+ * What to offer in a category box: everything the ledger is already using,
+ * plus the suggestions nobody has reached for yet.
+ *
+ * Built from the summary because that is where every distinct category in the
+ * books arrives already — grouped, so a category that exists cannot be missing
+ * from the list. Folded by case so a suggestion and a stored spelling of the
+ * same word appear once.
+ */
+export function categoryChoices(summary: LedgerSummary | undefined): string[] {
+  const byFold = new Map<string, string>()
+
+  for (const row of summary?.ledger.byCategory ?? []) byFold.set(row.category.toLowerCase(), row.category)
+  for (const suggestion of CATEGORY_SUGGESTIONS) {
+    if (!byFold.has(suggestion.toLowerCase())) byFold.set(suggestion.toLowerCase(), suggestion)
+  }
+
+  return [...byFold.values()].sort((a, b) => a.localeCompare(b))
 }

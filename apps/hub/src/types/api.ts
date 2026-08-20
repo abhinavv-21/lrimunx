@@ -405,18 +405,6 @@ export interface MailResult {
   error?: string
 }
 
-export type LedgerCategory =
-  | 'REGISTRATION'
-  | 'SPONSORSHIP'
-  | 'VENUE'
-  | 'FOOD'
-  | 'PRINTING'
-  | 'AWARDS'
-  | 'TRANSPORT'
-  | 'HOSPITALITY'
-  | 'MARKETING'
-  | 'MISC'
-
 /**
  * One line of the closing statement. Credit and debit are whole rupees and
  * exactly one of them is above zero — the API refuses a line that is both.
@@ -426,7 +414,12 @@ export interface LedgerEntry {
 
   entryDate: string
   particular: string
-  category: LedgerCategory
+  /**
+   * Free text, in the treasurer's own words. The hub suggests the ten the
+   * conference has always used; the API settles the case against what is
+   * already in the books, so it is safe to show verbatim.
+   */
+  category: string
   credit: number
   debit: number
   note: string | null
@@ -438,7 +431,7 @@ export interface LedgerEntry {
 export interface LedgerEntryInput {
   entryDate: string
   particular: string
-  category: LedgerCategory
+  category: string
   credit: number
   debit: number
   note: string | null
@@ -471,7 +464,7 @@ export interface LedgerSummary {
     shortfall: number
   }
   ledger: {
-    byCategory: Array<{ category: LedgerCategory; credit: number; debit: number }>
+    byCategory: Array<{ category: string; credit: number; debit: number }>
     credit: number
     debit: number
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { netOf, tierRows } from './summary'
+import { categoryChoices, netOf, tierRows } from './summary'
 import type { LedgerSummary } from '@/types/api'
 
 function summaryWith(tiers: LedgerSummary['registrations']['tiers']): LedgerSummary {
@@ -7,6 +7,17 @@ function summaryWith(tiers: LedgerSummary['registrations']['tiers']): LedgerSumm
     registrations: { tiers, unrecorded: 0, count: 0, collected: 0, expected: 0, shortfall: 0 },
     ledger: { byCategory: [], credit: 0, debit: 0 },
     net: { income: 0, expense: 0, balance: 0 },
+  }
+}
+
+function summaryUsing(categories: string[]): LedgerSummary {
+  const summary = summaryWith([])
+  return {
+    ...summary,
+    ledger: {
+      ...summary.ledger,
+      byCategory: categories.map((category) => ({ category, credit: 0, debit: 100 })),
+    },
   }
 }
 
@@ -65,5 +76,28 @@ describe('netOf', () => {
 
   it('is zero when the books balance, and says so as a zero', () => {
     expect(netOf({ credit: 5000, debit: 5000 })).toBe(0)
+  })
+})
+
+describe('categoryChoices', () => {
+  it('offers the ten suggestions before anything has been recorded', () => {
+    expect(categoryChoices(undefined)).toContain('Venue')
+    expect(categoryChoices(undefined)).toHaveLength(10)
+  })
+
+  it('adds a category the treasurer invented, in alphabetical order', () => {
+    const choices = categoryChoices(summaryUsing(['Ambulance on standby', 'Venue']))
+
+    expect(choices).toHaveLength(11)
+    expect(choices[0]).toBe('Ambulance on standby')
+    expect(choices.indexOf('Transport')).toBeLessThan(choices.indexOf('Venue'))
+  })
+
+  it('shows a stored spelling once, not next to the suggestion it matches', () => {
+    const choices = categoryChoices(summaryUsing(['venue', 'FOOD']))
+
+    expect(choices.filter((name) => name.toLowerCase() === 'venue')).toEqual(['venue'])
+    expect(choices.filter((name) => name.toLowerCase() === 'food')).toEqual(['FOOD'])
+    expect(choices).toHaveLength(10)
   })
 })

@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import {
   AttendanceStatus,
-  LedgerCategory,
   PriceTier,
   RegistrationStatus,
   RequestCategory,
@@ -413,11 +412,17 @@ export const updatePricingSchema = z
 // treasurer who typed it has already stopped looking at the screen.
 const LEDGER_MAX = 100_000_000
 
+// Free text, because a conference always turns up an expense nobody listed in
+// advance. Whitespace inside is collapsed so " Venue  hire " and "Venue hire"
+// cannot become two categories that sum apart; the route settles the case
+// against what is already in the ledger.
+const ledgerCategory = trimmed(2, 40).transform((v) => v.replace(/\s+/g, ' '))
+
 export const createLedgerEntrySchema = z
   .object({
     entryDate: z.coerce.date(),
     particular: trimmed(2, 200),
-    category: z.nativeEnum(LedgerCategory),
+    category: ledgerCategory,
     credit: rupees(LEDGER_MAX).default(0),
     debit: rupees(LEDGER_MAX).default(0),
     note: z.string().trim().max(500).nullish(),
@@ -431,7 +436,7 @@ export const updateLedgerEntrySchema = z
   .object({
     entryDate: z.coerce.date().optional(),
     particular: trimmed(2, 200).optional(),
-    category: z.nativeEnum(LedgerCategory).optional(),
+    category: ledgerCategory.optional(),
     credit: rupees(LEDGER_MAX).optional(),
     debit: rupees(LEDGER_MAX).optional(),
     note: z.string().trim().max(500).nullish(),
@@ -443,7 +448,7 @@ export const updateLedgerEntrySchema = z
   )
 
 export const ledgerQuery = paginationQuery.extend({
-  category: z.nativeEnum(LedgerCategory).optional(),
+  category: ledgerCategory.optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 })

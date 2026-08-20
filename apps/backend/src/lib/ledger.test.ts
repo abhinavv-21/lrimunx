@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { LedgerCategory, PriceTier } from '@prisma/client'
+import { PriceTier } from '@prisma/client'
 import { DEFAULT_TIER_PRICES, PRICE_TIERS, parsePrice, type TierPrices } from './conference.js'
-import { summariseLedger, type SummaryInput } from './ledger.js'
+import {
+  LEDGER_CATEGORY_SUGGESTIONS,
+  canonicalCategory,
+  summariseLedger,
+  type SummaryInput,
+} from './ledger.js'
 
 const prices: TierPrices = {
   [PriceTier.BASE]: 2500,
@@ -124,9 +129,9 @@ describe('summariseLedger — manual entries and the net position', () => {
       input({
         registrationGroups: [{ priceTier: PriceTier.BASE, count: 20, total: 50_000 }],
         ledgerGroups: [
-          { category: LedgerCategory.SPONSORSHIP, credit: 30_000, debit: 0 },
-          { category: LedgerCategory.VENUE, credit: 0, debit: 45_000 },
-          { category: LedgerCategory.FOOD, credit: 0, debit: 22_000 },
+          { category: 'Sponsorship', credit: 30_000, debit: 0 },
+          { category: 'Venue', credit: 0, debit: 45_000 },
+          { category: 'Food', credit: 0, debit: 22_000 },
         ],
       }),
     )
@@ -140,16 +145,16 @@ describe('summariseLedger — manual entries and the net position', () => {
 
   it('reports a loss as a negative balance rather than clamping it', () => {
     const summary = summariseLedger(
-      input({ ledgerGroups: [{ category: LedgerCategory.VENUE, credit: 0, debit: 40_000 }] }),
+      input({ ledgerGroups: [{ category: 'Venue', credit: 0, debit: 40_000 }] }),
     )
     expect(summary.net.balance).toBe(-40_000)
   })
 
   it('reads nulls from an aggregate as zero', () => {
     const summary = summariseLedger(
-      input({ ledgerGroups: [{ category: LedgerCategory.MISC, credit: null, debit: null }] }),
+      input({ ledgerGroups: [{ category: 'Miscellaneous', credit: null, debit: null }] }),
     )
-    expect(summary.ledger.byCategory).toEqual([{ category: LedgerCategory.MISC, credit: 0, debit: 0 }])
+    expect(summary.ledger.byCategory).toEqual([{ category: 'Miscellaneous', credit: 0, debit: 0 }])
     expect(summary.net.balance).toBe(0)
   })
 
@@ -160,17 +165,77 @@ describe('summariseLedger — manual entries and the net position', () => {
   })
 
   it('never double counts registration income as a ledger credit', () => {
-    // The REGISTRATION category exists for a cash payment somebody enters by
+    // The Registration category exists for a cash payment somebody enters by
     // hand. It must be added to the tier totals, not confused with them.
     const summary = summariseLedger(
       input({
         registrationGroups: [{ priceTier: PriceTier.BASE, count: 2, total: 5_000 }],
-        ledgerGroups: [{ category: LedgerCategory.REGISTRATION, credit: 2_500, debit: 0 }],
+        ledgerGroups: [{ category: 'Registration', credit: 2_500, debit: 0 }],
       }),
     )
 
     expect(summary.registrations.collected).toBe(5_000)
     expect(summary.ledger.credit).toBe(2_500)
     expect(summary.net.income).toBe(7_500)
+  })
+})
+
+describe('categories the treasurer types', () => {
+  it('groups whatever came back from the aggregate, suggestion or not', () => {
+    const summary = summariseLedger(
+      input({
+        ledgerGroups: [
+          { category: 'Venue', credit: 0, debit: 45_000 },
+          { category: 'Ambulance on standby', credit: 0, debit: 8_000 },
+          { category: 'AV hire', credit: 0, debit: 12_000 },
+        ],
+      }),
+    )
+
+    expect(summary.ledger.debit).toBe(65_000)
+    expect(summary.net.balance).toBe(-65_000)
+    expect(summary.ledger.byCategory.map((row) => row.category)).toEqual([
+      'Ambulance on standby',
+      'AV hire',
+      'Venue',
+    ])
+  })
+
+  it('keeps two categories apart when they are genuinely different words', () => {
+    const summary = summariseLedger(
+      input({
+        ledgerGroups: [
+          { category: 'Printing', credit: 0, debit: 3_000 },
+          { category: 'Placard printing', credit: 0, debit: 1_500 },
+        ],
+      }),
+    )
+
+    expect(summary.ledger.byCategory).toEqual([
+      { category: 'Placard printing', credit: 0, debit: 1_500 },
+      { category: 'Printing', credit: 0, debit: 3_000 },
+    ])
+  })
+})
+
+describe('canonicalCategory', () => {
+  const known = [...LEDGER_CATEGORY_SUGGESTIONS, 'Ambulance on standby']
+
+  it('folds a difference of case onto the spelling already in use', () => {
+    expect(canonicalCategory('venue', known)).toBe('Venue')
+    expect(canonicalCategory('VENUE', known)).toBe('Venue')
+    expect(canonicalCategory('ambulance ON standby', known)).toBe('Ambulance on standby')
+  })
+
+  it('leaves a category nobody has used exactly as it was typed', () => {
+    expect(canonicalCategory('AV hire', known)).toBe('AV hire')
+    expect(canonicalCategory('Ambulance', known)).toBe('Ambulance')
+  })
+
+  // The route passes the suggestions first for exactly this reason: a ledger
+  // carried over with a shouty spelling should still settle on "Food".
+  it('takes the first match, which is why the suggestions are passed first', () => {
+    expect(canonicalCategory('food', [...LEDGER_CATEGORY_SUGGESTIONS, 'FOOD'])).toBe('Food')
+    expect(canonicalCategory('food', ['FOOD', ...LEDGER_CATEGORY_SUGGESTIONS])).toBe('FOOD')
   })
 })

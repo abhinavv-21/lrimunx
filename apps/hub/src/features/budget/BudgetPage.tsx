@@ -19,14 +19,9 @@ import { Select, type SelectOption } from '@/components/ui/Select'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonCards, SkeletonRows } from '@/components/ui/States'
 import { LedgerEntryDialog } from './LedgerEntryDialog'
-import { CATEGORY_LABELS, LEDGER_CATEGORIES, TIER_LABELS, TIER_MEANING, formatMoney } from './money'
-import { netOf, tierRows, type TierRow } from './summary'
+import { TIER_LABELS, TIER_MEANING, formatMoney } from './money'
+import { categoryChoices, netOf, tierRows, type TierRow } from './summary'
 import type { LedgerEntry, LedgerSummary } from '@/types/api'
-
-const CATEGORY_FILTERS: SelectOption[] = [
-  { value: '', label: 'Every category' },
-  ...LEDGER_CATEGORIES.map((category) => ({ value: category, label: CATEGORY_LABELS[category] })),
-]
 
 /** A figure that is money, right-aligned and in the tabular face the tables use. */
 function Money({ amount, tone = 'ink' }: { amount: number; tone?: 'ink' | 'muted' | 'danger' }) {
@@ -191,8 +186,8 @@ function LedgerByCategory({ summary }: { summary: LedgerSummary }) {
 
           {byCategory.map((row) => (
             <Fragment key={row.category}>
-              <dt className="min-w-0 truncate py-2 text-body-sm text-ink">
-                {CATEGORY_LABELS[row.category]}
+              <dt className="min-w-0 truncate py-2 text-body-sm text-ink" title={row.category}>
+                {row.category}
               </dt>
               <dd className="py-2 text-right">
                 <Money amount={row.credit} tone={row.credit === 0 ? 'muted' : 'ink'} />
@@ -292,6 +287,18 @@ export function BudgetPage() {
   const { data, isPending, isFetching, isError, error, refetch } = useLedger(filters)
   const remove = useDeleteLedgerEntry()
 
+  // Whatever the ledger is actually using, not a fixed list: the categories are
+  // free text now, so a hardcoded filter would go stale the first time somebody
+  // typed one of their own.
+  const summary = useLedgerSummary()
+  const categoryFilters = useMemo<SelectOption[]>(
+    () => [
+      { value: '', label: 'Every category' },
+      ...categoryChoices(summary.data).map((name) => ({ value: name, label: name })),
+    ],
+    [summary.data],
+  )
+
   const hasFilters = Boolean(search || category || from || to)
 
   function clearFilters() {
@@ -352,7 +359,7 @@ export function BudgetPage() {
         id: 'category',
         header: 'Category',
         accessorFn: (row) => row.category,
-        cell: ({ row }) => <span className="text-ink">{CATEGORY_LABELS[row.original.category]}</span>,
+        cell: ({ row }) => <span className="text-ink">{row.original.category}</span>,
       },
       {
         id: 'credit',
@@ -442,7 +449,7 @@ export function BudgetPage() {
 
           <Field label="Category">
             {({ id }) => (
-              <Select id={id} value={category} onChange={setCategory} options={CATEGORY_FILTERS} />
+              <Select id={id} value={category} onChange={setCategory} options={categoryFilters} />
             )}
           </Field>
 

@@ -1,4 +1,4 @@
-import type { LedgerCategory, PriceTier } from '@/types/api'
+import type { PriceTier } from '@/types/api'
 
 /**
  * The money vocabulary for the budget screen and the payment dialog.
@@ -45,17 +45,26 @@ export const TIER_MEANING: Record<PriceTier, string> = {
   DISCOUNT: 'One flat concession rate, whatever the reason',
 }
 
-export const CATEGORY_LABELS: Record<LedgerCategory, string> = {
-  REGISTRATION: 'Registration',
-  SPONSORSHIP: 'Sponsorship',
-  VENUE: 'Venue',
-  FOOD: 'Food',
-  PRINTING: 'Printing',
-  AWARDS: 'Awards',
-  TRANSPORT: 'Transport',
-  HOSPITALITY: 'Hospitality',
-  MARKETING: 'Marketing',
-  MISC: 'Miscellaneous',
-}
+/**
+ * What the category box offers before anyone has typed. Suggestions, not a
+ * list: a conference always turns up a cost nobody planned for, and filing it
+ * under "Miscellaneous" is the same as not filing it at all.
+ *
+ * These ten are what the ledger used to be limited to, so a treasurer who never
+ * types anything else sees exactly the screen they had before.
+ */
+export const CATEGORY_SUGGESTIONS = [
+  'Registration',
+  'Sponsorship',
+  'Venue',
+  'Food',
+  'Printing',
+  'Awards',
+  'Transport',
+  'Hospitality',
+  'Marketing',
+  'Miscellaneous',
+] as const
 
-export const LEDGER_CATEGORIES = Object.keys(CATEGORY_LABELS) as LedgerCategory[]
+/** What a new entry starts on, and the commonest expense on the books. */
+export const DEFAULT_CATEGORY = 'Venue'

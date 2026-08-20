@@ -1,18 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useToast } from '@/providers/ToastProvider'
-import { useSaveLedgerEntry } from '@/lib/hooks'
+import { useLedgerSummary, useSaveLedgerEntry } from '@/lib/hooks'
 import { errorMessage } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
-import { CATEGORY_LABELS, LEDGER_CATEGORIES, formatMoney } from './money'
-import type { LedgerCategory, LedgerEntry } from '@/types/api'
-
-const CATEGORY_OPTIONS: SelectOption[] = LEDGER_CATEGORIES.map((category) => ({
-  value: category,
-  label: CATEGORY_LABELS[category],
-}))
+import { DEFAULT_CATEGORY, formatMoney } from './money'
+import { categoryChoices } from './summary'
+import type { LedgerEntry } from '@/types/api'
 
 // The API stores a credit and a debit and refuses a line that carries both.
 // Asking for a direction and one amount is the same thing said once, and it
@@ -45,7 +41,7 @@ export function LedgerEntryDialog({
 }) {
   const [entryDate, setEntryDate] = useState(today())
   const [particular, setParticular] = useState('')
-  const [category, setCategory] = useState<string>('VENUE')
+  const [category, setCategory] = useState<string>(DEFAULT_CATEGORY)
   const [direction, setDirection] = useState('debit')
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
@@ -54,11 +50,19 @@ export function LedgerEntryDialog({
   const save = useSaveLedgerEntry()
   const toast = useToast()
 
+  // The categories already in the books, so a treasurer who invented one last
+  // week picks it off the list instead of retyping it into a near-duplicate.
+  const summary = useLedgerSummary()
+  const categoryOptions = useMemo<SelectOption[]>(
+    () => categoryChoices(summary.data).map((name) => ({ value: name, label: name })),
+    [summary.data],
+  )
+
   useEffect(() => {
     if (!open) return
     setEntryDate(entry ? asDateInput(entry.entryDate) : today())
     setParticular(entry?.particular ?? '')
-    setCategory(entry?.category ?? 'VENUE')
+    setCategory(entry?.category ?? DEFAULT_CATEGORY)
     setDirection(entry && entry.credit > 0 ? 'credit' : 'debit')
     setAmount(entry ? String(entry.credit > 0 ? entry.credit : entry.debit) : '')
     setNote(entry?.note ?? '')
@@ -77,12 +81,18 @@ export function LedgerEntryDialog({
       return
     }
 
+    const trimmedCategory = category.trim()
+    if (trimmedCategory.length < 2 || trimmedCategory.length > 40) {
+      setError('Name the category in 2 to 40 characters — “Venue”, or “Ambulance on standby”.')
+      return
+    }
+
     try {
       await save.mutateAsync({
         ...(entry ? { id: entry.id } : {}),
         entryDate,
         particular: particular.trim(),
-        category: category as LedgerCategory,
+        category: trimmedCategory,
         credit: direction === 'credit' ? parsedAmount : 0,
         debit: direction === 'debit' ? parsedAmount : 0,
         note: note.trim() === '' ? null : note.trim(),
@@ -135,9 +145,20 @@ export function LedgerEntryDialog({
             )}
           </Field>
 
-          <Field label="Category" required>
+          <Field
+            label="Category"
+            hint="Pick one or type your own."
+            required
+          >
             {({ id }) => (
-              <Select id={id} value={category} onChange={setCategory} options={CATEGORY_OPTIONS} />
+              <Select
+                id={id}
+                value={category}
+                onChange={setCategory}
+                options={categoryOptions}
+                allowCustom
+                placeholder="Venue, Ambulance on standby…"
+              />
             )}
           </Field>
 

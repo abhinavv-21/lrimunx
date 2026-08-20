@@ -1213,6 +1213,71 @@ describe.skipIf(!boot.ready)('API integration', () => {
       }
     })
 
+    it('takes a category the treasurer invents, and keeps one spelling of it', async () => {
+      const category = `${NS.displayName}Ambulance on standby`
+      const ids: string[] = []
+
+      // Typed with the spacing of somebody in a hurry.
+      const first = await api.request('post', '/api/v1/ledger', { token: adminToken }).send({
+        entryDate: '2026-11-21',
+        particular: `${NS.displayName}Ambulance, day two`,
+        category: `  ${NS.displayName} Ambulance   on standby  `,
+        debit: 8_000,
+      })
+      expect(first.status).toBe(201)
+      expect((first.body as { category: string }).category).toBe(category)
+      ids.push((first.body as { id: string }).id)
+
+      // Same category, shouted. It must not open a second row in the summary.
+      const second = await api.request('post', '/api/v1/ledger', { token: adminToken }).send({
+        entryDate: '2026-11-22',
+        particular: `${NS.displayName}Ambulance, day three`,
+        category: category.toUpperCase(),
+        debit: 8_000,
+      })
+      expect(second.status).toBe(201)
+      expect((second.body as { category: string }).category).toBe(category)
+      ids.push((second.body as { id: string }).id)
+
+      // One of the ten the hub suggests, typed in lower case.
+      const suggested = await api.request('post', '/api/v1/ledger', { token: adminToken }).send({
+        entryDate: '2026-11-22',
+        particular: `${NS.displayName}Hall hire, day three`,
+        category: 'venue',
+        debit: 5_000,
+      })
+      expect(suggested.status).toBe(201)
+      expect((suggested.body as { category: string }).category).toBe('Venue')
+      ids.push((suggested.body as { id: string }).id)
+
+      const empty = await api.request('post', '/api/v1/ledger', { token: adminToken }).send({
+        entryDate: '2026-11-22',
+        particular: `${NS.displayName}Uncategorised`,
+        category: '   ',
+        debit: 100,
+      })
+      expect(empty.status).toBe(422)
+
+      const filtered = await api.request(
+        'get',
+        `/api/v1/ledger?category=${encodeURIComponent(category)}`,
+        { token: adminToken },
+      )
+      expect(filtered.status).toBe(200)
+      expect(filtered.body).toMatchObject({ total: 2, totals: { credit: 0, debit: 16_000 } })
+
+      const summary = await api.request('get', '/api/v1/ledger/summary', { token: adminToken })
+      const groups = (summary.body as { ledger: { byCategory: Array<{ category: string; debit: number }> } })
+        .ledger.byCategory
+      expect(groups.filter((row) => row.category === category)).toEqual([
+        { category, credit: 0, debit: 16_000 },
+      ])
+
+      for (const id of ids) {
+        await api.request('delete', `/api/v1/ledger/${id}`, { token: adminToken })
+      }
+    })
+
     it('adds registration income and hand-typed lines into one net position', async () => {
       const registration = await pendingRegistration('books')
       await api
