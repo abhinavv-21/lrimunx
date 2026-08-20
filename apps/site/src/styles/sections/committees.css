@@ -177,6 +177,8 @@
   background-color: var(--color-primary-tint);
 }
 
+/* First child on purpose: it paints beneath its siblings without needing a
+   stacking rule, and the rule that used to do that job broke the reveal panel. */
 .committee__watermark {
   position: absolute;
   inset-block-end: -12%;
@@ -193,11 +195,6 @@
 .committees__rail:not(.is-hover-synced) .committee:hover .committee__watermark,
 .committee.is-hovered .committee__watermark {
   opacity: 0.09;
-}
-
-.committee__card > *:not(.committee__watermark) {
-  position: relative;
-  z-index: 1;
 }
 
 .committee__index {
@@ -510,5 +507,22 @@
   .committee.is-hovered .committee__icon,
   .committee:hover .committee__icon {
     transform: none;
+  }
+}
+
+/* The heading is indented to grid column 2 at wide sizes (base.css,
+   .section__head) while the rail is a plain shell starting at the gutter, so
+   card 01 sat 114px left of its own heading.
+   
+   The rail moves, not the heading: pulling the heading out to column 1 puts it
+   under the vertical section label in the margin. One grid column plus one gap
+   is exactly the offset. */
+@media (min-width: 1024px) {
+  .committees__toolbar,
+  .committees__viewport,
+  .committees__progress-wrap {
+    padding-inline-start: calc(
+      var(--gutter) + (100% - var(--gutter) * 2 - var(--grid-gap) * 11) / 12 + var(--grid-gap)
+    );
   }
 }
