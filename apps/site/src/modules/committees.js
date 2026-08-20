@@ -20,7 +20,10 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
     const gap = parseFloat(getComputedStyle(el).columnGap)
     return Number.isFinite(gap) ? gap : 0
   }
-  const stepSize = () => items[0].getBoundingClientRect().width + gapOf(rail)
+  // offsetWidth, not getBoundingClientRect: the latter returns the transformed
+  // box, and the entry animation holds each card at rotateZ 0.6deg until it
+  // finishes, which measured 4.5px too wide and made every step drift.
+  const stepSize = () => items[0].offsetWidth + gapOf(rail)
 
   let ticking = false
 
@@ -29,13 +32,10 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
 
     const max = maxScroll()
     const progress = max > 0 ? rail.scrollLeft / max : 0
-    // From progress, not from the leftmost card: with three cards visible the
-    // leftmost index tops out at items.length - 3, so the readout could never
-    // reach its own stated total.
-    const index = Math.min(
-      items.length - 1,
-      Math.max(0, Math.round(progress * (items.length - 1))),
-    )
+    // The leftmost card on screen, which is what the number is describing.
+    // Deriving it from scroll progress instead made the readout run ahead of the
+    // rail and show 02 while card 01 was still half visible.
+    const index = Math.min(items.length - 1, Math.max(0, Math.round(rail.scrollLeft / stepSize())))
 
     if (positionEl) positionEl.textContent = pad(index + 1)
 
@@ -139,16 +139,20 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
     if (event.pointerId !== dragPointer) return
 
     if (dragging) {
-      // Kill the click that a pointerup after a drag would otherwise fire on
-      // whatever card happened to be under the cursor.
-      rail.addEventListener('click', (click) => click.stopPropagation(), {
-        capture: true,
-        once: true,
-      })
+      // Kill only the click that this pointerup is about to fire. Registering it
+      // unconditionally left it armed when no click followed, so it ate the
+      // user's next real click on the rail instead.
+      const swallow = (click) => click.stopPropagation()
+      rail.addEventListener('click', swallow, { capture: true, once: true })
+      window.setTimeout(() => rail.removeEventListener('click', swallow, true), 0)
     }
 
     if (rail.hasPointerCapture?.(dragPointer)) rail.releasePointerCapture(dragPointer)
     rail.classList.remove('is-dragging')
+
+    // Settle on a card rather than stopping wherever the button came up.
+    if (dragging) scrollToIndex(Math.round(rail.scrollLeft / stepSize()))
+
     dragPointer = null
     dragging = false
   }

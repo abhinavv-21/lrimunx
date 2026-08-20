@@ -83,7 +83,7 @@ export function LedgerEntryDialog({
 
     const trimmedCategory = category.trim()
     if (trimmedCategory.length < 2 || trimmedCategory.length > 40) {
-      setError('Name the category in 2 to 40 characters — “Venue”, or “Ambulance on standby”.')
+      setError('Name the category in 2 to 40 characters, like “Venue” or “Ambulance on standby”.')
       return
     }
 
@@ -145,11 +145,7 @@ export function LedgerEntryDialog({
             )}
           </Field>
 
-          <Field
-            label="Category"
-            hint="Pick one or type your own."
-            required
-          >
+          <Field label="Category" hint="Pick one or type your own." required>
             {({ id }) => (
               <Select
                 id={id}

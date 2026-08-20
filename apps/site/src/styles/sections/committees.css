@@ -90,13 +90,21 @@
   outline-offset: 4px;
 }
 
+/* Snapping is for everyone. It used to be inside a (hover: none) query, so a
+   mouse could leave a card sheared exactly on the gutter line and the rail had
+   no way to tidy itself up. Proximity rather than mandatory on pointer devices,
+   so a deliberate half-scroll to peek at the next card is still allowed. */
+.committees__rail {
+  scroll-snap-type: x proximity;
+}
+
+.committee {
+  scroll-snap-align: start;
+}
+
 @media (hover: none) {
   .committees__rail {
     scroll-snap-type: x mandatory;
-  }
-
-  .committee {
-    scroll-snap-align: start;
   }
 }
 
@@ -116,10 +124,15 @@
     scroll-behavior: auto;
   }
 
-  /* Stops the browser starting a native image or text drag mid-swipe. */
+  /* Stops the browser starting a native text or image drag mid-swipe. Not
+     pointer-events: none, which also blinded elementFromPoint and killed every
+     card's hover state for the duration of the drag. */
   .committees__rail.is-dragging * {
     user-select: none;
-    pointer-events: none;
+  }
+
+  .committees__rail.is-dragging img {
+    -webkit-user-drag: none;
   }
 }
 
@@ -343,8 +356,10 @@
 .committee__reveal {
   position: absolute;
   inset-inline: 0;
-  inset-block-end: 0;
-  max-block-size: 62%;
+  /* Clears the footer rather than covering it. Hovering a card used to hide the
+     seat count, the level tag and the Details button underneath this panel. */
+  inset-block-end: 7rem;
+  max-block-size: 42%;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--sp-5) var(--sp-6) var(--sp-6);

@@ -45,19 +45,18 @@
   );
 }
 
-/* The emblem watermark is gone. The nav carries the logo and the seal carries
-   the wreath, so this was the third wreath in one viewport, and at 0.06 opacity
-   on the left it sat directly behind the gold LRI. The <img> stays in the
-   markup for the loader; this rule removes it from the hero. */
+/* The faint conference mark behind the hero. Kept clear of two things: the
+   gold LRI on the left, and the seal on the right, which is the same wreath and
+   which this used to sit almost exactly on top of. */
 .hero__emblem {
   position: absolute;
   z-index: -1;
 
-  inset-block-end: 26%;
-  inset-inline-end: 4%;
-  inline-size: clamp(12rem, 22vw, 22rem);
+  inset-block-end: 6%;
+  inset-inline-end: -3%;
+  inline-size: clamp(9rem, 15vw, 15rem);
   block-size: auto;
-  opacity: 0.07;
+  opacity: 0.05;
   pointer-events: none;
   user-select: none;
 }
@@ -87,7 +86,10 @@
 }
 
 .hero__masthead {
-  max-inline-size: 34ch;
+  /* No max-inline-size here. A measure set in ch against this element's 16px
+     sans font has nothing to do with a 108px serif headline inside it, and
+     .line-mask's overflow: hidden turns any overshoot into cut-off letters
+     rather than a wrap. The tagline sets its own measure further down. */
   min-inline-size: 0;
 }
 
@@ -430,16 +432,14 @@ html.has-motion .hero__title-line {
 
   .hero__inner {
     /* The headline is the reason anyone is here; the seal is an ornament. */
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
     gap: clamp(var(--sp-6), 4vw, var(--sp-8));
   }
 }
 
-@media (min-width: 1024px) {
-  .hero__inner {
-    padding-inline: clamp(0px, 2vw, 2.5rem);
-  }
-}
+/* Deliberately no padding-inline override here. .hero__inner carries .shell,
+   and a same-specificity rule in this file replaces the shell gutter instead of
+   adding to it, which pulled the hero ~22px tighter than every other section. */
 
 @media (prefers-reduced-motion: reduce) {
   .hero__wash,

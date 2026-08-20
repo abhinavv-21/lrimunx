@@ -203,3 +203,52 @@ describe('scrolling the menu', () => {
     expect(document.activeElement).toBe(trigger)
   })
 })
+
+/**
+ * These exist because every dropdown inside a dialog was completely inert for
+ * days while this suite stayed green.
+ *
+ * Radix sets pointer-events: none on <body> for a modal dialog and re-enables it
+ * only on its own layer. The menu portals to <body> as a sibling of that layer,
+ * so it inherited the block: no hover, no click, and the outside-press listener
+ * closed the menu instead of selecting.
+ *
+ * The existing wheel test did not catch it because it dispatches a raw event
+ * through node.dispatchEvent, which bypasses the pointer-events check. These use
+ * user-event, which refuses to interact with an element that cannot receive
+ * pointer events, so they fail loudly when the block comes back.
+ */
+describe('a menu inside a dialog is actually usable with a mouse', () => {
+  function InDialog({ onChange }: { onChange?: (v: string) => void }) {
+    const [open, setOpen] = useState(true)
+    return (
+      <Modal open={open} onOpenChange={setOpen} title="Add delegate" holdsInput>
+        <Controlled onChange={onChange} />
+      </Modal>
+    )
+  }
+
+  it('highlights the row under the pointer', async () => {
+    const user = userEvent.setup()
+    render(<InDialog />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+
+    const row = screen.getByRole('option', { name: /UNHRC/ })
+    await user.hover(row)
+
+    await waitFor(() => expect(row).toHaveClass('bg-edge'))
+  })
+
+  it('selects the row that was clicked, rather than dismissing the menu', async () => {
+    const onChange = vi.fn()
+    const user = userEvent.setup()
+    render(<InDialog onChange={onChange} />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+    await user.click(screen.getByRole('option', { name: /UNHRC/ }))
+
+    expect(onChange).toHaveBeenCalledWith('unhrc')
+    expect(screen.getByRole('combobox', { name: 'Committee' })).toHaveTextContent('UNHRC')
+  })
+})

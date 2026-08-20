@@ -286,7 +286,23 @@ export function Select({
             <div
               ref={refs.setFloating}
 
-              style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
+              style={{
+                ...floatingStyles,
+                visibility: isPositioned ? 'visible' : 'hidden',
+                // Required, not cosmetic, and inline on purpose.
+                //
+                // A Radix modal dialog sets pointer-events: none on <body> and
+                // re-enables it only on its own layer. This menu portals to
+                // <body> as a sibling of that layer, so it inherited the block
+                // and stopped being hit-testable: no hover, no click, and the
+                // document-level outside-press listener resolved the target to
+                // <html> and closed the menu instead of selecting. Every
+                // dropdown inside a dialog was inert.
+                //
+                // Inline because Radix sets its block inline too, and a utility
+                // class loses to that the moment anything shifts specificity.
+                pointerEvents: 'auto',
+              }}
               // Anywhere in the menu, not just on a row: pressing the scrollbar
               // is a press on the list, and letting it move focus closed the
               // menu the moment the treasurer reached for it.
