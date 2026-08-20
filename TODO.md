@@ -45,6 +45,9 @@ through the Vercel CLI using your existing session. No token changed hands.
 - The **Prisma Postgres** store `lri-mun-x`, and its `DATABASE_PRISMA_DATABASE_URL`
   and `DATABASE_POSTGRES_URL` variables. This is what was blocking Neon: it had
   already claimed the `DATABASE` prefix.
+- Two half-created **Neon** databases, `neon-citron-house` and `lrimunx-db`. Both
+  were connected to no project. Nothing now holds the `DATABASE` prefix, so
+  creating a fresh one will not hit the conflict again.
 - `BLOB_WEBHOOK_PUBLIC_KEY` and `BLOB_STORE_ID`. Payment screenshots go through
   an S3-compatible API and Vercel Blob is not S3-compatible, so nothing read them.
 - `NODE_ENV`. Vercel sets this itself, and a hardcoded `production` would have
@@ -68,13 +71,23 @@ database.
 
 ### One leftover I could not finish
 
-- [ ] **Delete the `lrimunx-blob` Blob store.** It is disconnected from the
-      project now, so nothing uses it, but it still exists at team level and
-      Vercel refuses to delete a store that is not empty. It holds one 72 KB file
-      that I was not able to inspect or remove, because the CLI needs a Blob
-      read-write token and OIDC is not enabled for the development environment.
-      Delete it from the dashboard: **Storage → `lrimunx-blob` → empty it, then
-      delete**. Purely tidiness; it costs nothing where it is.
+- [ ] **Delete the `lrimunx-blob` Blob store.** Two clicks, and the order
+      matters.
+
+      **https://vercel.com/ephi/~/stores/blob/store_9mlCqNa8wYTMsTOe**
+
+      1. Delete the single file it holds (1 blob, 72 KB).
+      2. Then **Settings → Delete Store**.
+
+      Deleting the store first returns `409 Blob store not empty`.
+
+      I could not do this from the CLI. Every write route (`empty-store`,
+      `signed-token`, `delete`) needs a Blob read-write token, that token is only
+      issued when the store is connected to a project, and I disconnected it
+      during the cleanup. Reconnecting is dashboard-only, so it is circular.
+
+      Purely tidiness. It is disconnected from the project and costs nothing
+      where it is.
 
 ## 1.2 Create the database — THIS IS THE MAIN THING LEFT
 
