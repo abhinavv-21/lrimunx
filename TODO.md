@@ -110,10 +110,10 @@ not be writing users into your database. Run it yourself, once.
       parse in PowerShell):
 
   ```bash
-  DATABASE_URL="<paste DIRECT_URL here>" \
-  DIRECT_URL="<paste the same value here>" \
+  DATABASE_URL="postgresql://neondb_owner:npg_9gvRLJ0zXntY@ep-noisy-poetry-azbwf66l.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require" \
+  DIRECT_URL="postgresql://neondb_owner:npg_9gvRLJ0zXntY@ep-noisy-poetry-azbwf66l.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require" \
   SEED_ADMIN_USERNAME="abhinav" \
-  SEED_ADMIN_PASSWORD="<pick something long>" \
+  SEED_ADMIN_PASSWORD="dsg_lrimunx" \
   node scripts/bootstrap-admin.mjs
   ```
 

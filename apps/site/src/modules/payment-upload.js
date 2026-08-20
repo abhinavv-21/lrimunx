@@ -12,7 +12,15 @@ const COPY = {
     'The screenshot could not be uploaded. Nothing has been sent and everything you have typed is still here, so check your connection and try again. If it keeps failing, contact the secretariat using the details in the footer.',
   offline:
     'This device looks offline, so the screenshot could not be uploaded. Everything you have typed is still here. Try again once you are back online.',
+  // The server answers 503 when object storage is not configured. Retrying
+  // cannot help, so say what is actually wrong rather than sending the delegate
+  // to check a connection that is fine.
+  unavailable:
+    'Screenshot uploads are not switched on yet. This is on our side, not yours. Send your registration without one and the secretariat will ask you for it by email.',
 }
+
+/** Uploads are off at the server, not failing. Retrying will not change it. */
+class UploadsUnavailable extends Error {}
 
 function putSignedFile(uploadUrl, file, contentType, onProgress) {
   return new Promise((resolve, reject) => {
@@ -158,6 +166,7 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ contentType: file.type, size: file.size }),
       })
+      if (response.status === 503) throw new UploadsUnavailable()
       if (!response.ok) throw new Error(`Upload could not be started (${response.status})`)
 
       const { uploadUrl, fileUrl, contentType } = await response.json()
@@ -174,14 +183,24 @@ export function initPaymentUpload(root, { endpoint, announce, onChange } = {}) {
       showResult(file)
       say('Screenshot uploaded. You can send your registration now.')
       changed()
-    } catch {
+    } catch (error) {
       url = ''
-      failures += 1
       setBusy(false)
       hideProgress()
       clearResult()
       setStatus(COPY.idle)
-      const message = navigator.onLine === false ? COPY.offline : COPY.failed
+
+      let message
+      if (error instanceof UploadsUnavailable) {
+        // Count it as spent rather than as one failed attempt, so the form stops
+        // demanding a screenshot it is never going to be able to take.
+        failures = Number.MAX_SAFE_INTEGER
+        message = COPY.unavailable
+      } else {
+        failures += 1
+        message = navigator.onLine === false ? COPY.offline : COPY.failed
+      }
+
       setError(message)
       say(message)
       changed()
