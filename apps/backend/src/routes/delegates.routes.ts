@@ -23,6 +23,16 @@ const withAssignment = {
       committee: { select: { id: true, name: true, code: true } },
     },
   },
+  // Read-only. Set on the registration, through POST /registrations/:id/payment.
+  registration: {
+    select: {
+      id: true,
+      reference: true,
+      priceTier: true,
+      amountPaid: true,
+      paymentProofUrl: true,
+    },
+  },
 } satisfies Prisma.DelegateInclude
 
 type DelegateQuery = {

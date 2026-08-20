@@ -148,6 +148,15 @@ export interface DelegateAssignment {
   committee: CommitteeRef
 }
 
+/** What a delegate paid. Owned by the registration; read-only on the delegate. */
+export interface DelegatePayment {
+  id: string
+  reference: string
+  priceTier: PriceTier | null
+  amountPaid: number | null
+  paymentProofUrl: string | null
+}
+
 export interface Delegate {
   id: string
   fullName: string
@@ -166,6 +175,8 @@ export interface Delegate {
   accessibilityNotes: string | null
   attendanceStatus: AttendanceStatus
   assignment: DelegateAssignment | null
+  /** Read-only. Owned by the registration, absent for hand-added delegates. */
+  registration: DelegatePayment | null
   createdAt: string
   updatedAt: string
 }

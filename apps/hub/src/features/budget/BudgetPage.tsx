@@ -255,8 +255,8 @@ function BudgetSummary() {
       ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <RegistrationIncome summary={data} />
         <LedgerByCategory summary={data} />
+        <RegistrationIncome summary={data} />
       </div>
     </>
   )

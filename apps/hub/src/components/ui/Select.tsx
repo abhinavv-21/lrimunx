@@ -198,7 +198,14 @@ export function Select({
     },
   }
 
-  const chrome = cn(CONTROL, 'flex w-full items-center py-2 pr-9 text-left', className)
+  const chrome = cn(
+    CONTROL,
+    'flex w-full items-center py-2 pr-9 text-left',
+    // A button is not a link, so nothing gives it a pointer for free.
+    'cursor-pointer hover:bg-surface-sunken',
+    'disabled:cursor-not-allowed disabled:hover:bg-surface-sunken',
+    className,
+  )
 
   return (
     <>
@@ -292,8 +299,11 @@ export function Select({
                         aria-disabled={rowDisabled || undefined}
                         className={cn(
                           'flex min-h-tap items-center gap-2 px-3 py-2 text-body',
+                          'transition-colors duration-micro ease-out',
                           rowDisabled ? 'cursor-not-allowed text-ink-tertiary' : 'cursor-pointer',
-                          isActive && !rowDisabled && 'bg-accent-wash',
+                          isActive && !rowDisabled && 'bg-surface-sunken',
+                          isSelected && !rowDisabled && 'font-medium text-accent',
+                          isSelected && isActive && !rowDisabled && 'bg-accent-wash',
                         )}
 
                         onMouseDown={(event) => event.preventDefault()}

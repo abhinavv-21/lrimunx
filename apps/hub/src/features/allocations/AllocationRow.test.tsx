@@ -24,6 +24,8 @@ const delegate: Delegate = {
   accessibilityNotes: null,
   attendanceStatus: 'ABSENT',
   assignment: null,
+  // Hand-added delegates have no registration behind them.
+  registration: null,
   createdAt: '2026-08-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
 }

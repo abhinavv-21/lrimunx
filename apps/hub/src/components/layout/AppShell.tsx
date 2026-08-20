@@ -180,7 +180,7 @@ export function AppShell() {
             id="main"
             className={cn(
               'mx-auto w-full max-w-app flex-1 px-4 py-6 md:px-8 md:py-8',
-              'pb-[calc(theme(spacing.tabbar)+env(safe-area-inset-bottom)+24px)] md:pb-8',
+              'pb-[calc(theme(spacing.tabbar)+env(safe-area-inset-bottom)+64px)] md:pb-24',
             )}
           >
 
