@@ -104,6 +104,25 @@
   cursor: ew-resize;
 }
 
+/* Only on devices with a real pointer: on touch the rail pans natively and a
+   grab cursor would be meaningless. */
+@media (hover: hover) and (pointer: fine) {
+  .committees__rail {
+    cursor: grab;
+  }
+
+  .committees__rail.is-dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+  }
+
+  /* Stops the browser starting a native image or text drag mid-swipe. */
+  .committees__rail.is-dragging * {
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
 .committee {
   --cols: 1.12;
   flex: 0 0 auto;
@@ -143,6 +162,29 @@
 
 .committee__card--feature {
   background-color: var(--color-primary-tint);
+}
+
+.committee__watermark {
+  position: absolute;
+  inset-block-end: -12%;
+  inset-inline-end: -8%;
+  inline-size: 62%;
+  block-size: auto;
+  z-index: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity var(--dur-slow) var(--ease-expo);
+}
+
+.committees__rail:not(.is-hover-synced) .committee:hover .committee__watermark,
+.committee.is-hovered .committee__watermark {
+  opacity: 0.09;
+}
+
+.committee__card > *:not(.committee__watermark) {
+  position: relative;
+  z-index: 1;
 }
 
 .committee__index {
@@ -220,6 +262,12 @@
   font-size: var(--fs-300);
   line-height: 1.62;
   color: var(--on-ground-muted);
+  /* Bounded so the reveal panel can never cut through a line of it. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
 }
 
 .committee__foot {
@@ -294,7 +342,9 @@
 
 .committee__reveal {
   position: absolute;
-  inset: 0;
+  inset-inline: 0;
+  inset-block-end: 0;
+  max-block-size: 62%;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--sp-5) var(--sp-6) var(--sp-6);

@@ -61,7 +61,7 @@ export function initHero({ gsap, reduced }) {
         { y: 0, yPercent: 110 },
         {
           yPercent: 0,
-          duration: 1.3,
+          duration: 1,
           stagger: 0.1,
           onComplete() {
             gsap.set(lines, { willChange: 'auto' })
@@ -75,7 +75,7 @@ export function initHero({ gsap, reduced }) {
         wreathPaths,
         {
           strokeDashoffset: 0,
-          duration: 1.4,
+          duration: 1.05,
           ease: 'power2.inOut',
           stagger: { each: 0.012, from: 'start' },
           onComplete() {
@@ -87,16 +87,16 @@ export function initHero({ gsap, reduced }) {
     }
 
     if (numeral) {
-      tl.to(numeral, { opacity: 1, scale: 1, duration: 0.9 }, '-=0.85')
+      tl.to(numeral, { opacity: 1, scale: 1, duration: 0.7 }, '-=0.62')
     }
     if (caption) {
-      tl.to(caption, { opacity: 1, duration: 0.6 }, '-=0.5')
+      tl.to(caption, { opacity: 1, duration: 0.45 }, '-=0.36')
     }
 
     if (staged.length) {
       tl.to(
         staged,
-        { opacity: 1, y: 0, duration: 1, stagger: 0.09, clearProps: 'transform' },
+        { opacity: 1, y: 0, duration: 0.78, stagger: 0.07, clearProps: 'transform' },
         '-=1.1'
       )
     }

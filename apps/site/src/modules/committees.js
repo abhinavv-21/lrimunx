@@ -87,14 +87,74 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
     glideTo(i * stepSize())
   }
 
-  rail.addEventListener(
-    'pointerdown',
-    () => {
-      gsap.killTweensOf(rail)
-      target = rail.scrollLeft
-    },
-    { passive: true }
-  )
+  /**
+   * Drag to scroll.
+   *
+   * The hint under the rail has always said "Scroll, drag or use the arrows",
+   * but only touch could actually drag: touch gets native panning for free and
+   * a mouse gets nothing. This adds it for mouse and pen only, and leaves touch
+   * alone, because native momentum scrolling beats anything reimplemented here.
+   *
+   * A drag has to start before it counts, or every click on Details would be
+   * read as a one-pixel drag and swallowed.
+   */
+  const DRAG_THRESHOLD = 4
+
+  let dragPointer = null
+  let dragStartX = 0
+  let dragStartScroll = 0
+  let dragging = false
+
+  rail.addEventListener('pointerdown', (event) => {
+    gsap.killTweensOf(rail)
+    target = rail.scrollLeft
+
+    if (event.pointerType === 'touch') return
+    if (event.button !== 0) return
+
+    dragPointer = event.pointerId
+    dragStartX = event.clientX
+    dragStartScroll = rail.scrollLeft
+    dragging = false
+  })
+
+  rail.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== dragPointer) return
+
+    const travelled = event.clientX - dragStartX
+
+    if (!dragging) {
+      if (Math.abs(travelled) < DRAG_THRESHOLD) return
+      dragging = true
+      rail.classList.add('is-dragging')
+      rail.setPointerCapture(dragPointer)
+    }
+
+    event.preventDefault()
+    rail.scrollLeft = dragStartScroll - travelled
+    target = rail.scrollLeft
+  })
+
+  function endDrag(event) {
+    if (event.pointerId !== dragPointer) return
+
+    if (dragging) {
+      // Kill the click that a pointerup after a drag would otherwise fire on
+      // whatever card happened to be under the cursor.
+      rail.addEventListener('click', (click) => click.stopPropagation(), {
+        capture: true,
+        once: true,
+      })
+    }
+
+    if (rail.hasPointerCapture?.(dragPointer)) rail.releasePointerCapture(dragPointer)
+    rail.classList.remove('is-dragging')
+    dragPointer = null
+    dragging = false
+  }
+
+  rail.addEventListener('pointerup', endDrag)
+  rail.addEventListener('pointercancel', endDrag)
 
   prevBtn?.addEventListener('click', () => scrollByCards(-1))
   nextBtn?.addEventListener('click', () => scrollByCards(1))

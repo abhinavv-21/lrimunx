@@ -50,7 +50,16 @@
    on the left it sat directly behind the gold LRI. The <img> stays in the
    markup for the loader; this rule removes it from the hero. */
 .hero__emblem {
-  display: none;
+  position: absolute;
+  z-index: -1;
+
+  inset-block-end: 26%;
+  inset-inline-end: 4%;
+  inline-size: clamp(12rem, 22vw, 22rem);
+  block-size: auto;
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
 }
 
 .hero__grain {
@@ -78,6 +87,7 @@
 }
 
 .hero__masthead {
+  max-inline-size: 34ch;
   min-inline-size: 0;
 }
 
@@ -148,7 +158,7 @@ html.has-motion .hero__title-line {
   justify-self: center;
   display: grid;
   place-items: center;
-  inline-size: clamp(15rem, 24vw, 23rem);
+  inline-size: clamp(12rem, 17vw, 17rem);
   aspect-ratio: 1;
   color: var(--color-accent-gold);
 }
@@ -419,13 +429,15 @@ html.has-motion .hero__title-line {
   }
 
   .hero__inner {
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    /* The headline is the reason anyone is here; the seal is an ornament. */
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    gap: clamp(var(--sp-6), 4vw, var(--sp-8));
   }
 }
 
 @media (min-width: 1024px) {
   .hero__inner {
-    padding-inline-start: clamp(0px, 3vw, 4rem);
+    padding-inline: clamp(0px, 2vw, 2.5rem);
   }
 }
 
