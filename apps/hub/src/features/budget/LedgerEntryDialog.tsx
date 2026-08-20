@@ -1,0 +1,194 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { useToast } from '@/providers/ToastProvider'
+import { useSaveLedgerEntry } from '@/lib/hooks'
+import { errorMessage } from '@/lib/api'
+import { Button } from '@/components/ui/Button'
+import { Field, Input, Textarea } from '@/components/ui/Field'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { Modal } from '@/components/ui/Modal'
+import { CATEGORY_LABELS, LEDGER_CATEGORIES, formatMoney } from './money'
+import type { LedgerCategory, LedgerEntry } from '@/types/api'
+
+const CATEGORY_OPTIONS: SelectOption[] = LEDGER_CATEGORIES.map((category) => ({
+  value: category,
+  label: CATEGORY_LABELS[category],
+}))
+
+// The API stores a credit and a debit and refuses a line that carries both.
+// Asking for a direction and one amount is the same thing said once, and it
+// removes the only way a treasurer could file an unreconcilable row.
+const DIRECTIONS: SelectOption[] = [
+  { value: 'credit', label: 'Money in', hint: 'A sponsor cheque, a refund coming back' },
+  { value: 'debit', label: 'Money out', hint: 'An invoice, a bill, a purchase' },
+]
+
+function today(): string {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
+/** The stored timestamp back to the yyyy-mm-dd a date input can hold. */
+function asDateInput(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 10)
+}
+
+export function LedgerEntryDialog({
+  open,
+  onOpenChange,
+  entry,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  entry: LedgerEntry | null
+}) {
+  const [entryDate, setEntryDate] = useState(today())
+  const [particular, setParticular] = useState('')
+  const [category, setCategory] = useState<string>('VENUE')
+  const [direction, setDirection] = useState('debit')
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const save = useSaveLedgerEntry()
+  const toast = useToast()
+
+  useEffect(() => {
+    if (!open) return
+    setEntryDate(entry ? asDateInput(entry.entryDate) : today())
+    setParticular(entry?.particular ?? '')
+    setCategory(entry?.category ?? 'VENUE')
+    setDirection(entry && entry.credit > 0 ? 'credit' : 'debit')
+    setAmount(entry ? String(entry.credit > 0 ? entry.credit : entry.debit) : '')
+    setNote(entry?.note ?? '')
+    setError(null)
+  }, [open, entry])
+
+  const parsedAmount = Number(amount)
+  const amountIsUsable = amount.trim() !== '' && Number.isInteger(parsedAmount) && parsedAmount > 0
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+
+    if (!amountIsUsable) {
+      setError('Enter the amount as a whole number of rupees above zero.')
+      return
+    }
+
+    try {
+      await save.mutateAsync({
+        ...(entry ? { id: entry.id } : {}),
+        entryDate,
+        particular: particular.trim(),
+        category: category as LedgerCategory,
+        credit: direction === 'credit' ? parsedAmount : 0,
+        debit: direction === 'debit' ? parsedAmount : 0,
+        note: note.trim() === '' ? null : note.trim(),
+      })
+      toast.success(entry ? 'Entry updated' : 'Entry added', `${particular.trim()} — ${formatMoney(parsedAmount)}`)
+      onOpenChange(false)
+    } catch (caught) {
+      setError(errorMessage(caught, 'Could not save this entry.'))
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title={entry ? 'Edit ledger entry' : 'New ledger entry'}
+      description="One line of the closing statement. Date it when the money actually moved, not when you are typing it in."
+      holdsInput
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        {error ? (
+          <p role="alert" className="rounded-control border border-danger bg-danger-wash p-3 text-body-sm text-ink">
+            {error}
+          </p>
+        ) : null}
+
+        <Field label="Particular" hint="What the money was for, as it should read on the statement." required>
+          {({ id }) => (
+            <Input
+              id={id}
+              value={particular}
+              onChange={(event) => setParticular(event.target.value)}
+              placeholder="Hall booking — day one"
+              maxLength={200}
+              required
+            />
+          )}
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Date" required>
+            {({ id }) => (
+              <Input
+                id={id}
+                type="date"
+                value={entryDate}
+                onChange={(event) => setEntryDate(event.target.value)}
+                required
+              />
+            )}
+          </Field>
+
+          <Field label="Category" required>
+            {({ id }) => (
+              <Select id={id} value={category} onChange={setCategory} options={CATEGORY_OPTIONS} />
+            )}
+          </Field>
+
+          <Field label="Direction" required>
+            {({ id }) => (
+              <Select id={id} value={direction} onChange={setDirection} options={DIRECTIONS} />
+            )}
+          </Field>
+
+          <Field
+            label="Amount"
+            hint={amountIsUsable ? formatMoney(parsedAmount) : 'Whole rupees.'}
+            required
+          >
+            {({ id }) => (
+              <Input
+                id={id}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder="45000"
+                required
+              />
+            )}
+          </Field>
+        </div>
+
+        <Field label="Note" hint="Optional. An invoice number, who authorised it, anything the particular cannot hold.">
+          {({ id }) => (
+            <Textarea
+              id={id}
+              rows={2}
+              value={note}
+              maxLength={500}
+              onChange={(event) => setNote(event.target.value)}
+            />
+          )}
+        </Field>
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={save.isPending}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={save.isPending}>
+            {entry ? 'Save changes' : 'Add entry'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}

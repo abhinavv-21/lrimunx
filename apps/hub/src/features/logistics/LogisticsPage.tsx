@@ -4,20 +4,30 @@ import { CheckCircle2, ChevronDown, CircleDot, LoaderCircle, PackageSearch, Plus
 import { useIsAdmin } from '@/providers/AuthProvider'
 import { useOffline } from '@/providers/OfflineProvider'
 import { useToast } from '@/providers/ToastProvider'
-import { useCommittees, useDeleteLogistics, useLogistics, useUpdateLogistics } from '@/lib/hooks'
+import {
+  useCommittees,
+  useConference,
+  useDeleteLogistics,
+  useLogistics,
+  useUpdateLogistics,
+} from '@/lib/hooks'
 import { discardQueued, offlineDb } from '@/lib/offline'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { FilterBar } from '@/components/ui/FilterBar'
+import { Pagination } from '@/components/ui/Pagination'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { useCommitteeFilterOptions } from '@/lib/selectOptions'
 import { Card } from '@/components/ui/Card'
+import { Callout } from '@/components/ui/Callout'
 import { QueuedBadge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
 import { RequestForm } from './RequestForm'
-import { RequestCard, isBlocking } from './RequestCard'
+import { RequestCard } from './RequestCard'
+import { byNewest, byPriority } from './priority'
+import { formatDayDate } from '@/features/conference/conference'
 import { formatDateTime } from '@/lib/utils'
 import type { LogisticsRequest, RequestStatus } from '@/types/api'
 
@@ -46,6 +56,20 @@ const CATEGORY_FILTERS: SelectOption[] = [
   { value: 'LOGISTICS', label: 'Logistics' },
 ]
 
+const SORT_OPTIONS: SelectOption[] = [
+  { value: 'priority', label: 'Most urgent first', hint: 'Category and how long it has waited' },
+  { value: 'newest', label: 'Newest first' },
+]
+
+const ALL_DAYS = ''
+
+/** The count of open requests is the number someone scans for, so it is not a footnote. */
+function laneCountClass(loud: boolean): string {
+  return loud
+    ? 'font-heading text-h2 tabular-nums text-warning'
+    : 'font-mono text-data tabular-nums text-ink-secondary'
+}
+
 export function LogisticsPage() {
   const { pending, sync, state } = useOffline()
   const toast = useToast()
@@ -53,14 +77,45 @@ export function LogisticsPage() {
 
   const [category, setCategory] = useState('')
   const [committeeId, setCommitteeId] = useState('')
+  const [sort, setSort] = useState('priority')
+  const [page, setPage] = useState(1)
   const [showResolved, setShowResolved] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<LogisticsRequest | null>(null)
 
+  const conference = useConference()
+  const running = conference.data?.state === 'RUNNING'
+
+  // Null means "follow the conference". During the conference the board opens
+  // on today, because yesterday's resolved placard hunt is not what anyone
+  // standing at the desk needs to scroll past.
+  const [chosenDay, setChosenDay] = useState<string | null>(null)
+  const day = chosenDay ?? (running ? String(conference.data?.activeDay ?? '') : ALL_DAYS)
+
+  const dayOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: ALL_DAYS, label: 'All days' },
+      ...(conference.data?.days ?? []).map((entry) => ({
+        value: String(entry.day),
+        label: `Day ${entry.day}`,
+        hint: formatDayDate(entry.date),
+      })),
+    ],
+    [conference.data],
+  )
+
   const filters = useMemo(
-    () => ({ ...(category ? { category } : {}), ...(committeeId ? { committeeId } : {}) }),
-    [category, committeeId],
+    () => ({
+      ...(category ? { category } : {}),
+      ...(committeeId ? { committeeId } : {}),
+      ...(day !== ALL_DAYS ? { day: Number(day) } : {}),
+      // "Newest" is the server's own default ordering, so it is expressed by
+      // asking for no sort at all rather than by a second sort key.
+      ...(sort === 'priority' ? { sortBy: 'priority', sortDir: 'desc' as const } : {}),
+      page,
+    }),
+    [category, committeeId, day, sort, page],
   )
 
   const { data, isPending, isError, error, refetch } = useLogistics(filters)
@@ -74,24 +129,31 @@ export function LogisticsPage() {
 
   const lanes = useMemo(() => {
     const items = data?.items ?? []
-    const order = (list: LogisticsRequest[]) =>
-      [...list].sort((a, b) => {
-        const blockingDiff = Number(isBlocking(b)) - Number(isBlocking(a))
-        if (blockingDiff !== 0) return blockingDiff
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      })
+    const order = sort === 'priority' ? byPriority : byNewest
 
     return {
-      OPEN: order(items.filter((r) => r.status === 'OPEN')),
-      IN_PROGRESS: order(items.filter((r) => r.status === 'IN_PROGRESS')),
+      OPEN: [...items.filter((r) => r.status === 'OPEN')].sort(order),
+      IN_PROGRESS: [...items.filter((r) => r.status === 'IN_PROGRESS')].sort(order),
       RESOLVED: [...items.filter((r) => r.status === 'RESOLVED')].sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       ),
     }
-  }, [data])
+  }, [data, sort])
 
   const hasFilters = Boolean(category || committeeId)
-  const totalActive = lanes.OPEN.length + lanes.IN_PROGRESS.length
+  const dayScoped = day !== ALL_DAYS
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1
+
+  // The server scores at most 500 rows before ranking them. Past that the board
+  // is a window, and saying so beats letting someone believe they have seen it all.
+  const windowed =
+    data?.priorityWindow !== undefined && data.priorityWindow < data.total ? data.priorityWindow : null
+
+  function clearFilters() {
+    setCategory('')
+    setCommitteeId('')
+    setPage(1)
+  }
 
   async function changeStatus(request: LogisticsRequest, next: RequestStatus) {
     setBusyId(request.id)
@@ -125,7 +187,7 @@ export function LogisticsPage() {
         title="Logistics"
         description={
           isAdmin
-            ? 'What the floor needs, ordered by urgency. Blocking items come first.'
+            ? 'What the floor needs, ordered by urgency. The longer something waits, the higher it climbs.'
             : 'Raise anything a committee needs. Works offline — it sends itself when you reconnect.'
         }
         actions={
@@ -191,35 +253,99 @@ export function LogisticsPage() {
       ) : null}
 
       <FilterBar>
+        <Field label="Day">
+          {({ id }) => (
+            <Select
+              id={id}
+              value={day}
+              onChange={(next) => {
+                setChosenDay(next)
+                setPage(1)
+              }}
+              options={dayOptions}
+            />
+          )}
+        </Field>
         <Field label="Category">
           {({ id }) => (
-            <Select id={id} value={category} onChange={setCategory} options={CATEGORY_FILTERS} />
+            <Select
+              id={id}
+              value={category}
+              onChange={(next) => {
+                setCategory(next)
+                setPage(1)
+              }}
+              options={CATEGORY_FILTERS}
+            />
           )}
         </Field>
         <Field label="Committee">
           {({ id }) => (
-            <Select id={id} value={committeeId} onChange={setCommitteeId} options={committeeOptions} />
+            <Select
+              id={id}
+              value={committeeId}
+              onChange={(next) => {
+                setCommitteeId(next)
+                setPage(1)
+              }}
+              options={committeeOptions}
+            />
+          )}
+        </Field>
+        <Field label="Order">
+          {({ id }) => (
+            <Select
+              id={id}
+              value={sort}
+              onChange={(next) => {
+                setSort(next)
+                setPage(1)
+              }}
+              options={SORT_OPTIONS}
+            />
           )}
         </Field>
       </FilterBar>
 
-      {isPending ? (
+      {windowed !== null ? (
+        <Callout tone="warning" className="mb-6">
+          Ranking the {windowed} most recent of {data?.total} requests. Anything older is not in this
+          order — filter by day or by committee to reach it.
+        </Callout>
+      ) : null}
+
+      {/* Waiting on the conference too: the day filter defaults to today once it
+          arrives, and a board that renders every day first and then narrows is a
+          board someone has already started reading. */}
+      {isPending || conference.isPending ? (
         <SkeletonRows rows={4} columns={3} />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} />
-      ) : totalActive === 0 && lanes.RESOLVED.length === 0 ? (
+      ) : data.items.length === 0 ? (
         <EmptyState
           icon={PackageSearch}
-          title={hasFilters ? 'Nothing matches those filters' : 'Nothing outstanding'}
+          title={
+            hasFilters
+              ? 'Nothing matches those filters'
+              : dayScoped
+                ? `Nothing raised on day ${day} yet`
+                : 'Nothing outstanding'
+          }
           description={
             hasFilters
               ? 'Try clearing the filters to see the whole board.'
-              : 'When a committee needs a placard, stationery, an award or anything from the venue, raise it here and the desk sees it immediately.'
+              : dayScoped
+                ? 'The floor has not asked for anything today. Requests from other days are still there under All days.'
+                : 'When a committee needs a placard, stationery, an award or anything from the venue, raise it here and the desk sees it immediately.'
           }
           action={
             hasFilters ? (
-              <Button variant="secondary" onClick={() => { setCategory(''); setCommitteeId('') }}>
+              <Button variant="secondary" onClick={clearFilters}>
                 Clear filters
+              </Button>
+            ) : dayScoped ? (
+              <Button variant="secondary" onClick={() => setChosenDay(ALL_DAYS)}>
+                Show every day
               </Button>
             ) : (
               <Button onClick={() => setFormOpen(true)}>
@@ -231,6 +357,13 @@ export function LogisticsPage() {
         />
       ) : (
         <div className="flex flex-col gap-8">
+          {pages > 1 ? (
+            <p className="text-body-sm text-ink-secondary" aria-live="polite">
+              Page {page} of {pages}. The lanes below hold this page only — page on at the bottom for
+              the rest.
+            </p>
+          ) : null}
+
           {LANES.map((lane) => {
             const items = lanes[lane.status]
             const LaneIcon = lane.icon
@@ -241,15 +374,18 @@ export function LogisticsPage() {
                   <div className="flex items-center gap-2">
                     <LaneIcon size={18} className={lane.tone} aria-hidden />
                     <h2 className="font-heading text-h2 text-ink">{lane.title}</h2>
-                    <span className="font-mono text-data tabular-nums text-ink-secondary">{items.length}</span>
+                    <span className={laneCountClass(lane.status === 'OPEN' && items.length > 0)}>
+                      {items.length}
+                    </span>
                   </div>
                   <p className="text-body-sm text-ink-secondary">{lane.blurb}</p>
                 </header>
 
                 {items.length === 0 ? (
                   <p className="rounded-card border border-dashed border-edge px-4 py-6 text-center text-body-sm text-ink-secondary">
-                    {lane.status === 'OPEN' ? 'Nothing waiting. ' : 'Nobody is mid-task. '}
-                    {lane.status === 'OPEN' ? 'The desk is clear.' : 'Pick something up from above.'}
+                    {lane.status === 'OPEN'
+                      ? 'Nothing waiting. The desk is clear.'
+                      : 'Nobody is mid-task. Pick something up from above.'}
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-3">
@@ -307,6 +443,14 @@ export function LogisticsPage() {
               ) : null}
             </section>
           ) : null}
+
+          <Pagination
+            page={data.page}
+            pageSize={data.pageSize}
+            total={data.total}
+            onPageChange={setPage}
+            noun="requests"
+          />
         </div>
       )}
 

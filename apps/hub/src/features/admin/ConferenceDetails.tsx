@@ -13,8 +13,7 @@ import type { Settings } from '@/types/api'
  * These six values are read from and written to GET/PUT /settings, the same
  * endpoint that already stores googleFormUrl and googleSheetUrl. The server
  * only keeps keys listed in SETTING_KEYS (apps/backend/src/schemas/index.ts)
- * and only accepts keys named in updateSettingsSchema, so until the six below
- * are in both lists a save comes back rejected and the message is shown here.
+ * and only accepts keys named in updateSettingsSchema; all six are in both.
  */
 type ConferenceForm = Pick<
   Required<Settings>,

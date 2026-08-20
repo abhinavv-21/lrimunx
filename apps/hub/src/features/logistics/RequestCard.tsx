@@ -1,14 +1,43 @@
 import { formatDistanceToNow } from 'date-fns'
-import { AlertTriangle, CheckCircle2, Play, RotateCcw, Trash2, Undo2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Flame, Play, RotateCcw, Trash2, Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CategoryBadge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
-import type { LogisticsRequest, RequestCategory, RequestStatus } from '@/types/api'
+import { PRIORITY_LABEL } from './priority'
+import type { LogisticsRequest, PriorityLevel, RequestCategory, RequestStatus } from '@/types/api'
 
 const BLOCKING: ReadonlySet<RequestCategory> = new Set<RequestCategory>(['PLACARD', 'LOGISTICS'])
 
 export function isBlocking(request: LogisticsRequest): boolean {
   return BLOCKING.has(request.category) && request.status !== 'RESOLVED'
+}
+
+/**
+ * Four tones, not four shades of one. Critical and high are the two a runner
+ * needs to spot from across a room, so they take the loud colours; normal and
+ * low sit back on the neutral so they cannot compete with them.
+ */
+const LEVEL_TONE: Record<PriorityLevel, string> = {
+  CRITICAL: 'border-danger/40 bg-danger-wash text-danger',
+  HIGH: 'border-warning/40 bg-warning-wash text-warning',
+  NORMAL: 'border-edge-strong bg-surface-sunken text-ink-secondary',
+  LOW: 'border-edge bg-surface-sunken text-ink-tertiary',
+}
+
+function PriorityChip({ level }: { level: PriorityLevel }) {
+  const loud = level === 'CRITICAL' || level === 'HIGH'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-pill border px-2 py-0.5 text-label uppercase',
+        LEVEL_TONE[level],
+      )}
+    >
+      {loud ? <Flame size={12} aria-hidden /> : null}
+      {PRIORITY_LABEL[level]} priority
+    </span>
+  )
 }
 
 export function RequestCard({
@@ -25,13 +54,19 @@ export function RequestCard({
   onDelete: (request: LogisticsRequest) => void
 }) {
   const blocking = isBlocking(request)
+  const level = request.priorityLevel
   const age = formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })
+
+  // A card the desk should look at now. The server's own ranking decides that
+  // where it gave one; the committee page fetches requests without a score, so
+  // there the blocking categories still stand in for it.
+  const urgent = level !== undefined ? level === 'CRITICAL' || level === 'HIGH' : blocking
 
   return (
     <article
       className={cn(
         'rounded-card border bg-surface p-4 transition-colors duration-micro md:p-5',
-        blocking ? 'border-warning' : 'border-edge',
+        level === 'CRITICAL' ? 'border-danger' : urgent ? 'border-warning' : 'border-edge',
         request.status === 'RESOLVED' && 'opacity-75',
       )}
     >
@@ -39,7 +74,9 @@ export function RequestCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-h3 text-ink">{request.title}</h3>
-            {blocking ? (
+            {level !== undefined ? (
+              <PriorityChip level={level} />
+            ) : blocking ? (
               <span className="inline-flex items-center gap-1 rounded-pill border border-warning/30 bg-warning-wash px-2 py-0.5 text-label uppercase text-warning">
                 <AlertTriangle size={12} aria-hidden />
                 Blocks session
@@ -62,6 +99,12 @@ export function RequestCard({
           <dt className="sr-only">Committee</dt>
           <dd className="font-medium text-ink">{request.committee?.code ?? 'General'}</dd>
         </div>
+        {request.day != null ? (
+          <div className="flex items-center gap-1.5">
+            <dt className="sr-only">Conference day</dt>
+            <dd className="font-medium text-ink">Day {request.day}</dd>
+          </div>
+        ) : null}
         <div className="flex items-center gap-1.5">
           <dt className="sr-only">Raised by</dt>
           <dd>{request.createdBy.fullName}</dd>

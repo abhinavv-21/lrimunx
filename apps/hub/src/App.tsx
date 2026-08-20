@@ -11,7 +11,8 @@ const CommitteesPage = lazy(() => import('@/features/committees/CommitteesPage')
 const CommitteeDetailPage = lazy(() => import('@/features/committees/CommitteeDetailPage').then((m) => ({ default: m.CommitteeDetailPage })))
 const AllocationsPage = lazy(() => import('@/features/allocations/AllocationsPage').then((m) => ({ default: m.AllocationsPage })))
 const RegistrationsPage = lazy(() => import('@/features/registrations/RegistrationsPage').then((m) => ({ default: m.RegistrationsPage })))
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
+const BudgetPage = lazy(() => import('@/features/budget/BudgetPage').then((m) => ({ default: m.BudgetPage })))
 const LogisticsPage = lazy(() => import('@/features/logistics/LogisticsPage').then((m) => ({ default: m.LogisticsPage })))
 const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage').then((m) => ({ default: m.AttendancePage })))
 const UsersPage = lazy(() => import('@/features/users/UsersPage').then((m) => ({ default: m.UsersPage })))
@@ -85,19 +86,26 @@ export function App() {
 
           <Route path="registrations" element={<RegistrationsPage />} />
           <Route
+            path="budget"
+            element={<AdminOnly what="The conference budget"><BudgetPage /></AdminOnly>}
+          />
+          <Route
             path="allocations"
             element={<AdminOnly what="Allocating delegates"><AllocationsPage /></AdminOnly>}
           />
           <Route
-            path="settings"
+            path="admin"
             element={
-              <AdminOnly what="Conference settings" requires="isOwner">
-                <SettingsPage />
+              <AdminOnly what="Conference administration" requires="isOwner">
+                <AdminPage />
               </AdminOnly>
             }
           />
 
-          <Route path="integrations" element={<Navigate to="/settings" replace />} />
+          {/* Renamed to /admin. Kept so existing links and bookmarks resolve. */}
+          <Route path="settings" element={<Navigate to="/admin" replace />} />
+
+          <Route path="integrations" element={<Navigate to="/admin" replace />} />
 
           <Route path="assignments" element={<Navigate to="/allocations" replace />} />
           <Route
@@ -108,7 +116,7 @@ export function App() {
               </AdminOnly>
             }
           />
-          <Route path="audit" element={<Navigate to="/settings" replace />} />
+          <Route path="audit" element={<Navigate to="/admin" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

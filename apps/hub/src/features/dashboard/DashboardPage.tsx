@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { Inbox, PackageSearch } from 'lucide-react'
 import { useAuth, useIsAdmin, useIsOwner } from '@/providers/AuthProvider'
-import { useDashboard, useRegistrationStats } from '@/lib/hooks'
+import { useConference, useDashboard, useRegistrationStats } from '@/lib/hooks'
+import { ConferenceControl } from '@/features/conference/ConferenceControl'
+import { pluralise } from '@/lib/utils'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardHeader, CapacityMeter, Stat } from '@/components/ui/Card'
 import { CategoryBadge, RequestStatusBadge } from '@/components/ui/Badge'
@@ -16,6 +18,9 @@ export function DashboardPage() {
   const isAdmin = useIsAdmin()
   const isOwner = useIsOwner()
   const pendingRegistrations = registrationStats?.pending ?? 0
+  const { data: conference } = useConference()
+  const running = conference?.state === 'RUNNING'
+  const openRequests = data?.openRequests ?? 0
 
   return (
     <>
@@ -27,6 +32,30 @@ export function DashboardPage() {
             : 'Your board for the day. Raise anything the desk needs to know about.'
         }
       />
+
+      {isAdmin ? (
+        <div className="mb-6">
+          <ConferenceControl />
+        </div>
+      ) : null}
+
+      {/* While the conference is running, the open queue outranks everything
+          else on this screen, so it gets a row of its own above the numbers. */}
+      {running && openRequests > 0 ? (
+        <Link
+          to="/logistics"
+          className="mb-6 flex min-h-tap items-center gap-3 rounded-card border border-warning bg-warning-wash p-4 text-body text-ink transition-colors duration-micro hover:bg-surface"
+        >
+          <PackageSearch size={20} className="shrink-0 text-warning" aria-hidden />
+          <span className="flex-1">
+            <strong className="font-medium">{pluralise(openRequests, 'request')} waiting on the floor</strong>
+            <span className="text-ink-secondary">
+              {' '}
+              — {data?.inProgressRequests ?? 0} already being handled.
+            </span>
+          </span>
+        </Link>
+      ) : null}
 
       {isAdmin && pendingRegistrations > 0 ? (
         <Link

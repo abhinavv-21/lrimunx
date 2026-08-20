@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { Prisma, PriceTier, RegistrationStatus, Role } from '@prisma/client'
-import { keyFromUrl, presignGet } from '../lib/storage.js'
+import { keyFromUrl, presignGet, storageEnabled } from '../lib/storage.js'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { auditRequest, recordAudit } from '../lib/audit.js'
@@ -160,6 +160,13 @@ registrationsRouter.get(
       select: { paymentProofUrl: true },
     })
     if (!registration) throw ApiError.notFound('Registration not found')
+
+    if (!storageEnabled) {
+      throw new ApiError(
+        503,
+        'Payment screenshots are not available on this server. Set the S3_* variables to switch them on.',
+      )
+    }
 
     const stored = registration.paymentProofUrl
     if (!stored) throw ApiError.notFound('This registration has no payment screenshot')

@@ -21,6 +21,7 @@ import { Select, type SelectOption } from '@/components/ui/Select'
 import { ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
 import { RegistrationCard } from './RegistrationCard'
+import { PaymentDialog } from './PaymentDialog'
 import type { Registration } from '@/types/api'
 
 function RejectDialog({
@@ -94,6 +95,7 @@ export function RegistrationsPage() {
   const [page, setPage] = useState(1)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<Registration | null>(null)
+  const [paying, setPaying] = useState<Registration | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Registration | null>(null)
 
   const debouncedSearch = useDebounced(search)
@@ -241,6 +243,7 @@ export function RegistrationsPage() {
                 busy={busyId === registration.id}
                 onApprove={(target) => void handleApprove(target)}
                 onReject={setRejecting}
+                onRecordPayment={setPaying}
                 onDelete={setPendingDelete}
               />
             ))}
@@ -258,6 +261,8 @@ export function RegistrationsPage() {
 
       {isAdmin ? (
         <>
+          <PaymentDialog registration={paying} onOpenChange={(open) => !open && setPaying(null)} />
+
           <RejectDialog
             registration={rejecting}
             onOpenChange={(open) => !open && setRejecting(null)}

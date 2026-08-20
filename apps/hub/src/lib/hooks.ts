@@ -8,17 +8,27 @@ import {
 import { useEffect, useState } from 'react'
 import { apiFetch } from './api'
 import type {
+  AnnounceBatch,
+  AnnouncePreview,
+  AttendanceStatus,
   AttendanceSummary,
   AuditEntry,
   AuthUser,
   Award,
   AwardInput,
+  BulkCheckInResult,
   Committee,
   CommitteeDetail,
+  ConferenceMode,
   DashboardData,
   Delegate,
   DelegateInput,
   IngestResult,
+  LedgerEntry,
+  LedgerEntryInput,
+  LedgerPage,
+  LedgerSummary,
+  LogisticsPage,
   LogisticsRequest,
   MailResult,
   MatrixCommittee,
@@ -28,7 +38,9 @@ import type {
   RegistrationStats,
   ResetPreview,
   ResetResult,
+  RestartResult,
   Settings,
+  TierPrices,
 } from '@/types/api'
 
 export function useDebounced<T>(value: T, delay = 250): T {
@@ -56,6 +68,50 @@ export function useDashboard(): UseQueryResult<DashboardData> {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: () => apiFetch<DashboardData>('/dashboard'),
+  })
+}
+
+/**
+ * Whether the conference is running and which day it is on.
+ *
+ * Half the hub reads this — the header pill, the attendance day tabs, the
+ * logistics board — so it is one query key that every one of them shares
+ * rather than a provider. The staleTime is short because an admin flipping the
+ * day on their phone needs the volunteer's tab to catch up within a refetch,
+ * not on a page reload.
+ */
+export function useConference(): UseQueryResult<ConferenceMode> {
+  return useQuery({
+    queryKey: ['conference'],
+    queryFn: () => apiFetch<ConferenceMode>('/conference'),
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
+function conferenceChanged(queryClient: ReturnType<typeof useQueryClient>, mode: ConferenceMode) {
+  queryClient.setQueryData(['conference'], mode)
+  // The active day is an input to both of these: attendance counts the day it
+  // is told to, and logistics scores age twelve times faster once RUNNING.
+  void queryClient.invalidateQueries({ queryKey: ['attendance'] })
+  void queryClient.invalidateQueries({ queryKey: ['logistics'] })
+  void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+}
+
+export function useStartConference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<ConferenceMode>('/conference/start', { method: 'POST' }),
+    onSuccess: (mode) => conferenceChanged(queryClient, mode),
+  })
+}
+
+export function useSetConferenceDay() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (day: number) =>
+      apiFetch<ConferenceMode>('/conference/day', { method: 'POST', body: { day } }),
+    onSuccess: (mode) => conferenceChanged(queryClient, mode),
   })
 }
 
@@ -201,14 +257,26 @@ export interface LogisticsFilters {
   status?: string
   category?: string
   committeeId?: string
+  day?: number
   mine?: boolean
   search?: string
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
+  page?: number
 }
+
+/**
+ * One board's worth of requests. It used to ask for 200 and render whatever
+ * came back, which meant request 201 existed and nobody ever saw it; the page
+ * now pages through the whole set instead.
+ */
+export const LOGISTICS_PAGE_SIZE = 50
 
 export function useLogistics(filters: LogisticsFilters = {}) {
   return useQuery({
     queryKey: ['logistics', filters],
-    queryFn: () => apiFetch<Paginated<LogisticsRequest>>(`/logistics-requests${qs({ ...filters, pageSize: 200 })}`),
+    queryFn: () =>
+      apiFetch<LogisticsPage>(`/logistics-requests${qs({ ...filters, pageSize: LOGISTICS_PAGE_SIZE })}`),
     placeholderData: keepPreviousData,
   })
 }
@@ -236,10 +304,33 @@ export function useDeleteLogistics() {
   })
 }
 
-export function useAttendanceSummary() {
+/**
+ * Attendance for one day, plus the totals for all three.
+ *
+ * `day` undefined means "whichever day the conference is on", which is what
+ * the dashboard wants. The attendance page names a day explicitly so switching
+ * tabs cannot be raced by an admin moving the conference on.
+ */
+export function useAttendanceSummary(day?: number) {
   return useQuery({
-    queryKey: ['attendance', 'summary'],
-    queryFn: () => apiFetch<AttendanceSummary>('/attendance/summary'),
+    queryKey: ['attendance', 'summary', day ?? 'active'],
+    queryFn: () => apiFetch<AttendanceSummary>(`/attendance/summary${qs({ day })}`),
+    // Keeps the previous day's numbers on screen while the next day loads, so
+    // a tab press does not blank the counts someone is reading off.
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useBulkCheckIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { delegateIds: string[]; day: number; status: AttendanceStatus }) =>
+      apiFetch<BulkCheckInResult>('/attendance/bulk-check-in', { method: 'POST', body }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['delegates'] })
+      void queryClient.invalidateQueries({ queryKey: ['attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 }
 
@@ -437,6 +528,130 @@ export function useResetConference() {
   return useMutation({
     mutationFn: (passphrase: string) =>
       apiFetch<ResetResult>('/danger/reset', { method: 'POST', body: { passphrase } }),
+    onSuccess: () => queryClient.invalidateQueries(),
+  })
+}
+
+export function usePricing() {
+  return useQuery({
+    queryKey: ['pricing'],
+    queryFn: () => apiFetch<TierPrices>('/settings/pricing'),
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useRecordPayment() {
+  const invalidateRegistrations = useRegistrationInvalidation()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; priceTier: string; amountPaid?: number }) =>
+      apiFetch<Registration>(`/registrations/${id}/payment`, { method: 'POST', body }),
+    onSuccess: () => {
+      invalidateRegistrations()
+
+      void queryClient.invalidateQueries({ queryKey: ['ledger'] })
+    },
+  })
+}
+
+export interface LedgerFilters {
+  category?: string
+
+  from?: string
+  to?: string
+  search?: string
+  page?: number
+}
+
+export function useLedger(filters: LedgerFilters = {}) {
+  return useQuery({
+    queryKey: ['ledger', 'entries', filters],
+    queryFn: () => apiFetch<LedgerPage>(`/ledger${qs({ ...filters })}`),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useLedgerSummary() {
+  return useQuery({
+    queryKey: ['ledger', 'summary'],
+    queryFn: () => apiFetch<LedgerSummary>('/ledger/summary'),
+  })
+}
+
+function useLedgerInvalidation() {
+  const queryClient = useQueryClient()
+  return () => void queryClient.invalidateQueries({ queryKey: ['ledger'] })
+}
+
+export function useSaveLedgerEntry() {
+  const invalidate = useLedgerInvalidation()
+  return useMutation({
+    mutationFn: ({ id, ...body }: LedgerEntryInput & { id?: string }) =>
+      id
+        ? apiFetch<LedgerEntry>(`/ledger/${id}`, { method: 'PATCH', body })
+        : apiFetch<LedgerEntry>('/ledger', { method: 'POST', body }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDeleteLedgerEntry() {
+  const invalidate = useLedgerInvalidation()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/ledger/${id}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useSavePricing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Partial<TierPrices>) =>
+      apiFetch<TierPrices>('/settings/pricing', { method: 'PUT', body }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['pricing'], data)
+      void queryClient.invalidateQueries({ queryKey: ['registrations'] })
+    },
+  })
+}
+
+export function useAnnouncePreview(includeStudyGuide: boolean) {
+  return useQuery({
+    queryKey: ['announce', includeStudyGuide],
+    queryFn: () =>
+      apiFetch<AnnouncePreview>(`/allocations/announce/preview${qs({ includeStudyGuide })}`),
+  })
+}
+
+/**
+ * One batch of allocation emails. The caller loops on it until the server says
+ * `done`, which is why nothing is invalidated here: a refetch of the preview
+ * between batches would pull four hundred rows down for every twenty-five sent.
+ * The screen refetches once, when the run ends.
+ */
+export function useAnnounceBatch() {
+  return useMutation({
+    mutationFn: (body: { passphrase: string; includeStudyGuide: boolean }) =>
+      apiFetch<AnnounceBatch>('/allocations/announce', { method: 'POST', body }),
+  })
+}
+
+export function useClearAnnounceFailures() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ cleared: number }>('/allocations/announce/reset-failures', { method: 'POST' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['announce'] })
+      void queryClient.invalidateQueries({ queryKey: ['audit'] })
+    },
+  })
+}
+
+export function useRestartConference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (passphrase: string) =>
+      apiFetch<RestartResult>('/danger/restart-conference', { method: 'POST', body: { passphrase } }),
     onSuccess: () => queryClient.invalidateQueries(),
   })
 }

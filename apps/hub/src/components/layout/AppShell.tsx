@@ -7,6 +7,7 @@ import { LogOut, MoreHorizontal } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { navFor, type NavItem } from './navigation'
 import { ConnectionPill } from './ConnectionPill'
+import { ConferencePill } from '@/features/conference/ConferencePill'
 import { UpdatePrompt } from './UpdatePrompt'
 import { Button } from '@/components/ui/Button'
 import { RoleBadge } from '@/components/ui/Badge'
@@ -168,9 +169,10 @@ export function AppShell() {
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-edge bg-canvas/95 px-4 backdrop-blur md:px-8">
             <span className="md:hidden"><BrandMark compact /></span>
             <span className="hidden md:block" />
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <ConferencePill />
               <ConnectionPill />
-              <span className="hidden sm:block"><RoleBadge role={user.role} /></span>
+              <span className="hidden lg:block"><RoleBadge role={user.role} /></span>
             </div>
           </header>
 

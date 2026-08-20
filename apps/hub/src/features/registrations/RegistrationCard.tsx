@@ -1,11 +1,26 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Check, Eye, ImageOff, Mail, Phone, School, Trash2, X } from 'lucide-react'
+import { Check, Eye, ImageOff, Mail, Phone, School, Trash2, Wallet, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { apiFetch } from '@/lib/api'
+import { ApiError, apiFetch, errorMessage } from '@/lib/api'
 import { Badge } from '@/components/ui/Badge'
 import { cn, munExperience } from '@/lib/utils'
+import { TIER_LABELS, formatMoney } from '@/features/budget/money'
 import type { Registration } from '@/types/api'
+
+/** Tier and amount on one line, so the list can be read without opening a card. */
+function PaymentSummary({ registration }: { registration: Registration }) {
+  if (registration.amountPaid === null) {
+    return <span className="text-ink-tertiary">No payment recorded</span>
+  }
+
+  return (
+    <span className="text-ink">
+      {registration.priceTier ? `${TIER_LABELS[registration.priceTier]} · ` : 'Tier not set · '}
+      {formatMoney(registration.amountPaid)}
+    </span>
+  )
+}
 
 function StatusBadge({ status }: { status: Registration['status'] }) {
   if (status === 'APPROVED') return <Badge tone="success" icon={Check}>Approved</Badge>
@@ -23,6 +38,25 @@ function Detail({ label, value }: { label: string; value: string | null }) {
   )
 }
 
+/**
+ * Why the screenshot would not open, in words the reviewer can act on.
+ *
+ * The 5xx case is the one that matters day to day: object storage is optional
+ * on a deployment, and on a machine without it the endpoint fails rather than
+ * returning a link. That is a missing setting, not a broken registration, and
+ * the copy has to say so or every proof looks corrupt.
+ */
+function proofFailure(caught: unknown): string {
+  if (caught instanceof ApiError) {
+    if (caught.isOffline) return caught.message
+    if (caught.code >= 500) {
+      return 'The screenshot store is not set up on this server, so nothing can be opened here. Ask them to send it another way.'
+    }
+    if (caught.code === 404) return 'There is no screenshot on this registration.'
+  }
+  return errorMessage(caught, 'The link could not be signed. Try again in a moment.')
+}
+
 function PaymentProof({
   registrationId,
   hasProof,
@@ -33,17 +67,20 @@ function PaymentProof({
   applicantName: string
 }) {
   const [url, setUrl] = useState<string | null>(null)
-  const [state, setState] = useState<'idle' | 'loading' | 'failed'>('idle')
+  const [loading, setLoading] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
 
   async function reveal() {
-    if (state === 'loading') return
-    setState('loading')
+    if (loading) return
+    setLoading(true)
+    setFailure(null)
     try {
       const res = await apiFetch<{ url: string }>(`/registrations/${registrationId}/payment-proof`)
       setUrl(res.url)
-      setState('idle')
-    } catch {
-      setState('failed')
+    } catch (caught) {
+      setFailure(proofFailure(caught))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -72,15 +109,11 @@ function PaymentProof({
           </a>
         ) : (
           <div className="flex flex-col items-start gap-1">
-            <Button variant="ghost" size="sm" onClick={reveal} disabled={state === 'loading'}>
+            <Button variant="ghost" size="sm" onClick={() => void reveal()} disabled={loading}>
               <Eye size={14} aria-hidden />
-              {state === 'loading' ? 'Opening…' : 'View screenshot'}
+              {loading ? 'Opening…' : failure ? 'Try again' : 'View screenshot'}
             </Button>
-            {state === 'failed' && (
-              <span className="text-body-sm text-danger">
-                Could not load it. The link is signed and short-lived — try again.
-              </span>
-            )}
+            {failure ? <span className="text-body-sm text-danger">{failure}</span> : null}
           </div>
         )}
       </dd>
@@ -94,6 +127,7 @@ export function RegistrationCard({
   busy,
   onApprove,
   onReject,
+  onRecordPayment,
   onDelete,
 }: {
   registration: Registration
@@ -101,6 +135,7 @@ export function RegistrationCard({
   busy: boolean
   onApprove: (registration: Registration) => void
   onReject: (registration: Registration) => void
+  onRecordPayment: (registration: Registration) => void
   onDelete: (registration: Registration) => void
 }) {
   const pending = registration.status === 'PENDING'
@@ -160,6 +195,13 @@ export function RegistrationCard({
                 </a>
               </dd>
             </div>
+            <div className="flex items-center gap-1.5">
+              <dt className="sr-only">Payment</dt>
+              <Wallet size={14} className="shrink-0 text-ink-tertiary" aria-hidden />
+              <dd>
+                <PaymentSummary registration={registration} />
+              </dd>
+            </div>
           </dl>
         </div>
 
@@ -178,7 +220,7 @@ export function RegistrationCard({
         <Detail label="Accessibility" value={registration.accessibilityNotes} />
         <PaymentProof
           registrationId={registration.id}
-          hasProof={Boolean(registration.paymentProofUrl)}
+          hasProof={registration.hasPaymentProof}
           applicantName={registration.fullName}
         />
       </dl>
@@ -208,6 +250,16 @@ export function RegistrationCard({
               </Button>
             </>
           ) : null}
+
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={busy}
+            onClick={() => onRecordPayment(registration)}
+          >
+            <Wallet size={16} aria-hidden />
+            {registration.amountPaid === null ? 'Record payment' : 'Update payment'}
+          </Button>
 
           <Button
             variant="ghost"

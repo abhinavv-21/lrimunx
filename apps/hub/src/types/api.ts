@@ -2,6 +2,21 @@ export type Role = 'ADMIN' | 'CONTRIBUTOR'
 export type AttendanceStatus = 'ABSENT' | 'CHECKED_IN'
 export type RequestCategory = 'PLACARD' | 'STATIONERY' | 'AWARDS' | 'LOGISTICS'
 export type RequestStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
+export type ConferenceState = 'PREPARING' | 'RUNNING'
+export type PriorityLevel = 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW'
+
+export interface ConferenceDay {
+  day: number
+
+  date: string
+}
+
+export interface ConferenceMode {
+  state: ConferenceState
+
+  activeDay: number
+  days: ConferenceDay[]
+}
 
 export interface ApiErrorBody {
   error: string
@@ -192,10 +207,24 @@ export interface LogisticsRequest {
   createdBy: { id: string; fullName: string }
   resolvedBy: { id: string; fullName: string } | null
 
+  day?: number | null
+
+  priority?: number
+  priorityLevel?: PriorityLevel
+
   deduplicated?: boolean
 }
 
+export interface LogisticsPage extends Paginated<LogisticsRequest> {
+  priorityWindow?: number
+}
+
 export type RegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export type PriceTier = 'BASE' | 'INTERNAL' | 'ALUMNI' | 'DISCOUNT'
+
+/** What each tier charges, in whole Nepali rupees. */
+export type TierPrices = Record<PriceTier, number>
 
 export interface Registration {
   id: string
@@ -214,6 +243,12 @@ export interface Registration {
   referralCode: string | null
 
   paymentProofUrl: string | null
+
+  hasPaymentProof: boolean
+
+  priceTier: PriceTier | null
+
+  amountPaid: number | null
   dietaryNotes: string | null
   accessibilityNotes: string | null
   status: RegistrationStatus
@@ -242,10 +277,23 @@ export interface AuditEntry {
   user: { id: string; fullName: string; username?: string; role?: Role }
 }
 
+export interface AttendanceDayTotals {
+  day: number
+  date: string
+  checkedIn: number
+  absent: number
+}
+
 export interface AttendanceSummary {
+  day: number
+  state: ConferenceState
+  activeDay: number
+
   checkedIn: number
   absent: number
   total: number
+
+  days: AttendanceDayTotals[]
   committees: Array<{
     id: string
     code: string
@@ -254,6 +302,14 @@ export interface AttendanceSummary {
     checkedIn: number
     totalSeats: number
   }>
+}
+
+export interface BulkCheckInResult {
+  day: number
+  updated: number
+  unchanged: number
+
+  missing: string[]
 }
 
 export interface DashboardData {
@@ -336,4 +392,150 @@ export interface MailResult {
   sent: boolean
   skipped: boolean
   error?: string
+}
+
+export type LedgerCategory =
+  | 'REGISTRATION'
+  | 'SPONSORSHIP'
+  | 'VENUE'
+  | 'FOOD'
+  | 'PRINTING'
+  | 'AWARDS'
+  | 'TRANSPORT'
+  | 'HOSPITALITY'
+  | 'MARKETING'
+  | 'MISC'
+
+/**
+ * One line of the closing statement. Credit and debit are whole rupees and
+ * exactly one of them is above zero — the API refuses a line that is both.
+ */
+export interface LedgerEntry {
+  id: string
+
+  entryDate: string
+  particular: string
+  category: LedgerCategory
+  credit: number
+  debit: number
+  note: string | null
+  createdAt: string
+  updatedAt: string
+  recordedBy: { id: string; fullName: string }
+}
+
+export interface LedgerEntryInput {
+  entryDate: string
+  particular: string
+  category: LedgerCategory
+  credit: number
+  debit: number
+  note: string | null
+}
+
+export interface LedgerPage extends Paginated<LedgerEntry> {
+  /** Across everything the filter matches, not just the page being shown. */
+  totals: { credit: number; debit: number }
+}
+
+export interface TierIncome {
+  tier: PriceTier
+  count: number
+
+  total: number
+
+  configuredPrice: number
+
+  expected: number
+}
+
+export interface LedgerSummary {
+  registrations: {
+    tiers: TierIncome[]
+
+    unrecorded: number
+    count: number
+    collected: number
+    expected: number
+    shortfall: number
+  }
+  ledger: {
+    byCategory: Array<{ category: LedgerCategory; credit: number; debit: number }>
+    credit: number
+    debit: number
+  }
+  net: { income: number; expense: number; balance: number }
+}
+
+export type ExclusionReason = 'NO_ALLOCATION' | 'NO_EMAIL' | 'ALREADY_SENT' | 'NO_STUDY_GUIDE'
+
+export interface AnnounceRecipient {
+  delegateId: string
+  fullName: string
+  email: string
+  committeeCode: string
+  country: string
+
+  previousError: string | null
+  attempts: number
+}
+
+export interface AnnounceExclusion {
+  delegateId: string
+  fullName: string
+  reason: ExclusionReason
+
+  detail?: string
+}
+
+export interface AnnouncePreview {
+  willSend: number
+  batchSize: number
+  batchesNeeded: number
+
+  emailConfigured: boolean
+
+  requireStudyGuide: boolean
+  committeesMissingGuide: string[]
+  conference: { startsOn: string | null; endsOn: string | null; venue: string | null }
+  confirmationPhrase: string
+  recipients: AnnounceRecipient[]
+  excluded: AnnounceExclusion[]
+  excludedCounts: Record<ExclusionReason, number>
+}
+
+export interface AnnounceOutcome {
+  delegateId: string
+  fullName: string
+  email: string
+  sent: boolean
+  error?: string
+}
+
+export interface AnnounceBatch {
+  sent: number
+  failed: number
+
+  remaining: number
+
+  rateLimited: boolean
+
+  done: boolean
+  outcomes: AnnounceOutcome[]
+  excludedCounts: Record<ExclusionReason, number>
+
+  message?: string
+}
+
+export interface PlaceholderCounts {
+  registrations: number
+  delegates: number
+  assignments: number
+  logisticsRequests: number
+  attendance: number
+}
+
+export interface RestartResult {
+  deleted: Omit<ResetCounts, 'committees'>
+  seeded: PlaceholderCounts
 }

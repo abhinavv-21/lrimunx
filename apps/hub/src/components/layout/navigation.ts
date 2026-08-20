@@ -1,6 +1,6 @@
 import {
-  ClipboardList, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings,
-  UserCheck, Users, UsersRound,
+  ClipboardList, Inbox, LayoutDashboard, Landmark, PackageSearch, ShieldCheck,
+  UserCheck, Users, UsersRound, Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '@/types/api'
@@ -24,8 +24,11 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/registrations', label: 'Registrations', icon: Inbox, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/allocations', label: 'Allocations', icon: ClipboardList, roles: ['ADMIN'] },
   { to: '/committees', label: 'Committees', icon: Landmark, roles: ['ADMIN', 'CONTRIBUTOR'] },
+  { to: '/budget', label: 'Budget', icon: Wallet, roles: ['ADMIN'] },
   { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'], requires: 'canManageUsers' },
-  { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'], requires: 'isOwner' },
+  // Renamed from Settings: it holds the conference record, the money, the
+  // announcement sends and the danger zone, which is more than settings.
+  { to: '/admin', label: 'Admin', icon: ShieldCheck, roles: ['ADMIN'], requires: 'isOwner' },
 ]
 
 export function navFor(user: { role: Role; canManageUsers?: boolean; isOwner?: boolean }): NavItem[] {

@@ -18,6 +18,40 @@ already done and is not listed here.
 
 ---
 
+# 0. Where to run the commands
+
+**Every command in this file runs from the repository root:**
+
+```
+D:\LRI MUN X\Management Webapp
+```
+
+Which terminal matters, because two different shells appear below.
+
+| Block looks like | Use | Why |
+| :--- | :--- | :--- |
+| `npx vercel …`, `git push`, `npm run …` | **Git Bash** or **PowerShell**, either works | plain single-line commands |
+| Ends lines with `\`, or starts `VAR="value" command` | **Git Bash only** | PowerShell has no line-continuation backslash and no inline variable prefix. It will throw a parser error. |
+| Starts with `& "C:\Program Files\…"` | **PowerShell, as Administrator** | registering a Windows service needs elevation |
+
+**The easiest option:** type `!` followed by the command directly in Claude Code.
+It runs in this session and the output comes back in the conversation, so I can
+see what happened and help if it fails.
+
+```
+!npx vercel env ls
+```
+
+To open Git Bash at the right place: right-click the project folder in Explorer
+and choose **Git Bash Here**. For elevated PowerShell: Start menu, type
+PowerShell, right-click, **Run as administrator**, then:
+
+```powershell
+cd "D:\LRI MUN X\Management Webapp"
+```
+
+---
+
 # 1. Deploy to Vercel
 
 ## Already done, do not redo
@@ -71,7 +105,9 @@ not be writing users into your database. Run it yourself, once.
 
   That file holds live credentials. It is gitignored. Delete it when you are done.
 
-- [ ] Open it, copy the **`DIRECT_URL`** value, and run:
+- [ ] Open it, copy the **`DIRECT_URL`** value, and run this **in Git Bash**
+      (the backslashes and the `VAR="…"` prefixes are Bash syntax and will not
+      parse in PowerShell):
 
   ```bash
   DATABASE_URL="<paste DIRECT_URL here>" \
@@ -370,7 +406,8 @@ PostgreSQL 17 is installed, the `munx` role and `lri_mun_x` database exist, ever
 migration is applied. One thing left.
 
 - [ ] **Register it as a Windows service**, or it will not survive a reboot. I
-      started it by hand. Run once, in a terminal opened **as Administrator**:
+      started it by hand. Run once, in **PowerShell opened as Administrator**
+      (not Git Bash):
 
   ```powershell
   & "C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe" register -N postgresql-x64-17 -D "C:\Program Files\PostgreSQL\17\data" -S auto
