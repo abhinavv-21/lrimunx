@@ -47,6 +47,11 @@ authRouter.post(
       fullName: user.fullName,
       role: user.role,
       canManageUsers: user.canManageUsers,
+      // Carried on the response, never into the token: signAccessToken builds
+      // its own payload from id/username/fullName/role, and requireOwner asks
+      // the database on every request it guards. So revoking ownership takes
+      // effect immediately rather than when a fifteen-minute token expires.
+      isOwner: user.isOwner,
     }
 
     const refreshToken = signRefreshToken(user.id)
@@ -77,6 +82,8 @@ authRouter.post(
       fullName: user.fullName,
       role: user.role,
       canManageUsers: user.canManageUsers,
+      // See the note on the login handler above.
+      isOwner: user.isOwner,
     }
 
     const nextRefreshToken = signRefreshToken(user.id)
@@ -103,6 +110,12 @@ authRouter.get(
         fullName: true,
         role: true,
         canManageUsers: true,
+        // Not in the access token on purpose. Ownership is checked against the
+        // database on every request it guards (see requireOwner), so revoking
+        // it takes effect now rather than whenever a fifteen-minute token
+        // happens to expire — and a token carrying a stale `true` would let the
+        // UI offer a screen the API is going to refuse.
+        isOwner: true,
         createdAt: true,
       },
     })

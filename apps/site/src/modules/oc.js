@@ -5,26 +5,26 @@ const TIERS = [
     caption: 'Faculty oversight',
     members: [
       {
-        name: 'To be announced',
+        name: 'Subrat Lamichhane',
         role: 'Chief Advisor',
-        photo: 'chief-advisor.jpg',
-        mono: 'CA',
+        photo: 'subrat-lamichhane.jpg',
+        mono: 'SL',
         detail: 'Patron of the conference and final authority on school matters.',
         social: null,
       },
       {
-        name: 'To be announced',
-        role: 'Faculty Advisor',
-        photo: 'advisor-01.jpg',
-        mono: 'FA',
+        name: 'Siddub Sharma Bidari',
+        role: 'Senior Advisor',
+        photo: 'siddub-sharma-bidari.jpg',
+        mono: 'SB',
         detail: 'Academic oversight of committee content and conduct.',
         social: null,
       },
       {
-        name: 'To be announced',
-        role: 'Faculty Advisor',
-        photo: 'advisor-02.jpg',
-        mono: 'FA',
+        name: 'Mhigshang Lama Yolmo',
+        role: 'Advisor',
+        photo: 'mhigshang-lama-yolmo.jpg',
+        mono: 'MY',
         detail: 'Institutional liaison and delegate welfare.',
         social: null,
       },
@@ -36,43 +36,27 @@ const TIERS = [
     caption: 'Conference leadership',
     members: [
       {
-        name: 'To be announced',
+        name: 'Aaradhy Raj Pant',
         role: 'Secretary-General',
-        photo: 'secretary-general.jpg',
-        mono: 'SG',
+        photo: 'aaradhy-raj-pant.jpg',
+        mono: 'AP',
         detail: 'Final authority on the conference agenda and its execution.',
         social: null,
       },
       {
-        name: 'To be announced',
+        name: 'Abhinav GC',
         role: 'Deputy Secretary-General',
-        photo: 'deputy-secretary-general.jpg',
-        mono: 'DSG',
+        photo: 'abhinav-gc.jpg',
+        mono: 'AG',
         detail: 'Deputises across committees and chairs the secretariat.',
         social: null,
       },
       {
-        name: 'To be announced',
+        name: 'Bidushi Sharma',
         role: 'Director-General',
-        photo: 'director-general.jpg',
-        mono: 'DG',
-        detail: 'Operations, venue and the running order of all three days.',
-        social: null,
-      },
-      {
-        name: 'To be announced',
-        role: "Chargé d'Affaires",
-        photo: 'charge-daffaires.jpg',
-        mono: 'CDA',
-        detail: 'School delegations, allocations and external correspondence.',
-        social: null,
-      },
-      {
-        name: 'To be announced',
-        role: 'Head of Committee Affairs',
-        photo: 'head-committee-affairs.jpg',
-        mono: 'HCA',
-        detail: 'Chair training, rules of procedure and study guides.',
+        photo: 'bidushi-sharma.jpg',
+        mono: 'BS',
+        detail: 'Operations, venue and the running order of the conference.',
         social: null,
       },
     ],
@@ -82,14 +66,13 @@ const TIERS = [
     title: 'Under Secretariat',
     caption: 'Departments',
     members: [
-      { name: 'To be announced', role: 'USG · Delegate Affairs', photo: 'usg-delegate-affairs.jpg', mono: 'DA', social: null },
-      { name: 'To be announced', role: 'USG · Logistics', photo: 'usg-logistics.jpg', mono: 'LOG', social: null },
-      { name: 'To be announced', role: 'USG · Finance', photo: 'usg-finance.jpg', mono: 'FIN', social: null },
-      { name: 'To be announced', role: 'USG · Press & Media', photo: 'usg-press.jpg', mono: 'PR', social: null },
-      { name: 'To be announced', role: 'USG · Design', photo: 'usg-design.jpg', mono: 'DSN', social: null },
-      { name: 'To be announced', role: 'USG · Outreach', photo: 'usg-outreach.jpg', mono: 'OUT', social: null },
-      { name: 'To be announced', role: 'USG · Technology', photo: 'usg-technology.jpg', mono: 'TECH', social: null },
-      { name: 'To be announced', role: 'USG · Hospitality', photo: 'usg-hospitality.jpg', mono: 'HOS', social: null },
+      { name: 'Aditya Joshi', role: 'Head of Conference Management', photo: 'aditya-joshi.jpg', mono: 'AJ', social: null },
+      { name: 'Sparsh Sharma', role: 'Head of Delegate and Dais Affairs', photo: 'sparsh-sharma.jpg', mono: 'SS', social: null },
+      { name: 'Asia Ramdam', role: 'Media Team', photo: 'asia-ramdam.jpg', mono: 'AR', social: null },
+      { name: 'Abhigya Shrestha', role: 'Media Team', photo: 'abhigya-shrestha.jpg', mono: 'AS', social: null },
+      { name: 'Stuti Gautam', role: 'Media Team', photo: 'stuti-gautam.jpg', mono: 'SG', social: null },
+      { name: 'Krystal Gurung', role: 'Head of Outreach', photo: 'krystal-gurung.jpg', mono: 'KG', social: null },
+      { name: 'Desna KC', role: 'Head of Logistics', photo: 'desna-kc.jpg', mono: 'DK', social: null },
     ],
   },
 ]
@@ -167,7 +150,7 @@ function renderCard(member, tier) {
            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
            <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/>
          </svg>
-         <span>${member.social.label}<span class="u-visually-hidden"> — ${member.name}, opens in a new tab</span></span>
+         <span>${member.social.label}<span class="u-visually-hidden">, ${member.name}, opens in a new tab</span></span>
        </a>`
     : ''
 
@@ -175,7 +158,7 @@ function renderCard(member, tier) {
     <div class="oc-card__media media-plate">
       <img
         src="${import.meta.env.BASE_URL}assets/oc/${member.photo}"
-        alt="${member.name} — ${member.role}"
+        alt="${member.name}, ${member.role}"
         loading="lazy"
         decoding="async"
         width="400"

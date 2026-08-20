@@ -1,16 +1,22 @@
 import { Router } from 'express'
-import { Prisma, RegistrationStatus, Role } from '@prisma/client'
+import { Prisma, PriceTier, RegistrationStatus, Role } from '@prisma/client'
 import { keyFromUrl, presignGet } from '../lib/storage.js'
 import { prisma } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { auditRequest, recordAudit } from '../lib/audit.js'
 import { registrationApprovedMail, sendMail } from '../lib/email.js'
 import { runSerializable } from '../lib/transaction.js'
+import { readTierPrices } from '../lib/conference.js'
 import { checkReviewTransition } from '../lib/registrations.js'
 import { asyncHandler, validate } from '../middleware/validate.js'
 import { currentUser } from '../middleware/auth.js'
 import { requireAdmin } from '../middleware/rbac.js'
-import { registrationQuery, rejectRegistrationSchema, uuidParam } from '../schemas/index.js'
+import {
+  recordPaymentSchema,
+  registrationQuery,
+  rejectRegistrationSchema,
+  uuidParam,
+} from '../schemas/index.js'
 
 export const registrationsRouter = Router()
 
@@ -33,6 +39,8 @@ const registrationView = {
   dietaryNotes: true,
   accessibilityNotes: true,
   status: true,
+  priceTier: true,
+  amountPaid: true,
   reviewedAt: true,
   rejectionReason: true,
   delegateId: true,
@@ -45,6 +53,21 @@ const registrationOrder: Prisma.RegistrationOrderByWithRelationInput[] = [
   { status: 'asc' },
   { createdAt: 'desc' },
 ]
+
+/**
+ * Adds `hasPaymentProof` to a registration on the way out.
+ *
+ * The URL is already in the payload, but the review screen wants one row that
+ * shows tier, amount and whether there is a screenshot to look at, and asking
+ * it to infer the third from a nullable string it must not render is how a
+ * blob URL ends up on the page. Derived rather than stored: the column is the
+ * only record of the upload, so a second flag could disagree with it.
+ */
+function withProofFlag<T extends { paymentProofUrl: string | null }>(
+  row: T,
+): T & { hasPaymentProof: boolean } {
+  return { ...row, hasPaymentProof: row.paymentProofUrl !== null }
+}
 
 interface RegistrationQuery {
   page: number
@@ -101,7 +124,7 @@ registrationsRouter.get(
       prisma.registration.count({ where }),
     ])
 
-    res.json({ items, total, page: q.page, pageSize: q.pageSize })
+    res.json({ items: items.map(withProofFlag), total, page: q.page, pageSize: q.pageSize })
   }),
 )
 
@@ -122,7 +145,7 @@ registrationsRouter.get(
     })
     if (!registration) throw ApiError.notFound('Registration not found')
 
-    res.json(registration)
+    res.json(withProofFlag(registration))
   }),
 )
 
@@ -154,6 +177,43 @@ registrationsRouter.get(
 
     res.setHeader('Cache-Control', 'no-store')
     res.json({ url: presignedUrl, expiresAt: new Date(validUntil).toISOString() })
+  }),
+)
+
+registrationsRouter.post(
+  '/:id/payment',
+  requireAdmin,
+  validate(uuidParam, 'params'),
+  validate(recordPaymentSchema),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params as { id: string }
+    const { priceTier, amountPaid } = req.body as { priceTier: PriceTier; amountPaid?: number }
+
+    const before = await prisma.registration.findUnique({ where: { id }, select: registrationView })
+    if (!before) throw ApiError.notFound('Registration not found')
+
+    // The tier's configured rate is the default, not the rule. Real payments
+    // arrive short, rounded, or at last year's price, and a screen that could
+    // only record the list price would push the difference into a note nobody
+    // adds up.
+    const prices = await readTierPrices()
+    const amount = amountPaid ?? prices[priceTier]
+
+    const after = await prisma.registration.update({
+      where: { id },
+      data: { priceTier, amountPaid: amount },
+      select: registrationView,
+    })
+
+    await auditRequest(req, {
+      action: 'PAYMENT',
+      entityType: 'Registration',
+      entityId: id,
+      payloadBefore: { priceTier: before.priceTier, amountPaid: before.amountPaid },
+      payloadAfter: { priceTier, amountPaid: amount, configuredPrice: prices[priceTier] },
+    })
+
+    res.json(withProofFlag(after))
   }),
 )
 
@@ -252,7 +312,7 @@ registrationsRouter.post(
       }),
     )
 
-    res.json({ ...result, email })
+    res.json({ ...result, registration: withProofFlag(result.registration), email })
   }),
 )
 
@@ -294,7 +354,7 @@ registrationsRouter.post(
       payloadAfter: after,
     })
 
-    res.json(after)
+    res.json(withProofFlag(after))
   }),
 )
 

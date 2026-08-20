@@ -5,13 +5,13 @@ const COPY = {
   idle: 'No screenshot added yet.',
   uploading: 'Uploading your screenshot…',
   uploaded: 'Screenshot uploaded.',
-  type: 'That file is not an image this form can take. Use a PNG, JPEG or WebP — a screenshot from your phone will already be one of those.',
+  type: 'That file is not an image this form can take. Use a PNG, JPEG or WebP. A screenshot from your phone will already be one of those.',
   size: 'That image is larger than 8 MB. Send the screenshot rather than the full-resolution photo, or crop it to the confirmation.',
   empty: 'That file is empty. Try taking the screenshot again.',
   failed:
-    'The screenshot could not be uploaded. Nothing has been sent and everything you have typed is still here — check your connection and try again. If it keeps failing, contact the secretariat at the address in the footer.',
+    'The screenshot could not be uploaded. Nothing has been sent and everything you have typed is still here, so check your connection and try again. If it keeps failing, contact the secretariat using the details in the footer.',
   offline:
-    'This device looks offline, so the screenshot could not be uploaded. Everything you have typed is still here — try again once you are back online.',
+    'This device looks offline, so the screenshot could not be uploaded. Everything you have typed is still here. Try again once you are back online.',
 }
 
 function putSignedFile(uploadUrl, file, contentType, onProgress) {

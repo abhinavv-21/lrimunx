@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { RoleBadge } from '@/components/ui/Badge'
-import { ConfirmDialog, Modal } from '@/components/ui/Modal'
+import { CONFIRM_PHRASE, ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
 import { formatDateTime } from '@/lib/utils'
 import type { AuthUser } from '@/types/api'
@@ -246,6 +246,7 @@ export function UsersPage() {
             ? `Delete the account for ${pendingDelete.fullName} (${pendingDelete.username})? Accounts with activity history cannot be deleted — change the role to Contributor instead.`
             : ''
         }
+        confirmPhrase={CONFIRM_PHRASE}
         onConfirm={() => void confirmDelete()}
         loading={remove.isPending}
       />

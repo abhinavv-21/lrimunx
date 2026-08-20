@@ -182,6 +182,10 @@
 }
 
 .committee__abbr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
   font-family: var(--font-ui);
   font-size: var(--fs-100);
   font-weight: 600;
@@ -191,6 +195,25 @@
   padding-block-end: var(--sp-5);
   margin-block-end: var(--sp-5);
   border-block-end: 1px solid var(--color-border);
+}
+
+/* What sort of room it is. ICJ, FPN and IP do not run country delegations, and
+   in a twelve-card rail people skim, so the difference has to be visible
+   without reading the blurb. */
+.committee__kind {
+  color: var(--on-ground-muted);
+}
+
+.committee__kind::before {
+  content: '·';
+  margin-inline-end: var(--sp-2);
+  color: var(--color-border);
+}
+
+/* Marks a structural difference, not a promotion. A tinted fill or a larger
+   card would read as "these three are better", which is the wrong sentence. */
+.committee__card--offpattern {
+  border-block-start: 2px solid var(--color-accent-gold);
 }
 
 .committee__blurb {
@@ -203,9 +226,40 @@
   margin-block-start: auto;
   padding-block-start: var(--sp-6);
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.committee__seats {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  flex: 1 0 auto;
+}
+
+.committee__seats-figure {
+  font-family: var(--font-display);
+  font-size: var(--fs-700);
+  font-variation-settings: 'opsz' 40, 'WONK' 1;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.committee__seats-noun {
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground-muted);
+}
+
+/* Keeps the icon's 1.75rem of space so a failed load does not pull the card up. */
+.committee__icon.is-missing {
+  visibility: hidden;
 }
 
 .committee__toggle {
@@ -240,8 +294,9 @@
 
 .committee__reveal {
   position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--sp-5) var(--sp-6) var(--sp-6);
   background-color: var(--color-ink);
   color: var(--color-text-inverse);
@@ -290,6 +345,13 @@
   font-size: var(--fs-200);
   line-height: 1.55;
   color: rgb(var(--rgb-text-inverse) / 0.72);
+}
+
+/* With JavaScript off the rail is never populated, so the arrows, the position
+   readout, the progress bar and the keyboard hint all drive nothing. */
+.committees__rail-wrap:has(.committees__rail:empty) .committees__toolbar,
+.committees__rail-wrap:has(.committees__rail:empty) .committees__progress-wrap {
+  display: none;
 }
 
 .committees__progress-wrap {
@@ -351,6 +413,13 @@
   .committee__card {
     min-block-size: 24rem;
     padding: var(--sp-5);
+  }
+}
+
+@media (max-width: 700px) {
+  .committee__foot {
+    justify-content: flex-start;
+    column-gap: var(--sp-5);
   }
 }
 

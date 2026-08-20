@@ -1,11 +1,12 @@
-export const COMMITTEES = [
-  { code: 'UNSC', name: 'United Nations Security Council' },
-  { code: 'UNHRC', name: 'Human Rights Council' },
-  { code: 'DISEC', name: 'Disarmament & International Security' },
-  { code: 'ECOSOC', name: 'Economic & Social Council' },
-  { code: 'WHO', name: 'World Health Organization' },
-  { code: 'HCC', name: 'Historical Crisis Committee' },
-].map((committee) => ({ ...committee, value: `${committee.name} (${committee.code})` }))
+import { COMMITTEES as CATALOGUE, preferenceValue } from '../data/committees.js'
+
+// One source of truth: src/data/committees.js. The listbox needs only what it
+// shows and what it submits.
+export const COMMITTEES = CATALOGUE.map((committee) => ({
+  code: committee.code,
+  name: committee.name,
+  value: preferenceValue(committee),
+}))
 
 export const ACADEMIC_LEVELS = [
   { code: 'MS', name: 'Middle School (7–8)', value: 'Middle School' },

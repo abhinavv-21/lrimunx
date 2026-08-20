@@ -664,6 +664,7 @@ p {
 .media-plate {
   position: relative;
   overflow: hidden;
+  container-type: inline-size;
   background-color: var(--color-ink);
 
   background-image:
@@ -689,7 +690,10 @@ p {
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: var(--fs-700);
+  /* Scales with the plate: the same component is a 3rem chip in one place and a
+     475px portrait frame in another, and a fixed size made the large ones look
+     broken rather than pending. */
+  font-size: clamp(1.5rem, 26cqi, 5.5rem);
   font-variation-settings: 'opsz' 48;
   color: rgb(var(--rgb-gold) / 0.72);
   letter-spacing: 0.06em;
@@ -849,4 +853,14 @@ html.app-ready body > *:not(#site-loader):not(.to-top) {
   html.has-motion [data-reveal] {
     transform: none;
   }
+}
+
+/* One sentence turning a section full of pending placeholders into a stated
+   status. Remove it once the assets it refers to are in. */
+.section__status {
+  margin-block-start: var(--sp-4);
+  max-inline-size: var(--measure);
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--on-ground-muted);
 }

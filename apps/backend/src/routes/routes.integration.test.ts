@@ -3,6 +3,8 @@ import { AttendanceStatus, RegistrationStatus, Role } from '@prisma/client'
 import type { PrismaClient } from '@prisma/client'
 import type { ApiErrorBody } from '../lib/errors.js'
 import { REFERENCE_PATTERN, generateReference } from '../lib/registrations.js'
+import { DEFAULT_TIER_PRICES } from '../lib/conference.js'
+import { seedPlaceholders, type PlaceholderCounts } from '../lib/placeholders.js'
 import type { PublicRegistrationAccepted } from './public.routes.js'
 import { bootApi, type Api, type HttpMethod } from '../test-support/harness.js'
 import {
@@ -534,20 +536,30 @@ describe.skipIf(!boot.ready)('API integration', () => {
         where: { canManageUsers: true, id: { not: fixtures.adminId } },
       })
 
-      const response = await asAdmin('patch', `/api/v1/users/${fixtures.adminId}`)
-        .send({ canManageUsers: false })
+      // The restore is in a finally because it is not cleanup, it is the
+      // precondition of the next test. Without it a single failed assertion
+      // here left the fixture admin holding the flag and took the following
+      // test down with it, which turned one red line into two and pointed the
+      // second one at /auth/me, where nothing was wrong.
+      try {
+        const response = await asAdmin('patch', `/api/v1/users/${fixtures.adminId}`)
+          .send({ canManageUsers: false })
 
-      if (others === 0) {
-        expect(response.status).toBe(409)
-        expect((response.body as ApiErrorBody).error).toContain('at least one account')
-      } else {
-        expect(response.status).toBe(200)
+        if (others === 0) {
+          expect(response.status).toBe(409)
+          // Case-insensitive on purpose. The sentence is shown to a person and
+          // reads correctly capitalised; asserting on its exact casing tests
+          // the style guide rather than the rule.
+          expect((response.body as ApiErrorBody).error.toLowerCase()).toContain('at least one account')
+        } else {
+          expect(response.status).toBe(200)
+        }
+      } finally {
+        await prisma.user.update({
+          where: { id: fixtures.adminId },
+          data: { canManageUsers: false },
+        })
       }
-
-      await prisma.user.update({
-        where: { id: fixtures.adminId },
-        data: { canManageUsers: false },
-      })
     })
 
     it('tells the client, so the hub can hide the tab', async () => {
@@ -1094,6 +1106,634 @@ describe.skipIf(!boot.ready)('API integration', () => {
 
       await unallocate()
       await clearMatrix()
+    })
+  })
+
+  describe('pricing, payments and the books', () => {
+    const TOUCHED_SETTINGS = [
+      'price.BASE',
+      'price.INTERNAL',
+      'price.ALUMNI',
+      'price.DISCOUNT',
+      'conference.state',
+      'conference.day',
+    ]
+
+    async function asOwner<T>(work: () => Promise<T>): Promise<T> {
+      await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: true } })
+      try {
+        return await work()
+      } finally {
+        await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: false } })
+      }
+    }
+
+    afterAll(async () => {
+      if (!boot.ready || !fixtures) return
+      await prisma.setting.deleteMany({ where: { key: { in: TOUCHED_SETTINGS } } })
+    })
+
+    it('keeps the four tier prices behind the owner flag, not behind ADMIN', async () => {
+      const read = await api.request('get', '/api/v1/settings/pricing', { token: contributorToken })
+      expect(read.status).toBe(200)
+      expect(read.body).toHaveProperty('BASE')
+
+      const asPlainAdmin = await api
+        .request('put', '/api/v1/settings/pricing', { token: adminToken })
+        .send({ BASE: 3000 })
+      expect(asPlainAdmin.status).toBe(403)
+      expect((asPlainAdmin.body as ApiErrorBody).error).toMatch(/owner/i)
+
+      const written = await asOwner(() =>
+        api
+          .request('put', '/api/v1/settings/pricing', { token: adminToken })
+          .send({ BASE: 3000, INTERNAL: 1000 }),
+      )
+      expect(written.status).toBe(200)
+      expect(written.body).toMatchObject({ BASE: 3000, INTERNAL: 1000 })
+    })
+
+    it('defaults a recorded payment to the tier price and lets an odd one override it', async () => {
+      const cheap = await pendingRegistration('tier-default')
+      const odd = await pendingRegistration('tier-override')
+
+      await asOwner(() =>
+        api.request('put', '/api/v1/settings/pricing', { token: adminToken }).send({ ALUMNI: 2200 }),
+      )
+
+      const defaulted = await api
+        .request('post', `/api/v1/registrations/${cheap.id}/payment`, { token: adminToken })
+        .send({ priceTier: 'ALUMNI' })
+      expect(defaulted.status).toBe(200)
+      expect(defaulted.body).toMatchObject({ priceTier: 'ALUMNI', amountPaid: 2200 })
+
+      const overridden = await api
+        .request('post', `/api/v1/registrations/${odd.id}/payment`, { token: adminToken })
+        .send({ priceTier: 'ALUMNI', amountPaid: 1750 })
+      expect(overridden.status).toBe(200)
+      expect(overridden.body).toMatchObject({ priceTier: 'ALUMNI', amountPaid: 1750 })
+
+      await prisma.registration.deleteMany({ where: { id: { in: [cheap.id, odd.id] } } })
+    })
+
+    it('carries tier, amount and whether there is a screenshot on one payload', async () => {
+      const registration = await pendingRegistration('one-screen')
+
+      await api
+        .request('post', `/api/v1/registrations/${registration.id}/payment`, { token: adminToken })
+        .send({ priceTier: 'DISCOUNT', amountPaid: 900 })
+
+      const detail = await api.request('get', `/api/v1/registrations/${registration.id}`, {
+        token: adminToken,
+      })
+      expect(detail.status).toBe(200)
+      expect(detail.body).toMatchObject({
+        priceTier: 'DISCOUNT',
+        amountPaid: 900,
+        hasPaymentProof: blobConfigured,
+      })
+
+      const rejected = await api
+        .request('post', `/api/v1/registrations/${registration.id}/reject`, { token: adminToken })
+        .send({ reason: 'Duplicate application' })
+      expect(rejected.status).toBe(200)
+      expect(rejected.body).toMatchObject({ priceTier: 'DISCOUNT', amountPaid: 900 })
+      expect(rejected.body).toHaveProperty('hasPaymentProof')
+
+      await prisma.registration.delete({ where: { id: registration.id } })
+    })
+
+    it('refuses a ledger line that is both money in and money out, and one that is neither', async () => {
+      for (const body of [
+        { entryDate: '2026-11-21', particular: 'Confused line', category: 'MISC', credit: 100, debit: 100 },
+        { entryDate: '2026-11-21', particular: 'Empty line', category: 'MISC', credit: 0, debit: 0 },
+      ]) {
+        const response = await api.request('post', '/api/v1/ledger', { token: adminToken }).send(body)
+        expect(response.status).toBe(422)
+      }
+    })
+
+    it('adds registration income and hand-typed lines into one net position', async () => {
+      const registration = await pendingRegistration('books')
+      await api
+        .request('post', `/api/v1/registrations/${registration.id}/payment`, { token: adminToken })
+        .send({ priceTier: 'BASE', amountPaid: 2500 })
+
+      const before = await api.request('get', '/api/v1/ledger/summary', { token: adminToken })
+      expect(before.status).toBe(200)
+      const baselineBalance = (before.body as { net: { balance: number } }).net.balance
+
+      const created = await api.request('post', '/api/v1/ledger', { token: adminToken }).send({
+        entryDate: '2026-11-21',
+        particular: `${NS.displayName}Hall hire for three days`,
+        category: 'VENUE',
+        debit: 45_000,
+      })
+      expect(created.status).toBe(201)
+      const entryId = (created.body as { id: string }).id
+
+      const after = await api.request('get', '/api/v1/ledger/summary', { token: adminToken })
+      const summary = after.body as {
+        registrations: { tiers: Array<{ tier: string; count: number; total: number }> }
+        ledger: { debit: number }
+        net: { balance: number }
+      }
+
+      expect(summary.registrations.tiers.map((t) => t.tier)).toEqual([
+        'BASE',
+        'INTERNAL',
+        'ALUMNI',
+        'DISCOUNT',
+      ])
+      expect(summary.net.balance).toBe(baselineBalance - 45_000)
+
+      const contributor = await api.request('get', '/api/v1/ledger/summary', {
+        token: contributorToken,
+      })
+      expect(contributor.status).toBe(403)
+
+      await api.request('delete', `/api/v1/ledger/${entryId}`, { token: adminToken })
+      await prisma.registration.delete({ where: { id: registration.id } })
+    })
+
+    it('leaves a rejected applicant out of the income, since that money is going back', async () => {
+      const registration = await pendingRegistration('refund')
+      await api
+        .request('post', `/api/v1/registrations/${registration.id}/payment`, { token: adminToken })
+        .send({ priceTier: 'BASE', amountPaid: 2500 })
+
+      const withPending = await api.request('get', '/api/v1/ledger/summary', { token: adminToken })
+      const before = (withPending.body as { registrations: { collected: number } }).registrations
+        .collected
+
+      await api
+        .request('post', `/api/v1/registrations/${registration.id}/reject`, { token: adminToken })
+        .send({ reason: 'Withdrew before the conference' })
+
+      const withRejected = await api.request('get', '/api/v1/ledger/summary', { token: adminToken })
+      const after = (withRejected.body as { registrations: { collected: number } }).registrations
+        .collected
+
+      expect(after).toBe(before - 2500)
+
+      await prisma.registration.delete({ where: { id: registration.id } })
+    })
+  })
+
+  describe('three-day attendance and conference mode', () => {
+    afterAll(async () => {
+      if (!boot.ready || !fixtures) return
+      await prisma.setting.deleteMany({
+        where: { key: { in: ['conference.state', 'conference.day'] } },
+      })
+      await prisma.delegateAttendance.deleteMany({ where: { delegateId: fixtures.delegateId } })
+      await prisma.delegate.update({
+        where: { id: fixtures.delegateId },
+        data: { attendanceStatus: AttendanceStatus.ABSENT },
+      })
+    })
+
+    it('records each day separately instead of overwriting the one before it', async () => {
+      for (const day of [1, 2, 3]) {
+        const response = await api
+          .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+          .send({ delegateId: fixtures.delegateId, day, status: AttendanceStatus.CHECKED_IN })
+        expect(response.status).toBe(200)
+        expect(response.body).toMatchObject({ day, attendanceStatus: AttendanceStatus.CHECKED_IN })
+      }
+
+      const rows = await prisma.delegateAttendance.findMany({
+        where: { delegateId: fixtures.delegateId },
+        orderBy: { day: 'asc' },
+      })
+      expect(rows.map((r) => r.day)).toEqual([1, 2, 3])
+      expect(rows.every((r) => r.status === AttendanceStatus.CHECKED_IN)).toBe(true)
+    })
+
+    it('keeps the delegate marked present while any one day still says so', async () => {
+      await api
+        .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+        .send({ delegateId: fixtures.delegateId, day: 1, status: AttendanceStatus.ABSENT })
+
+      const stillPresent = await prisma.delegate.findUniqueOrThrow({
+        where: { id: fixtures.delegateId },
+      })
+      expect(stillPresent.attendanceStatus).toBe(AttendanceStatus.CHECKED_IN)
+
+      for (const day of [2, 3]) {
+        await api
+          .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+          .send({ delegateId: fixtures.delegateId, day, status: AttendanceStatus.ABSENT })
+      }
+
+      const nowAbsent = await prisma.delegate.findUniqueOrThrow({
+        where: { id: fixtures.delegateId },
+      })
+      expect(nowAbsent.attendanceStatus).toBe(AttendanceStatus.ABSENT)
+    })
+
+    it('reports a summary per day and refuses a day the conference does not have', async () => {
+      await api
+        .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+        .send({ delegateId: fixtures.delegateId, day: 2, status: AttendanceStatus.CHECKED_IN })
+
+      const summary = await api.request('get', '/api/v1/attendance/summary?day=2', {
+        token: contributorToken,
+      })
+      expect(summary.status).toBe(200)
+      const body = summary.body as {
+        day: number
+        checkedIn: number
+        days: Array<{ day: number; date: string; checkedIn: number }>
+      }
+      expect(body.day).toBe(2)
+      expect(body.days.map((d) => d.date)).toEqual(['2026-11-21', '2026-11-22', '2026-11-23'])
+      expect(body.checkedIn).toBeGreaterThanOrEqual(1)
+
+      const outOfRange = await api.request('get', '/api/v1/attendance/summary?day=4', {
+        token: contributorToken,
+      })
+      expect(outOfRange.status).toBe(422)
+    })
+
+    it('starts the conference, moves the day, and stamps new requests with it', async () => {
+      const start = await api.request('post', '/api/v1/conference/start', { token: adminToken }).send({})
+      expect(start.status).toBe(200)
+      expect(start.body).toMatchObject({ state: 'RUNNING' })
+
+      const day = await api
+        .request('post', '/api/v1/conference/day', { token: adminToken })
+        .send({ day: 2 })
+      expect(day.status).toBe(200)
+      expect(day.body).toMatchObject({ state: 'RUNNING', activeDay: 2 })
+
+      const filed = await api
+        .request('post', '/api/v1/logistics-requests', { token: contributorToken })
+        .send({
+          title: `${NS.displayName}Second mic for the caucus`,
+          category: 'LOGISTICS',
+          description: 'One mic between forty delegates is slowing the speakers list down.',
+          committeeId: fixtures.committeeId,
+        })
+      expect(filed.status).toBe(201)
+      expect(filed.body).toMatchObject({ day: 2, priorityLevel: 'HIGH' })
+      expect((filed.body as { priority: number }).priority).toBe(40)
+
+      await prisma.logisticsReq.delete({ where: { id: (filed.body as { id: string }).id } })
+    })
+
+    it('refuses a CONTRIBUTOR the conference controls but lets them read the mode', async () => {
+      expect((await api.request('get', '/api/v1/conference', { token: contributorToken })).status).toBe(200)
+      expect(
+        (await api.request('post', '/api/v1/conference/start', { token: contributorToken }).send({}))
+          .status,
+      ).toBe(403)
+      expect(
+        (
+          await api
+            .request('post', '/api/v1/conference/day', { token: contributorToken })
+            .send({ day: 1 })
+        ).status,
+      ).toBe(403)
+    })
+
+    it('sorts the logistics queue by the computed priority', async () => {
+      const response = await api.request(
+        'get',
+        '/api/v1/logistics-requests?sortBy=priority&sortDir=desc',
+        { token: contributorToken },
+      )
+      expect(response.status).toBe(200)
+
+      const body = response.body as { items: Array<{ priority: number }>; priorityWindow: number }
+      expect(body).toHaveProperty('priorityWindow')
+
+      const scores = body.items.map((item) => item.priority)
+      expect([...scores].sort((a, b) => b - a)).toEqual(scores)
+    })
+  })
+
+  describe('the danger zone belongs to the owner', () => {
+    it('refuses an ADMIN who does not own the deployment', async () => {
+      for (const [method, url] of [
+        ['get', '/api/v1/danger/reset/preview'],
+        ['post', '/api/v1/danger/reset'],
+        ['post', '/api/v1/danger/restart-conference'],
+        ['put', '/api/v1/settings'],
+      ] as Array<[HttpMethod, string]>) {
+        const response = await api
+          .request(method, url, { token: adminToken })
+          .send({ passphrase: 'lrimunx' })
+        expect(response.status).toBe(403)
+        expect((response.body as ApiErrorBody).error).toMatch(/owner/i)
+      }
+    })
+
+    it('tells the owner what the confirmation phrase is, and refuses anything else', async () => {
+      await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: true } })
+      try {
+        const preview = await api.request('get', '/api/v1/danger/reset/preview', { token: adminToken })
+        expect(preview.status).toBe(200)
+        expect(preview.body).toMatchObject({ confirmationPhrase: 'lrimunx' })
+
+        // Deliberately NOT the env passphrase. That switch decides whether the
+        // deployment offers the button at all; this decides whether the person
+        // clicking it meant to.
+        const wrong = await api
+          .request('post', '/api/v1/danger/reset', { token: adminToken })
+          .send({ passphrase: 'LRIMUNX' })
+        expect([403, 503]).toContain(wrong.status)
+        expect((wrong.body as ApiErrorBody).error).not.toMatch(/something went wrong/i)
+
+        const counts = await countAllTables(prisma)
+        expect(counts.delegate).toBeGreaterThan(0)
+      } finally {
+        await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: false } })
+      }
+    })
+
+    it('reports ownership on /auth/me so the hub can gate the Settings tab', async () => {
+      const before = await api.request('get', '/api/v1/auth/me', { token: adminToken })
+      expect(before.body).toMatchObject({ isOwner: false, canManageUsers: false })
+
+      await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: true } })
+      try {
+        const after = await api.request('get', '/api/v1/auth/me', { token: adminToken })
+        expect(after.body).toMatchObject({ isOwner: true })
+
+        const login = await api.request('post', '/api/v1/auth/login').send({
+          username: fixtures.adminUsername,
+          password: fixtures.password,
+        })
+        expect(login.status).toBe(200)
+        expect((login.body as { user: { isOwner: boolean } }).user.isOwner).toBe(true)
+      } finally {
+        await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: false } })
+      }
+    })
+  })
+
+  describe('the restart seeder', () => {
+    // Run against the real schema and then thrown away. A restart wipes every
+    // delegate and registration on the database, so it cannot be exercised for
+    // real inside a suite that asserts it left the row counts where it found
+    // them — but the seeder itself is the part with the constraints in it, and
+    // rolling the transaction back proves it against live PostgreSQL rather
+    // than against a mock that would agree with whatever it was told.
+    const ROLLBACK = new Error('rollback')
+
+    async function seedAndRollback(): Promise<PlaceholderCounts> {
+      let counts: PlaceholderCounts | undefined
+
+      await prisma
+        .$transaction(
+          async (tx) => {
+            const committee = await tx.committee.findUniqueOrThrow({
+              where: { id: fixtures.committeeId },
+              select: { id: true, code: true, totalSeats: true },
+            })
+
+            counts = await seedPlaceholders(
+              tx,
+              [{ ...committee, countries: [] }],
+              fixtures.adminId,
+              DEFAULT_TIER_PRICES,
+            )
+
+            throw ROLLBACK
+          },
+          { timeout: 30_000 },
+        )
+        .catch((error) => {
+          if (error !== ROLLBACK) throw error
+        })
+
+      if (!counts) throw new Error('The seeder did not report any counts')
+      return counts
+    }
+
+    it('fills every screen: registrations, delegates, allocations, requests and attendance', async () => {
+      const counts = await seedAndRollback()
+
+      expect(counts.registrations).toBe(20)
+      expect(counts.delegates).toBeGreaterThan(0)
+      expect(counts.logisticsRequests).toBeGreaterThan(0)
+      // The fixture committee has two seats, and attendance is three days per
+      // seated delegate.
+      expect(counts.attendance).toBe(counts.assignments * 3)
+      expect(counts.assignments).toBeLessThanOrEqual(2)
+    })
+
+    it('leaves nothing behind when the transaction is rolled back', async () => {
+      const before = await countAllTables(prisma)
+      await seedAndRollback()
+      expect(await countAllTables(prisma)).toEqual(before)
+    })
+
+    it('refuses to seed a conference with no rooms rather than half-filling one', async () => {
+      await expect(
+        prisma.$transaction(async (tx) =>
+          seedPlaceholders(tx, [], fixtures.adminId, DEFAULT_TIER_PRICES),
+        ),
+      ).rejects.toThrow(/committee/i)
+    })
+  })
+
+  describe('announcing allocations', () => {
+    async function allocate(): Promise<void> {
+      await prisma.assignment.create({
+        data: {
+          delegateId: fixtures.delegateId,
+          committeeId: fixtures.committeeId,
+          country: `${NS.displayName}France`,
+          assignedById: fixtures.adminId,
+        },
+      })
+    }
+
+    async function setGuide(url: string | null): Promise<void> {
+      await prisma.committee.update({
+        where: { id: fixtures.committeeId },
+        data: { studyGuideUrl: url },
+      })
+    }
+
+    async function asOwner<T>(work: () => Promise<T>): Promise<T> {
+      await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: true } })
+      try {
+        return await work()
+      } finally {
+        await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: false } })
+      }
+    }
+
+    afterAll(async () => {
+      if (!boot.ready || !fixtures) return
+      await prisma.allocationAnnouncement.deleteMany({ where: { delegateId: fixtures.delegateId } })
+      await prisma.assignment.deleteMany({ where: { delegateId: fixtures.delegateId } })
+      await setGuide(null)
+    })
+
+    it('is owner-only — an ADMIN who does not own the hub cannot mail the school', async () => {
+      const preview = await api.request('get', '/api/v1/allocations/announce/preview', {
+        token: adminToken,
+      })
+      expect(preview.status).toBe(403)
+
+      const send = await api
+        .request('post', '/api/v1/allocations/announce', { token: adminToken })
+        .send({ passphrase: 'lrimunx' })
+      expect(send.status).toBe(403)
+      expect((send.body as ApiErrorBody).error).toMatch(/owner/i)
+    })
+
+    it('previews who would receive it and why everyone else would not', async () => {
+      await allocate()
+      await setGuide('https://lrimunx.org/guides/rehearsal.pdf')
+
+      const preview = await asOwner(() =>
+        api.request('get', '/api/v1/allocations/announce/preview', { token: adminToken }),
+      )
+      expect(preview.status).toBe(200)
+
+      const body = preview.body as {
+        willSend: number
+        batchSize: number
+        batchesNeeded: number
+        confirmationPhrase: string
+        recipients: Array<{ delegateId: string; committeeCode: string; country: string }>
+        excludedCounts: Record<string, number>
+      }
+
+      expect(body.confirmationPhrase).toBe('lrimunx')
+      expect(body.batchSize).toBeGreaterThan(0)
+      expect(body.batchesNeeded).toBe(Math.ceil(body.willSend / body.batchSize))
+      expect(body.excludedCounts).toHaveProperty('NO_ALLOCATION')
+
+      const mine = body.recipients.find((r) => r.delegateId === fixtures.delegateId)
+      expect(mine).toMatchObject({ committeeCode: expect.any(String), country: `${NS.displayName}France` })
+    })
+
+    it('holds a committee back when its study guide is not set, and names it', async () => {
+      await setGuide(null)
+
+      const preview = await asOwner(() =>
+        api.request('get', '/api/v1/allocations/announce/preview', { token: adminToken }),
+      )
+      const body = preview.body as {
+        committeesMissingGuide: string[]
+        excludedCounts: Record<string, number>
+        recipients: Array<{ delegateId: string }>
+      }
+
+      expect(body.excludedCounts['NO_STUDY_GUIDE']).toBeGreaterThanOrEqual(1)
+      expect(body.committeesMissingGuide.length).toBeGreaterThanOrEqual(1)
+      expect(body.recipients.some((r) => r.delegateId === fixtures.delegateId)).toBe(false)
+
+      // Opting out puts them back in the list rather than leaving them stuck.
+      const without = await asOwner(() =>
+        api.request(
+          'get',
+          '/api/v1/allocations/announce/preview?includeStudyGuide=false',
+          { token: adminToken },
+        ),
+      )
+      const relaxed = without.body as { recipients: Array<{ delegateId: string }> }
+      expect(relaxed.recipients.some((r) => r.delegateId === fixtures.delegateId)).toBe(true)
+
+      await setGuide('https://lrimunx.org/guides/rehearsal.pdf')
+    })
+
+    it('refuses the wrong confirmation phrase without sending anything', async () => {
+      const response = await asOwner(() =>
+        api
+          .request('post', '/api/v1/allocations/announce', { token: adminToken })
+          .send({ passphrase: 'LRIMUNX' }),
+      )
+
+      expect(response.status).toBe(403)
+      expect((response.body as ApiErrorBody).error).toContain('lrimunx')
+      expect(await prisma.allocationAnnouncement.count()).toBe(0)
+    })
+
+    it('refuses to start at all when SMTP is not configured, rather than reporting 400 sent', async () => {
+      const response = await asOwner(() =>
+        api
+          .request('post', '/api/v1/allocations/announce', { token: adminToken })
+          .send({ passphrase: 'lrimunx' }),
+      )
+
+      // This deployment has no SMTP, so the endpoint must say so. If SMTP is
+      // configured on the machine running this, the send is real and the batch
+      // shape is what matters instead.
+      if (response.status === 503) {
+        expect((response.body as ApiErrorBody).error).toMatch(/SMTP/i)
+        expect(await prisma.allocationAnnouncement.count()).toBe(0)
+        return
+      }
+
+      expect(response.status).toBe(200)
+      expect(response.body).toHaveProperty('remaining')
+      expect(response.body).toHaveProperty('done')
+    })
+
+    it('never mails a delegate twice, however many times the button is pressed', async () => {
+      // Written directly, because the point is the exclusion rule and not SMTP.
+      await prisma.allocationAnnouncement.create({
+        data: { delegateId: fixtures.delegateId, status: 'SENT', sentAt: new Date() },
+      })
+
+      const preview = await asOwner(() =>
+        api.request('get', '/api/v1/allocations/announce/preview', { token: adminToken }),
+      )
+      const body = preview.body as {
+        recipients: Array<{ delegateId: string }>
+        excluded: Array<{ delegateId: string; reason: string }>
+      }
+
+      expect(body.recipients.some((r) => r.delegateId === fixtures.delegateId)).toBe(false)
+      expect(
+        body.excluded.find((row) => row.delegateId === fixtures.delegateId)?.reason,
+      ).toBe('ALREADY_SENT')
+
+      await prisma.allocationAnnouncement.deleteMany({ where: { delegateId: fixtures.delegateId } })
+    })
+
+    it('clears failures for a retry but will not lift a SENT record', async () => {
+      await prisma.allocationAnnouncement.create({
+        data: {
+          delegateId: fixtures.delegateId,
+          status: 'FAILED',
+          error: '550 mailbox unavailable',
+          attempts: 1,
+        },
+      })
+
+      const cleared = await asOwner(() =>
+        api
+          .request('post', '/api/v1/allocations/announce/reset-failures', { token: adminToken })
+          .send({}),
+      )
+      expect(cleared.status).toBe(200)
+      expect((cleared.body as { cleared: number }).cleared).toBeGreaterThanOrEqual(1)
+
+      await prisma.allocationAnnouncement.create({
+        data: { delegateId: fixtures.delegateId, status: 'SENT', sentAt: new Date() },
+      })
+
+      const again = await asOwner(() =>
+        api
+          .request('post', '/api/v1/allocations/announce/reset-failures', { token: adminToken })
+          .send({}),
+      )
+      expect(again.status).toBe(200)
+
+      const survivor = await prisma.allocationAnnouncement.findUnique({
+        where: { delegateId: fixtures.delegateId },
+      })
+      expect(survivor?.status).toBe('SENT')
+
+      await prisma.allocationAnnouncement.deleteMany({ where: { delegateId: fixtures.delegateId } })
     })
   })
 })

@@ -254,3 +254,49 @@
     transform: none;
   }
 }
+
+/* The archive before the photographs exist. See PHOTOS_PUBLISHED in
+   src/modules/gallery.js. */
+.gallery__pending {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding-block-start: var(--sp-7);
+}
+
+.gallery__pending-note {
+  max-inline-size: var(--measure);
+  font-size: var(--fs-400);
+  line-height: var(--lh-body);
+  color: var(--on-ground-muted);
+}
+
+.gallery__pending-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: 3rem;
+  padding-inline: var(--sp-5);
+  border: 1px solid var(--border-interactive);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--on-ground);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-base) var(--ease-house),
+    color var(--dur-base) var(--ease-house);
+}
+
+.gallery__pending-link span {
+  color: var(--accent-on-ground);
+}
+
+.gallery__pending-link:hover,
+.gallery__pending-link:focus-visible {
+  border-color: var(--accent-on-ground);
+  color: var(--accent-on-ground);
+}

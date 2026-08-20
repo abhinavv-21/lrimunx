@@ -9,13 +9,23 @@ function requireEnv(name: string): string {
   return value
 }
 
+// Mirrors apps/site/src/data/committees.js, which is the source of truth.
+// `npm run check:committees` fails if the two drift apart. Keep code, name and
+// totalSeats identical; the rest of a committee (agenda, chair, blurb) is site
+// copy and deliberately has no column here.
 const STANDARD_COMMITTEES = [
   { name: 'United Nations Security Council', code: 'UNSC', totalSeats: 15 },
-  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 40 },
-  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 35 },
-  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 30 },
-  { name: 'World Health Organization', code: 'WHO', totalSeats: 28 },
-  { name: 'United Nations Environment Programme', code: 'UNEP', totalSeats: 30 },
+  { name: 'International Court of Justice', code: 'ICJ', totalSeats: 15 },
+  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 40 },
+  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 50 },
+  { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
+  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 45 },
+  { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 35 },
+  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },
+  { name: 'Federal Parliament of Nepal', code: 'FPN', totalSeats: 35 },
+  { name: 'International Press', code: 'IP', totalSeats: 15 },
+  { name: 'Economic and Financial Committee', code: 'ECOFIN', totalSeats: 40 },
+  { name: 'Social, Humanitarian and Cultural Committee', code: 'SOCHUM', totalSeats: 45 },
 ]
 
 async function main() {

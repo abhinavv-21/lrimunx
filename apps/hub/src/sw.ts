@@ -59,10 +59,10 @@ self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: '/admin/icons/icon-192.png',
+      badge: '/admin/icons/icon-192.png',
       tag: payload.tag ?? 'munx',
-      data: { url: payload.url ?? '/logistics' },
+      data: { url: payload.url ?? '/admin/logistics' },
       requireInteraction: true,
     }),
   )
@@ -70,7 +70,7 @@ self.addEventListener('push', (event: PushEvent) => {
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close()
-  const target = (event.notification.data as { url?: string } | undefined)?.url ?? '/'
+  const target = (event.notification.data as { url?: string } | undefined)?.url ?? '/admin'
 
   event.waitUntil(
     (async () => {

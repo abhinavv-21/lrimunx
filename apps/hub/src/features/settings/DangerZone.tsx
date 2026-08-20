@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { AlertTriangle, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Callout } from '@/components/ui/Callout'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
-import { Modal } from '@/components/ui/Modal'
-import { ApiError } from '@/lib/api'
+import { CONFIRM_PHRASE, ConfirmDialog } from '@/components/ui/Modal'
+import { ApiError, errorMessage } from '@/lib/api'
 import { useResetConference, useResetPreview } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import { pluralise } from '@/lib/utils'
@@ -28,13 +29,19 @@ export function DangerZone() {
   const [passphrase, setPassphrase] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  const { data: preview, refetch } = useResetPreview()
+  const {
+    data: preview,
+    isPending: previewPending,
+    isError: previewFailed,
+    error: previewError,
+    refetch,
+  } = useResetPreview()
   const reset = useResetConference()
   const toast = useToast()
 
   const items = preview ? summarise(preview.deleted) : []
   const nothingToClear = preview !== undefined && preview.total === 0
-  const disabled = preview !== undefined && !preview.configured
+  const switchedOff = preview !== undefined && !preview.configured
 
   function close(nextOpen: boolean) {
     if (!nextOpen) {
@@ -72,7 +79,23 @@ export function DangerZone() {
             happened. There is no undo.
           </p>
 
-          {items.length > 0 ? (
+          {previewPending ? (
+            <p className="mt-3 text-body-sm text-ink-secondary" aria-live="polite">
+              Counting what is in the conference…
+            </p>
+          ) : previewFailed ? (
+            <div className="mt-3 max-w-prose">
+              <Callout tone="danger" alert>
+                <p>
+                  Could not count what is in the conference right now, so clearing is held back:{' '}
+                  {errorMessage(previewError, 'the server did not answer.')}
+                </p>
+                <Button variant="secondary" size="sm" className="mt-2" onClick={() => void refetch()}>
+                  Try again
+                </Button>
+              </Callout>
+            </div>
+          ) : items.length > 0 ? (
             <p className="mt-3 text-body-sm text-ink">
               Right now that would remove <strong className="font-medium">{items.join(', ')}</strong>.
             </p>
@@ -82,7 +105,7 @@ export function DangerZone() {
             </p>
           ) : null}
 
-          {disabled ? (
+          {switchedOff ? (
             <p className="mt-3 max-w-prose rounded-control border border-edge bg-surface-sunken p-3 text-body-sm text-ink-secondary">
               Clearing is switched off on this deployment. Set{' '}
               <code className="font-mono text-data">DANGER_RESET_PASSPHRASE</code> in the server
@@ -91,7 +114,11 @@ export function DangerZone() {
           ) : null}
 
           <div className="mt-4">
-            <Button variant="secondary" onClick={() => setOpen(true)} disabled={disabled || nothingToClear}>
+            <Button
+              variant="secondary"
+              onClick={() => setOpen(true)}
+              disabled={previewPending || previewFailed || switchedOff || nothingToClear}
+            >
               <Trash2 size={16} aria-hidden />
               Clear everything
             </Button>
@@ -99,7 +126,7 @@ export function DangerZone() {
         </div>
       </div>
 
-      <Modal
+      <ConfirmDialog
         open={open}
         onOpenChange={close}
         title="Clear all conference data?"
@@ -108,48 +135,30 @@ export function DangerZone() {
             ? `This will permanently delete ${items.join(', ')}. Accounts and the audit log are kept.`
             : 'This will permanently delete every committee, delegate, allocation, registration, logistics request and award.'
         }
+        confirmLabel="Delete everything"
+        confirmPhrase={CONFIRM_PHRASE}
+        confirmDisabled={passphrase === ''}
+        loading={reset.isPending}
+        onConfirm={() => void handleReset()}
       >
-        <div className="flex flex-col gap-4">
-          {error ? (
-            <p role="alert" className="rounded-control border border-danger bg-danger-wash p-3 text-body-sm text-ink">
-              {error}
-            </p>
-          ) : null}
+        {error ? (
+          <Callout tone="danger" alert>
+            {error}
+          </Callout>
+        ) : null}
 
-          <Field label="Passphrase" hint="Ask the secretariat if you do not have it.">
-            {({ id }) => (
-              <Input
-                id={id}
-                type="password"
-                value={passphrase}
-                autoComplete="off"
-                autoFocus
-                onChange={(event) => setPassphrase(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && passphrase !== '') {
-                    event.preventDefault()
-                    void handleReset()
-                  }
-                }}
-              />
-            )}
-          </Field>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="secondary" onClick={() => close(false)} disabled={reset.isPending}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handleReset()}
-              loading={reset.isPending}
-              disabled={passphrase === ''}
-            >
-              <Trash2 size={16} aria-hidden />
-              Delete everything
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        <Field label="Passphrase" hint="Ask the secretariat if you do not have it.">
+          {({ id }) => (
+            <Input
+              id={id}
+              type="password"
+              value={passphrase}
+              autoComplete="off"
+              onChange={(event) => setPassphrase(event.target.value)}
+            />
+          )}
+        </Field>
+      </ConfirmDialog>
     </Card>
   )
 }

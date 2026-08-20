@@ -19,7 +19,7 @@ const FIELDS = [
     max: 120,
     messages: {
       required: 'Enter your full name, as it should appear on your placard.',
-      short: 'That looks too short — enter your full name.',
+      short: 'That looks too short. Enter your full name.',
       long: 'That is longer than 120 characters.',
     },
   },
@@ -33,7 +33,7 @@ const FIELDS = [
     messages: {
       required: 'Enter the email address your allocation should go to.',
       pattern:
-        'That does not look like an email address — check for a missing @ or a typo in the domain.',
+        'That does not look like an email address. Check for a missing @ or a typo in the domain.',
       long: 'That is longer than 160 characters.',
     },
   },
@@ -47,7 +47,7 @@ const FIELDS = [
     pattern: /^[0-9+\-() ]+$/,
     messages: {
       required: 'Enter a number the secretariat can reach you on.',
-      short: 'That number is too short — it needs at least 6 characters.',
+      short: 'That number is too short. It needs at least 6 characters.',
       long: 'That is longer than 24 characters.',
       pattern: 'Use digits, spaces and + - ( ) only.',
     },
@@ -61,7 +61,7 @@ const FIELDS = [
     max: 160,
     messages: {
       required: 'Enter the school you are representing.',
-      short: 'That looks too short — enter the full name of your school.',
+      short: 'That looks too short. Enter the full name of your school.',
       long: 'That is longer than 160 characters.',
     },
   },
@@ -149,15 +149,15 @@ const SUMMARY = {
   },
   rateLimited: {
     title: 'Too many attempts just now',
-    copy: 'Several registrations have already been sent from this connection, so the form is holding this one back. On a shared school or home connection that can happen on your first try — there is nothing wrong with your details. Keep this page open, everything you typed is still here, and press Send again in ten or fifteen minutes.',
+    copy: 'Several registrations have already been sent from this connection, so the form is holding this one back. On a shared school or home connection that can happen on your first try, and there is nothing wrong with your details. Keep this page open, everything you typed is still here, and press Send again in ten or fifteen minutes.',
   },
   offline: {
     title: 'That did not go through',
-    copy: 'Your registration did not reach the secretariat. Nothing has been sent and everything you typed is still in the form. If you are online, the server may have been asleep — wait a few seconds and press Send again.',
+    copy: 'Your registration did not reach the secretariat. Nothing has been sent and everything you typed is still in the form. If you are online, the server may have been asleep, so wait a few seconds and press Send again.',
   },
   server: {
     title: 'Something went wrong at our end',
-    copy: 'Your registration could not be recorded just now. Nothing you typed has been lost — try again in a moment.',
+    copy: 'Your registration could not be recorded just now. Nothing you typed has been lost, so try again in a moment.',
   },
 }
 
@@ -181,7 +181,7 @@ const PRESELECT_NOTICE =
 const SUBMIT_NOTE = {
   blocked: 'Add your payment screenshot to finish.',
   ready: 'This sends your registration to the secretariat.',
-  sending: 'Sending — do not close this page.',
+  sending: 'Sending. Do not close this page.',
   fallback: 'Uploads are not working. You can send this now and the secretariat will ask for the screenshot by email.',
 }
 
@@ -190,13 +190,13 @@ const UPLOAD_FAILURES_BEFORE_FALLBACK = 2
 const MISSING_PROOF = 'Add the screenshot of your payment before sending this.'
 
 const UPLOAD_GAVE_UP =
-  'The screenshot still could not be uploaded. You can send your registration without it — the secretariat will ask you for it by email.'
+  'The screenshot still could not be uploaded. You can send your registration without it, and the secretariat will ask you for it by email.'
 
 const DONE_WITHOUT_PROOF = {
-  copy: 'Your details are with the LRI MUN X secretariat. Your payment screenshot did not upload, so it still has to reach them — email it to the address in the footer below, quoting the email address you registered with.',
+  copy: 'Your details are with the LRI MUN X secretariat. Your payment screenshot did not upload, so it still has to reach them. Send it to the secretariat using the contact in the footer below, quoting the email address you registered with.',
   proofTitle: 'Send your payment screenshot',
   proofCopy:
-    'It could not be uploaded from this page. Email it to the secretariat at the address in the footer; screenshots are matched against the account by hand.',
+    'It could not be uploaded from this page. Send it to the secretariat using the contact in the footer; screenshots are matched against the account by hand.',
 }
 
 const REFERENCE_FALLBACK = 'Your full name, as entered in step 1'
@@ -306,7 +306,7 @@ export function initRegisterPage({ gsap, ScrollTrigger, reduced, scrollTo } = {}
 
     if (primary.code && primary.code === second.code) {
       second.clear({
-        reason: `Second preference cleared — ${primary.code} is now your first preference.`,
+        reason: `Second preference cleared. ${primary.code} is now your first preference.`,
       })
     }
 

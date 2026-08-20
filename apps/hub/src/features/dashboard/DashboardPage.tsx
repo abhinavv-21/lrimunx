@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Inbox, PackageSearch } from 'lucide-react'
-import { useAuth, useIsAdmin } from '@/providers/AuthProvider'
+import { useAuth, useIsAdmin, useIsOwner } from '@/providers/AuthProvider'
 import { useDashboard, useRegistrationStats } from '@/lib/hooks'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, CardHeader, CapacityMeter, Stat } from '@/components/ui/Card'
@@ -14,6 +14,7 @@ export function DashboardPage() {
   const { data, isPending, isError, error, refetch } = useDashboard()
   const { data: registrationStats } = useRegistrationStats()
   const isAdmin = useIsAdmin()
+  const isOwner = useIsOwner()
   const pendingRegistrations = registrationStats?.pending ?? 0
 
   return (
@@ -154,9 +155,11 @@ export function DashboardPage() {
               <CardHeader
                 title="Recent activity"
                 actions={
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/audit">Full audit log</Link>
-                  </Button>
+                  isOwner ? (
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/settings">Full audit log</Link>
+                    </Button>
+                  ) : null
                 }
               />
               <ul className="flex flex-col divide-y divide-edge">

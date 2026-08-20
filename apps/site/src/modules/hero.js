@@ -1,14 +1,10 @@
-const RIBBON = [
-  'LRI Model UN X',
-  'Tenth Edition',
-  'LRI School',
-  'Kalanki · Kathmandu',
-  'Model United Nations',
-]
+// The headline now says "LRI Model United Nations" at full size, so the ribbon
+// carries only what the headline does not.
+const RIBBON = ['Tenth Edition', 'Kalanki · Kathmandu', '21–23 November 2026']
 
 const RIBBON_SPEED = 46
 
-export function initHero({ gsap, ScrollTrigger, reduced }) {
+export function initHero({ gsap, reduced }) {
   const hero = document.querySelector('.hero')
   if (!hero) return
 
@@ -46,10 +42,9 @@ export function initHero({ gsap, ScrollTrigger, reduced }) {
   gsap.set(staged, { opacity: 0, y: 26 })
   staged.forEach((el) => el.removeAttribute('data-reveal'))
 
-  const dashes = wreathPaths.map((path) => {
+  wreathPaths.forEach((path) => {
     const len = path.getTotalLength()
     gsap.set(path, { strokeDasharray: len, strokeDashoffset: len })
-    return len
   })
 
   const numeral = hero.querySelector('.hero__seal-numeral')

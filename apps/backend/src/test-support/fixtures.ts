@@ -129,7 +129,12 @@ export async function sweepNamespace(prisma: PrismaClient): Promise<void> {
   const committeeIds = committees.map((row) => row.id)
   const delegateIds = delegates.map((row) => row.id)
 
+  await prisma.ledgerEntry.deleteMany({ where: { recordedById: { in: userIds } } })
   await prisma.auditLog.deleteMany({ where: { userId: { in: userIds } } })
+  // DelegateAttendance cascades from Delegate, but the delegate delete below is
+  // filtered by id, so sweep it explicitly rather than trusting the order.
+  await prisma.delegateAttendance.deleteMany({ where: { delegateId: { in: delegateIds } } })
+  await prisma.allocationAnnouncement.deleteMany({ where: { delegateId: { in: delegateIds } } })
   await prisma.pushSub.deleteMany({ where: { endpoint: { startsWith: NS.pushEndpoint } } })
   await prisma.logisticsReq.deleteMany({
     where: {
@@ -165,6 +170,8 @@ export async function removeFixtures(prisma: PrismaClient, _fixtures: Fixtures):
 export interface TableCounts {
   user: number
   delegate: number
+  delegateAttendance: number
+  allocationAnnouncement: number
   committee: number
   committeeCountry: number
   assignment: number
@@ -172,16 +179,19 @@ export interface TableCounts {
   logisticsReq: number
   award: number
   auditLog: number
+  ledgerEntry: number
   setting: number
   pushSub: number
   session: number
 }
 
 export async function countAllTables(prisma: PrismaClient): Promise<TableCounts> {
-  const [user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub, session] =
+  const [user, delegate, delegateAttendance, allocationAnnouncement, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, ledgerEntry, setting, pushSub, session] =
     await Promise.all([
       prisma.user.count(),
       prisma.delegate.count(),
+      prisma.delegateAttendance.count(),
+      prisma.allocationAnnouncement.count(),
       prisma.committee.count(),
       prisma.committeeCountry.count(),
       prisma.assignment.count(),
@@ -189,10 +199,11 @@ export async function countAllTables(prisma: PrismaClient): Promise<TableCounts>
       prisma.logisticsReq.count(),
       prisma.award.count(),
       prisma.auditLog.count(),
+      prisma.ledgerEntry.count(),
       prisma.setting.count(),
       prisma.pushSub.count(),
       prisma.session.count(),
     ])
 
-  return { user, delegate, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, setting, pushSub, session }
+  return { user, delegate, delegateAttendance, allocationAnnouncement, committee, committeeCountry, assignment, registration, logisticsReq, award, auditLog, ledgerEntry, setting, pushSub, session }
 }

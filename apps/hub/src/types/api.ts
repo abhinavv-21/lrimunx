@@ -23,6 +23,8 @@ export interface AuthUser {
   role: Role
 
   canManageUsers?: boolean
+
+  isOwner?: boolean
 }
 
 export interface LoginResponse {
@@ -300,6 +302,13 @@ export interface IngestResult {
 export interface Settings {
   googleFormUrl: string
   googleSheetUrl: string
+
+  conferenceName?: string
+  edition?: string
+  startsOn?: string
+  endsOn?: string
+  venue?: string
+  contactEmail?: string
 }
 
 export interface ResetCounts {

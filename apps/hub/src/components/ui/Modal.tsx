@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
 import { X } from 'lucide-react'
 import { Button } from './Button'
+import { Field, Input } from './Field'
 import { cn } from '@/lib/utils'
 
 const OVERLAY = 'fixed inset-0 z-40 bg-surface-inverted/40 backdrop-blur-[1px]'
@@ -69,6 +70,8 @@ export function Modal({
   )
 }
 
+export const CONFIRM_PHRASE = 'lrimunx'
+
 export function ConfirmDialog({
   open,
   onOpenChange,
@@ -77,6 +80,9 @@ export function ConfirmDialog({
   confirmLabel = 'Delete',
   onConfirm,
   loading = false,
+  confirmPhrase,
+  confirmDisabled = false,
+  children,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -85,22 +91,69 @@ export function ConfirmDialog({
   confirmLabel?: string
   onConfirm: () => void
   loading?: boolean
+
+  confirmPhrase?: string
+
+  confirmDisabled?: boolean
+  children?: ReactNode
 }) {
+  const [typed, setTyped] = useState('')
+  const phraseRef = useRef<HTMLInputElement>(null)
+
+  const phraseTyped = confirmPhrase === undefined || typed.trim() === confirmPhrase
+  const blocked = confirmDisabled || !phraseTyped
+
+  useEffect(() => {
+    if (!open) setTyped('')
+  }, [open])
+
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className={OVERLAY} />
-        <AlertDialog.Content className={PANEL}>
+        <AlertDialog.Content
+          className={PANEL}
+          onOpenAutoFocus={(event) => {
+            if (confirmPhrase === undefined) return
+
+            event.preventDefault()
+            phraseRef.current?.focus()
+          }}
+        >
           <AlertDialog.Title className="font-heading text-h2 text-ink">{title}</AlertDialog.Title>
           <AlertDialog.Description className="max-w-prose text-body-sm text-ink-secondary">
             {description}
           </AlertDialog.Description>
 
+          {children}
+
+          {confirmPhrase !== undefined ? (
+            <Field label={`Type ${confirmPhrase} to confirm`}>
+              {({ id }) => (
+                <Input
+                  id={id}
+                  ref={phraseRef}
+                  value={typed}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="font-mono"
+                  onChange={(event) => setTyped(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter') return
+                    event.preventDefault()
+                    if (!blocked && !loading) onConfirm()
+                  }}
+                />
+              )}
+            </Field>
+          ) : null}
+
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <AlertDialog.Cancel asChild>
               <Button variant="secondary" disabled={loading}>Cancel</Button>
             </AlertDialog.Cancel>
-            <Button variant="destructive" onClick={onConfirm} loading={loading}>
+            <Button variant="destructive" onClick={onConfirm} loading={loading} disabled={blocked}>
               {confirmLabel}
             </Button>
           </div>

@@ -29,7 +29,13 @@ export function initCommittees({ gsap, ScrollTrigger, reduced }) {
 
     const max = maxScroll()
     const progress = max > 0 ? rail.scrollLeft / max : 0
-    const index = Math.min(items.length - 1, Math.max(0, Math.round(rail.scrollLeft / stepSize())))
+    // From progress, not from the leftmost card: with three cards visible the
+    // leftmost index tops out at items.length - 3, so the readout could never
+    // reach its own stated total.
+    const index = Math.min(
+      items.length - 1,
+      Math.max(0, Math.round(progress * (items.length - 1))),
+    )
 
     if (positionEl) positionEl.textContent = pad(index + 1)
 

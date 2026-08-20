@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test-support/vitest.setup.ts'],
     poolOptions: { forks: { singleFork: true } },
     passWithNoTests: false,
     env: {

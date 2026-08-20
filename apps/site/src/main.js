@@ -14,6 +14,7 @@ import './styles/sections/footer.css'
 
 import { initNav } from './modules/nav.js'
 import { initHero } from './modules/hero.js'
+import { renderCommitteeCards } from './modules/committee-cards.js'
 import { initCommittees } from './modules/committees.js'
 import { initCommitteeDialog } from './modules/committee-dialog.js'
 import { initOc } from './modules/oc.js'
@@ -69,6 +70,7 @@ const ctx = {
 function boot() {
   initHero(ctx)
   initNav(ctx)
+  renderCommitteeCards()
   initCommittees(ctx)
   initCommitteeDialog(ctx)
   initOc(ctx)

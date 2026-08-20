@@ -257,6 +257,31 @@
   transform: rotate(45deg) scale(1);
 }
 
+/* Stands in for the email and phone until they exist. Reads as a deliberate
+   pending state rather than a missing line. */
+.footer__pending {
+  display: flex;
+  align-items: center;
+  /* Matches the min-block-size of the two links it stands in for, so the column
+     does not reflow when the email and phone land. */
+  min-block-size: 2.75rem;
+  font-size: var(--fs-200);
+  letter-spacing: var(--tracking-body);
+  color: rgb(var(--rgb-text-inverse) / 0.66);
+  font-style: normal;
+}
+
+/* The same rule motif as .section__eyebrow, which is how this system marks a
+   labelled item. Stops the line reading as a truncated address. */
+.footer__pending::before {
+  content: '';
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1px;
+  margin-inline-end: var(--sp-3);
+  background-color: var(--hairline-gold);
+}
+
 .footer__address a {
   display: inline-flex;
   align-items: center;

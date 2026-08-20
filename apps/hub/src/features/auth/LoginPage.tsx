@@ -48,11 +48,11 @@ export function LoginPage() {
         </div>
 
         <div className="max-w-prose">
-          <p className="font-heading text-display text-ink-inverted">Six committees. One desk.</p>
+          <p className="font-heading text-display text-ink-inverted">Every committee, one desk.</p>
           <span className="page-rule mt-6" aria-hidden />
           <p className="mt-6 text-body text-ink-tertiary">
-            Delegates, country assignments, placards and attendance — tracked in one place, and still
-            working when the venue wifi is not.
+            Delegates, country assignments, placards and attendance, tracked in one place and still
+            working when the venue Wi-Fi is not.
           </p>
         </div>
 

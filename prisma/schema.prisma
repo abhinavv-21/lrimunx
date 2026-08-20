@@ -1,6 +1,19 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Pooled connection for the app. On a serverless host every cold start opens
+  // its own connection, so DATABASE_URL points at a pooler there.
+  url       = env("DATABASE_URL")
+  // Unpooled, for migrations only. `prisma migrate deploy` takes an advisory
+  // lock and cannot hold one through a transaction-mode pooler, so it hangs
+  // forever against the pooled URL.
+  //
+  // DIRECT_URL is REQUIRED, and that is Prisma's behaviour rather than a
+  // choice made here: with the variable unset, every CLI command fails with
+  // P1012 "Environment variable not found: DIRECT_URL", and setting it to an
+  // empty string fails with "You must provide a nonempty direct URL". There is
+  // no fallback to `url`. Where there is no pooler — Oracle, and any local
+  // machine — set DIRECT_URL to exactly the same value as DATABASE_URL.
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -36,6 +49,45 @@ enum RegistrationStatus {
   REJECTED
 }
 
+/// What an applicant was charged. Four rates, not a free number, because the
+/// secretariat has to be able to answer "what did the internal students bring
+/// in" at the end without reading every row.
+///
+/// DISCOUNT is one flat concession rate covering every reason a discount is
+/// given — early bird, a school block booking, a hardship case. Splitting it
+/// per reason was considered and dropped: the reason belongs in a conversation,
+/// the amount is the only part the books need.
+enum PriceTier {
+  BASE
+  INTERNAL
+  ALUMNI
+  DISCOUNT
+}
+
+/// Where a ledger line belongs in the closing statement. An enum rather than
+/// free text because the summary groups on it; `particular` is where the
+/// treasurer writes what actually happened.
+/// The outcome of one delegate's allocation email. Absence of a row means
+/// nobody has tried yet; SENT is the idempotency guard that stops a second
+/// press of the button mailing four hundred students twice.
+enum AnnouncementStatus {
+  SENT
+  FAILED
+}
+
+enum LedgerCategory {
+  REGISTRATION
+  SPONSORSHIP
+  VENUE
+  FOOD
+  PRINTING
+  AWARDS
+  TRANSPORT
+  HOSPITALITY
+  MARKETING
+  MISC
+}
+
 model User {
   id             String         @id @default(uuid())
   username       String         @unique
@@ -56,6 +108,18 @@ model User {
   /// without a deployment — and the routes enforce it, so hiding the tab in the
   /// UI is presentation, not security.
   canManageUsers Boolean        @default(false)
+  /// The one person who owns this deployment: settings, the danger zone and the
+  /// restart button answer to this and to nothing else.
+  ///
+  /// A flag rather than `username === 'abhinav'` in the route handlers, for the
+  /// same reason canManageUsers is one. A hardcoded name is a deployment away
+  /// from being wrong — the handover to next year's secretariat is a rename, a
+  /// restored dump can carry a different account, and a test database has no
+  /// such user at all. Worse, it scatters the rule across every handler that
+  /// checks it, so granting it to a second person means editing code and
+  /// shipping. This is a row: `requireOwner` reads it, one migration sets it,
+  /// and moving ownership is an UPDATE.
+  isOwner        Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   assignments    Assignment[]   @relation("AssignedBy")
@@ -65,6 +129,7 @@ model User {
   subscriptions  PushSub[]
   reviewedRegs   Registration[] @relation("ReviewedBy")
   sessions       Session[]
+  ledgerEntries  LedgerEntry[]  @relation("RecordedBy")
 }
 
 /// One live sign-in, so that signing out can actually end it.
@@ -97,9 +162,9 @@ model Session {
 }
 
 model Delegate {
-  id                   String           @id @default(uuid())
+  id                   String                  @id @default(uuid())
   fullName             String
-  email                String           @unique
+  email                String                  @unique
   phone                String
   schoolName           String
   grade                String
@@ -120,12 +185,22 @@ model Delegate {
   awardsWon            Int?
   dietaryNotes         String?
   accessibilityNotes   String?
-  attendanceStatus     AttendanceStatus @default(ABSENT)
+  /// Whether this delegate turned up AT ALL, across the three days.
+  ///
+  /// No longer the source of truth — DelegateAttendance is, one row per day —
+  /// but kept and maintained because "has this person appeared yet" is the
+  /// question the delegates list, the exports and the dashboard count ask, and
+  /// answering it from three rows per delegate would mean a join on every one
+  /// of them. The attendance routes rewrite this whenever a day changes, so it
+  /// is CHECKED_IN exactly when at least one day is.
+  attendanceStatus     AttendanceStatus        @default(ABSENT)
+  attendance           DelegateAttendance[]
+  announcement         AllocationAnnouncement?
   assignment           Assignment?
   awards               Award[]
   registration         Registration?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
 }
 
 /// A registration submitted from the public conference site.
@@ -168,6 +243,19 @@ model Registration {
   dietaryNotes         String?
   accessibilityNotes   String?
   status               RegistrationStatus @default(PENDING)
+  /// Which of the four rates this applicant was put on. Null until someone on
+  /// the secretariat has looked at the screenshot and recorded the payment.
+  priceTier            PriceTier?
+  /// What actually arrived, in WHOLE NEPALI RUPEES. Not paisa: every rate the
+  /// conference charges is a round rupee figure, and minor units would mean
+  /// every screen dividing by 100 to show a number nobody writes with decimals.
+  ///
+  /// Deliberately stored rather than derived from the tier's configured price.
+  /// A tier says what was asked for; this says what came in, and the two differ
+  /// often enough — a bank transfer rounded down, a part payment, a delegate
+  /// who paid last year's rate — that deriving it would erase the real number
+  /// the books have to balance against.
+  amountPaid           Int?
   reviewedById         String?
   reviewedAt           DateTime?
   rejectionReason      String?
@@ -181,17 +269,27 @@ model Registration {
 
   @@index([status, createdAt])
   @@index([email])
+  @@index([priceTier])
 }
 
 model Committee {
-  id          String             @id @default(uuid())
-  name        String             @unique // e.g. UNSC, DISEC, UNHRC
-  totalSeats  Int
-  code        String             @unique
-  assignments Assignment[]
-  requests    LogisticsReq[]
-  awards      Award[]
-  countries   CommitteeCountry[]
+  id            String             @id @default(uuid())
+  name          String             @unique // e.g. UNSC, DISEC, UNHRC
+  totalSeats    Int
+  code          String             @unique
+  /// Where this committee's background guide lives. Per committee rather than
+  /// one link for the conference because that is what a study guide is: UNSC's
+  /// guide is no use to a delegate in ECOFIN, and a single link would send
+  /// every delegate to a page they have to search.
+  ///
+  /// Null until the chairs have written one. The allocation announcement
+  /// refuses to send to a committee with no guide rather than mailing a
+  /// delegate a link that goes nowhere.
+  studyGuideUrl String?
+  assignments   Assignment[]
+  requests      LogisticsReq[]
+  awards        Award[]
+  countries     CommitteeCountry[]
 }
 
 /// One country on one committee's matrix — the list of who is IN the room,
@@ -240,6 +338,10 @@ model LogisticsReq {
   description  String
   committeeId  String?
   status       RequestStatus   @default(OPEN)
+  /// Which conference day the request is for, 1-3. Filled in from the active
+  /// day while the conference is RUNNING and left null before it starts, so a
+  /// request raised in October is not pinned to a day nobody has reached yet.
+  day          Int?
   createdById  String
   resolvedById String?
   committee    Committee?      @relation(fields: [committeeId], references: [id])
@@ -276,6 +378,98 @@ model Award {
   @@index([committeeId])
 }
 
+/// One delegate's attendance on one day of the conference.
+///
+/// The conference runs 21, 22 and 23 November 2026, and a delegate who came on
+/// Saturday and not on Sunday is a fact the old single `attendanceStatus` could
+/// not hold: checking someone in on day 2 silently overwrote day 1, so the only
+/// honest report the hub could produce was "ever seen".
+///
+/// A row per day per delegate rather than three columns, so the awards desk can
+/// ask "who was here on the day of the ceremony" as a query rather than as
+/// three ORs, and so a fourth day costs data instead of a migration.
+///
+/// ABSENT rows are written as well as CHECKED_IN ones. A missing row and a row
+/// saying ABSENT both mean the same thing to a reader, but only the row records
+/// that someone actually looked.
+model DelegateAttendance {
+  id         String           @id @default(uuid())
+  delegateId String
+  /// 1, 2 or 3. Validated in the API, not by the database: Postgres has no
+  /// cheap enum-of-integers, and a CHECK constraint here would have to be
+  /// migrated the day the conference gains a day.
+  day        Int
+  status     AttendanceStatus @default(ABSENT)
+  delegate   Delegate         @relation(fields: [delegateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([delegateId, day])
+  @@index([day, status])
+}
+
+/// One line of the conference books.
+///
+/// The shape a school treasurer already writes: a date, what it was for, and
+/// the money in one of two columns. Exactly one of credit/debit is non-zero and
+/// the API refuses a row where both or neither are, so a line can never be
+/// ambiguous about its direction.
+///
+/// Registration income is deliberately NOT copied in here. It lives on
+/// Registration, where the tier is, and the summary endpoint adds the two
+/// together — duplicating it would give the conference two numbers for the same
+/// money and no way to tell which one drifted.
+model LedgerEntry {
+  id           String         @id @default(uuid())
+  /// When the money moved, which is not when the row was typed. Both matter:
+  /// this one closes the books, `createdAt` says who was catching up on what.
+  entryDate    DateTime
+  particular   String
+  category     LedgerCategory
+  /// Money in and money out, in WHOLE NEPALI RUPEES — the same unit as
+  /// Registration.amountPaid, so the two can be added without a conversion.
+  credit       Int            @default(0)
+  debit        Int            @default(0)
+  note         String?
+  recordedById String
+  recordedBy   User           @relation("RecordedBy", fields: [recordedById], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([entryDate])
+  @@index([category])
+}
+
+/// Whether this delegate has been told which committee they are in.
+///
+/// One row per delegate, unique on the delegate, and that uniqueness is the
+/// whole point: the announcement goes to four hundred school students over
+/// SMTP in batches of twenty-five, and a duplicate mailshot is not something
+/// you can take back. The send skips anyone who already has a SENT row, so
+/// pressing the button twice is safe and resuming after a timeout is the
+/// normal way it finishes.
+///
+/// FAILED rows are kept rather than deleted. SMTP rejects a handful of school
+/// addresses on every send, and the operator needs to see which ones and why
+/// — `attempts` and `error` are what turn "12 failed" into something someone
+/// can act on. A retry updates the row in place.
+model AllocationAnnouncement {
+  id         String             @id @default(uuid())
+  delegateId String             @unique
+  status     AnnouncementStatus
+  /// The SMTP failure, verbatim, on a FAILED row. Null once it succeeds.
+  error      String?
+  /// Counts every attempt, not just the failures, so a row that took three
+  /// goes to get through is visible as one.
+  attempts   Int                @default(1)
+  sentAt     DateTime?
+  delegate   Delegate           @relation(fields: [delegateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@index([status])
+}
+
 model AuditLog {
   id            String   @id @default(uuid())
   userId        String
@@ -289,7 +483,13 @@ model AuditLog {
 }
 
 /// Small key/value store for conference-level configuration entered in the
-/// app — currently the registration form link.
+/// app: the registration form link, the four price tiers, and whether the
+/// conference is running and on which day.
+///
+/// Values are strings even when they are numbers. A typed settings table would
+/// mean a migration every time the secretariat wants to configure one more
+/// thing, and the four callers that read a number here parse it in one place
+/// (lib/conference.ts) with a documented default.
 model Setting {
   key       String   @id
   value     String

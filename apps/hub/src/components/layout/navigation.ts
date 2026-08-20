@@ -1,5 +1,5 @@
 import {
-  ClipboardList, FileClock, Globe2, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings,
+  ClipboardList, Inbox, LayoutDashboard, Landmark, PackageSearch, Settings,
   UserCheck, Users, UsersRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -13,7 +13,7 @@ export interface NavItem {
 
   primary?: boolean
 
-  requires?: 'canManageUsers'
+  requires?: 'canManageUsers' | 'isOwner'
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -24,16 +24,15 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/registrations', label: 'Registrations', icon: Inbox, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/allocations', label: 'Allocations', icon: ClipboardList, roles: ['ADMIN'] },
   { to: '/committees', label: 'Committees', icon: Landmark, roles: ['ADMIN', 'CONTRIBUTOR'] },
-  { to: '/matrix', label: 'Country matrix', icon: Globe2, roles: ['ADMIN', 'CONTRIBUTOR'] },
-  { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'] },
   { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'], requires: 'canManageUsers' },
-  { to: '/audit', label: 'Audit log', icon: FileClock, roles: ['ADMIN'] },
+  { to: '/settings', label: 'Settings', icon: Settings, roles: ['ADMIN'], requires: 'isOwner' },
 ]
 
-export function navFor(user: { role: Role; canManageUsers?: boolean }): NavItem[] {
+export function navFor(user: { role: Role; canManageUsers?: boolean; isOwner?: boolean }): NavItem[] {
   return NAV_ITEMS.filter(
     (item) =>
       item.roles.includes(user.role) &&
-      (item.requires !== 'canManageUsers' || user.canManageUsers === true),
+      (item.requires !== 'canManageUsers' || user.canManageUsers === true) &&
+      (item.requires !== 'isOwner' || user.isOwner === true),
   )
 }

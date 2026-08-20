@@ -10,6 +10,9 @@ import { committeesRouter } from './committees.routes.js'
 import { matrixRouter } from './matrix.routes.js'
 import { logisticsRouter } from './logistics.routes.js'
 import { attendanceRouter } from './attendance.routes.js'
+import { allocationsRouter } from './allocations.routes.js'
+import { conferenceRouter } from './conference.routes.js'
+import { ledgerRouter } from './ledger.routes.js'
 import { usersRouter } from './users.routes.js'
 import { auditRouter } from './audit.routes.js'
 import { exportsRouter } from './exports.routes.js'
@@ -33,6 +36,9 @@ apiRouter.use('/committees', committeesRouter)
 apiRouter.use('/matrix', matrixRouter)
 apiRouter.use('/logistics-requests', logisticsRouter)
 apiRouter.use('/attendance', attendanceRouter)
+apiRouter.use('/allocations', allocationsRouter)
+apiRouter.use('/conference', conferenceRouter)
+apiRouter.use('/ledger', ledgerRouter)
 apiRouter.use('/users', usersRouter)
 apiRouter.use('/audit-logs', auditRouter)
 apiRouter.use('/exports', exportsRouter)

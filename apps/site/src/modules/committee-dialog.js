@@ -11,6 +11,7 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     name: dialog.querySelector('#cdlg-name'),
     blurb: dialog.querySelector('[data-cdlg-blurb]'),
     agenda: dialog.querySelector('[data-cdlg-agenda]'),
+    blockLabel: dialog.querySelector('[data-cdlg-block-label]'),
     chair: dialog.querySelector('[data-cdlg-chair]'),
     vice: dialog.querySelector('[data-cdlg-vice]'),
     note: dialog.querySelector('[data-cdlg-note]'),
@@ -32,7 +33,9 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
 
     const icon = card.querySelector('.committee__icon')
     const tag = card.querySelector('.tag')
-    const code = text(card.querySelector('.committee__abbr'))
+    // .committee__abbr wraps both the code and the room kind, so read the code
+    // element specifically. Falls back for safety if the markup changes.
+    const code = text(card.querySelector('.committee__code') ?? card.querySelector('.committee__abbr'))
     const name = text(card.querySelector('.committee__name'))
 
     if (slots.icon) {
@@ -47,6 +50,9 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     if (slots.name) slots.name.textContent = name
     if (slots.blurb) slots.blurb.textContent = text(card.querySelector('.committee__blurb'))
     if (slots.agenda) slots.agenda.textContent = text(card.querySelector('.committee__reveal-text'))
+    if (slots.blockLabel) {
+      slots.blockLabel.textContent = text(card.querySelector('.committee__reveal-label')) || 'Agenda'
+    }
     if (slots.note) slots.note.textContent = text(card.querySelector('.committee__reveal-note'))
 
     if (slots.chair) slots.chair.textContent = item.dataset.chair || 'To be announced'

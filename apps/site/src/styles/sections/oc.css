@@ -63,6 +63,20 @@
   pointer-events: none;
 }
 
+.oc-card__media.is-missing::after {
+  display: none;
+}
+
+.oc-card__media.is-missing {
+  border-color: var(--hairline-gold);
+  transition: border-color var(--dur-base) var(--ease-house);
+}
+
+.oc-card:hover .oc-card__media.is-missing,
+.oc-card:focus-within .oc-card__media.is-missing {
+  border-color: var(--color-accent-gold);
+}
+
 .oc-card:hover .oc-card__media img,
 .oc-card:focus-within .oc-card__media img {
   filter: grayscale(0) contrast(1);

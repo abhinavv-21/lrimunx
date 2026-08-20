@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Eraser, FileClock } from 'lucide-react'
 import { useAuditLog, useClearAuditLog } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
-import { PageHeader } from '@/components/ui/PageHeader'
+import { Card, CardHeader } from '@/components/ui/Card'
 import { FilterBar, SearchField } from '@/components/ui/FilterBar'
 import { Field } from '@/components/ui/Field'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { ConfirmDialog } from '@/components/ui/Modal'
+import { CONFIRM_PHRASE, ConfirmDialog } from '@/components/ui/Modal'
+import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
 import { formatDateTime, humanise, pluralise } from '@/lib/utils'
 
@@ -32,9 +33,10 @@ const RECORD_TYPES: SelectOption[] = [
   { value: 'User', label: 'User' },
 ]
 
-export function AuditPage() {
+export function AuditLogSection() {
   const [search, setSearch] = useState('')
   const [entityType, setEntityType] = useState('')
+  const [page, setPage] = useState(1)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [clearOpen, setClearOpen] = useState(false)
 
@@ -46,16 +48,18 @@ export function AuditPage() {
     [search, entityType],
   )
 
-  const { data, isPending, isError, error, refetch } = useAuditLog(filters)
+  useEffect(() => setPage(1), [search, entityType])
+
+  const { data, isPending, isError, error, refetch } = useAuditLog(filters, page)
 
   return (
-    <>
-      <PageHeader
+    <Card>
+      <CardHeader
         title="Audit log"
         description="Every change made by an admin, and every attendance check-in, with before and after."
         actions={
           data && data.total > 0 ? (
-            <Button variant="secondary" onClick={() => setClearOpen(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setClearOpen(true)}>
               <Eraser size={16} aria-hidden />
               Clear history
             </Button>
@@ -74,7 +78,7 @@ export function AuditPage() {
       </FilterBar>
 
       {isPending ? (
-        <SkeletonRows rows={10} columns={4} />
+        <SkeletonRows rows={6} columns={4} />
       ) : isError ? (
         <ErrorState error={error} onRetry={() => void refetch()} />
       ) : data.items.length === 0 ? (
@@ -96,9 +100,11 @@ export function AuditPage() {
         />
       ) : (
         <>
-          <p className="mb-3 font-mono text-data text-ink-secondary" aria-live="polite">
-            {data.total} {data.total === 1 ? 'entry' : 'entries'}
-          </p>
+          {data.total <= data.pageSize ? (
+            <p className="mb-3 font-mono text-data text-ink-secondary" aria-live="polite">
+              {pluralise(data.total, 'entry', 'entries')}
+            </p>
+          ) : null}
 
           <ul className="flex flex-col gap-2">
             {data.items.map((entry) => {
@@ -147,6 +153,14 @@ export function AuditPage() {
               )
             })}
           </ul>
+
+          <Pagination
+            page={data.page}
+            pageSize={data.pageSize}
+            total={data.total}
+            onPageChange={setPage}
+            noun="entries"
+          />
         </>
       )}
 
@@ -160,6 +174,7 @@ export function AuditPage() {
             : ''
         }
         confirmLabel="Clear history"
+        confirmPhrase={CONFIRM_PHRASE}
         loading={clear.isPending}
         onConfirm={() => {
           clear
@@ -167,12 +182,13 @@ export function AuditPage() {
             .then((result) => {
               toast.success('History cleared', `${pluralise(result.deleted, 'entry', 'entries')} removed.`)
               setClearOpen(false)
+              setPage(1)
             })
             .catch((caught: unknown) => {
               toast.error('Could not clear history', caught instanceof Error ? caught.message : undefined)
             })
         }}
       />
-    </>
+    </Card>
   )
 }

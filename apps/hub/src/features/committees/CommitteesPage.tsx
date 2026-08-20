@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardList, Landmark, Pencil, Plus, Trash2, Trophy } from 'lucide-react'
+import { ClipboardList, Landmark, Pencil, Plus, Trash2, Trophy, Upload } from 'lucide-react'
 import { useIsAdmin } from '@/providers/AuthProvider'
 import { useToast } from '@/providers/ToastProvider'
 import { useCommittees, useDeleteCommittee, useSaveCommittee } from '@/lib/hooks'
@@ -9,9 +9,10 @@ import { Callout } from '@/components/ui/Callout'
 import { Button } from '@/components/ui/Button'
 import { Card, CapacityMeter } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
-import { ConfirmDialog, Modal } from '@/components/ui/Modal'
+import { CONFIRM_PHRASE, ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { EmptyState, ErrorState, SkeletonCards } from '@/components/ui/States'
 import { ApiError, errorMessage } from '@/lib/api'
+import { MatrixImportDialog } from './MatrixImportDialog'
 import type { Committee } from '@/types/api'
 
 function CommitteeForm({
@@ -131,6 +132,7 @@ export function CommitteesPage() {
   const isAdmin = useIsAdmin()
 
   const [formOpen, setFormOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editing, setEditing] = useState<Committee | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Committee | null>(null)
 
@@ -152,18 +154,24 @@ export function CommitteesPage() {
     <>
       <PageHeader
         title="Committees"
-        description="Rooms, seat counts and how full each one is. Open one for its delegates, requests and awards."
+        description="Rooms, seat counts and how full each one is. Open one for its delegates, country matrix, requests and awards."
         actions={
           isAdmin ? (
-            <Button
-              onClick={() => {
-                setEditing(null)
-                setFormOpen(true)
-              }}
-            >
-              <Plus size={16} aria-hidden />
-              New committee
-            </Button>
+            <>
+              <Button variant="secondary" onClick={() => setImportOpen(true)}>
+                <Upload size={16} aria-hidden />
+                Import matrix CSV
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditing(null)
+                  setFormOpen(true)
+                }}
+              >
+                <Plus size={16} aria-hidden />
+                New committee
+              </Button>
+            </>
           ) : null
         }
       />
@@ -260,6 +268,7 @@ export function CommitteesPage() {
       {isAdmin ? (
         <>
           <CommitteeForm open={formOpen} onOpenChange={setFormOpen} committee={editing} />
+          <MatrixImportDialog open={importOpen} onOpenChange={setImportOpen} />
           <ConfirmDialog
             open={pendingDelete !== null}
             onOpenChange={(open) => !open && setPendingDelete(null)}
@@ -276,6 +285,7 @@ export function CommitteesPage() {
                   ? `${pendingDelete.filledSeats} ${pendingDelete.filledSeats === 1 ? 'delegate is' : 'delegates are'} allocated to ${pendingDelete.code} — ${pendingDelete.name}, so deleting it will be refused. Move them to another committee in Allocations first.`
                   : `Delete ${pendingDelete.code} — ${pendingDelete.name}? Its country matrix and awards go with it. This cannot be undone.`
             }
+            confirmPhrase={CONFIRM_PHRASE}
             onConfirm={() => void confirmDelete()}
             loading={remove.isPending}
           />

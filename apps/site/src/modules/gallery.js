@@ -1,3 +1,16 @@
+/**
+ * Flip to true when the photographs are actually in
+ * assets/past-galleries/edition-01/01.jpg through edition-09/01.jpg.
+ *
+ * While it is false the section renders the edition marquee and a link to
+ * Instagram, and the grid and the per-edition filters are not built at all.
+ * With it true and the files absent, the section is nine broken plates and ten
+ * filter buttons that each resolve to a single broken plate, under a live status
+ * line announcing "Showing 1 item from edition III." That reads as a build
+ * failure rather than as work in progress.
+ */
+const PHOTOS_PUBLISHED = false
+
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX']
 
 const RATIOS = ['4 / 5', '3 / 2', '1 / 1', '4 / 3', '5 / 4', '3 / 4']
@@ -10,43 +23,39 @@ const PHOTOS = ROMAN.map((roman, index) => {
     editionIndex: index + 1,
     src: `${import.meta.env.BASE_URL}assets/past-galleries/${folder}/01.jpg`,
     ratio: RATIOS[index % RATIOS.length],
-    alt: `LRI Model UN edition ${roman}. PLACEHOLDER alt text.`,
+    alt: `A moment from LRI Model UN edition ${roman}.`,
     caption: 'Conference floor',
   }
 })
 
-const QUOTES = [
-  {
-    type: 'quote',
-    edition: 'IX',
-    editionIndex: 9,
-    text: 'Delegate review to be added.',
-    name: 'Name to be announced',
-    meta: 'Committee to be announced · Edition IX',
-  },
-  {
-    type: 'quote',
-    edition: 'VII',
-    editionIndex: 7,
-    text: 'Delegate review to be added.',
-    name: 'Name to be announced',
-    meta: 'Committee to be announced · Edition VII',
-  },
-  {
-    type: 'quote',
-    edition: 'IV',
-    editionIndex: 4,
-    text: 'Delegate review to be added.',
-    name: 'Name to be announced',
-    meta: 'Committee to be announced · Edition IV',
-  },
-]
+/**
+ * Delegate testimonials. Empty on purpose: the three that used to sit here were
+ * all placeholders reading "Delegate review to be added", and three identical
+ * blank cards read worse than none at all.
+ *
+ * To bring them back, add entries in this shape and they will be spliced back
+ * into the grid at the positions below:
+ *   { type: 'quote', edition: 'IX', editionIndex: 9,
+ *     text: '...', name: '...', meta: 'Committee · Edition IX' }
+ *
+ * Only ship a real quote from a real delegate, with their permission.
+ */
+const QUOTES = []
+
+// Quotes are spliced between photographs rather than grouped, so the grid
+// keeps its rhythm. Positions are applied back to front so each index still
+// refers to the original photo order, and any that overshoot a short list are
+// skipped rather than appended in the wrong place.
+const QUOTE_POSITIONS = [2, 7, 11]
 
 const ITEMS = (() => {
   const out = [...PHOTOS]
-  out.splice(2, 0, QUOTES[0])
-  out.splice(7, 0, QUOTES[1])
-  out.splice(11, 0, QUOTES[2])
+
+  QUOTE_POSITIONS.forEach((position, index) => {
+    const quote = QUOTES[index]
+    if (quote && position <= out.length) out.splice(position, 0, quote)
+  })
+
   return out
 })()
 
@@ -57,6 +66,11 @@ export function initGallery({ gsap, ScrollTrigger, reduced }) {
   if (!root) return
 
   buildMarquee()
+
+  if (!PHOTOS_PUBLISHED) {
+    root.append(renderPendingArchive())
+    return
+  }
 
   const filters = renderFilters()
   const grid = renderGrid()
@@ -239,4 +253,31 @@ function renderGrid() {
   })
 
   return grid
+}
+
+/**
+ * The archive section without photographs. The marquee above it already carries
+ * the proof that matters (ten editions, nine of them past), so this adds the one
+ * place the photographs actually are today rather than nine empty frames.
+ */
+function renderPendingArchive() {
+  const wrap = document.createElement('div')
+  wrap.className = 'gallery__pending'
+
+  wrap.innerHTML = `
+    <p class="gallery__pending-note">
+      Photographs from the first nine editions are being collected and scanned.
+    </p>
+    <a
+      class="gallery__pending-link"
+      href="https://www.instagram.com/lrimunx/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      See past editions on Instagram
+      <span aria-hidden="true">@lrimunx</span>
+    </a>
+  `
+
+  return wrap
 }

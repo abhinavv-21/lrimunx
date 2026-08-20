@@ -13,6 +13,7 @@ import './styles/sections/payment.css'
 import { initNav } from './modules/nav.js'
 import { initFooter } from './modules/footer.js'
 import { initRegisterPage } from './modules/register-page.js'
+import { COMMITTEES } from './data/committees.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -60,10 +61,19 @@ const ctx = {
   },
 }
 
+const NUMBER_WORDS = [
+  'No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six',
+  'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
+]
+
 function boot() {
   initNav(ctx)
   initFooter(ctx)
   initRegisterPage(ctx)
+
+  // Keeps the hint honest when a committee is added to src/data/committees.js.
+  const count = document.querySelector('[data-committee-count]')
+  if (count) count.textContent = NUMBER_WORDS[COMMITTEES.length] ?? String(COMMITTEES.length)
 
   initAnchors()
   initReveals()

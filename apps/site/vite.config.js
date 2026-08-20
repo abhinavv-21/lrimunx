@@ -2,7 +2,10 @@ import { defineConfig } from 'vite'
 import { cpSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const RUNTIME_ONLY = ['oc', 'past-galleries']
+// Copied verbatim rather than processed by Vite, because these are referenced
+// by paths built at runtime, not by tags in the HTML. 'icons' joined the list
+// when the committee cards moved from hardcoded markup to src/data/committees.js.
+const RUNTIME_ONLY = ['oc', 'past-galleries', 'icons']
 function copyAssets() {
   return {
     name: 'lri-copy-assets',

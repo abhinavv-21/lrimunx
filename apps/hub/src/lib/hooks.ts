@@ -331,10 +331,16 @@ export function useDeleteRegistration() {
   })
 }
 
-export function useAuditLog(filters: { entityType?: string; action?: string; search?: string } = {}) {
+const AUDIT_PAGE_SIZE = 50
+
+export function useAuditLog(
+  filters: { entityType?: string; action?: string; search?: string } = {},
+  page = 1,
+) {
   return useQuery({
-    queryKey: ['audit', filters],
-    queryFn: () => apiFetch<Paginated<AuditEntry>>(`/audit-logs${qs({ ...filters, pageSize: 100 })}`),
+    queryKey: ['audit', filters, page],
+    queryFn: () =>
+      apiFetch<Paginated<AuditEntry>>(`/audit-logs${qs({ ...filters, page, pageSize: AUDIT_PAGE_SIZE })}`),
     placeholderData: keepPreviousData,
   })
 }

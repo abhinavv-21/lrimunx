@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiFetch, setSessionExpiredHandler, tokens } from '@/lib/api'
 import { clearCachedData } from '@/lib/offline'
-import type { AuthUser, LoginResponse, Role } from '@/types/api'
+import type { AuthUser, LoginResponse } from '@/types/api'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -10,8 +10,6 @@ interface AuthContextValue {
   sessionExpired: boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
-
-  can: (...roles: Role[]) => boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -89,11 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionExpired(false)
   }, [])
 
-  const can = useCallback((...roles: Role[]) => (user ? roles.includes(user.role) : false), [user])
-
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, sessionExpired, login, logout, can }),
-    [user, status, sessionExpired, login, logout, can],
+    () => ({ user, status, sessionExpired, login, logout }),
+    [user, status, sessionExpired, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -112,4 +108,8 @@ export function useIsAdmin(): boolean {
 export function useCanManageUsers(): boolean {
   const { user } = useAuth()
   return user?.role === 'ADMIN' && user.canManageUsers === true
+}
+
+export function useIsOwner(): boolean {
+  return useAuth().user?.isOwner === true
 }

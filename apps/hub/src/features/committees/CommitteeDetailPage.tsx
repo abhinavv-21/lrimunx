@@ -16,6 +16,7 @@ import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
 import { RequestCard, isBlocking } from '@/features/logistics/RequestCard'
 import { RequestForm } from '@/features/logistics/RequestForm'
 import { AwardsSection } from './AwardsSection'
+import { CountryMatrixSection } from './CountryMatrixSection'
 import { ApiError } from '@/lib/api'
 import type { CommitteeSeat, LogisticsRequest, RequestStatus } from '@/types/api'
 
@@ -244,6 +245,13 @@ export function CommitteeDetailPage() {
             />
           )}
         </Card>
+
+        <CountryMatrixSection
+          committeeId={data.id}
+          committeeCode={data.code}
+          totalSeats={data.totalSeats}
+          isAdmin={isAdmin}
+        />
 
         <Card>
           <CardHeader

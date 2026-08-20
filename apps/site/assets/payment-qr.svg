@@ -8,9 +8,10 @@
 
   TO REPLACE: overwrite THIS FILE — assets/payment-qr.svg — with the real code.
   If the real code is a PNG or JPEG rather than an SVG, drop it in as
-  assets/payment-qr.png and change the one `src` in register.html marked
-  "PLACEHOLDER QR". Nothing else needs to change: the plate around it is a
-  fixed square and the image is object-fit: contain.
+  assets/payment-qr.png and update the `src`, `alt` and the caption beneath it
+  in register.html (search that file for "payment-qr"). Nothing else needs to
+  change: the plate around it is a fixed square and the image is
+  object-fit: contain.
 
   Hex values are hardcoded here because an <img> cannot read CSS custom
   properties. They are the tokens: ink #2B0A21, magenta #B41884, paper #FAF7F3.
