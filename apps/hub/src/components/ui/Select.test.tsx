@@ -152,3 +152,54 @@ describe('ARIA wiring and focus', () => {
     expect(screen.getByRole('combobox', { name: 'Country' })).toHaveTextContent('Atlantis')
   })
 })
+
+describe('scrolling the menu', () => {
+  function wheelOver(node: Element): WheelEvent {
+    const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 120 })
+    node.dispatchEvent(event)
+    return event
+  }
+
+  function InDialog() {
+    const [open, setOpen] = useState(true)
+    return (
+      <Modal open={open} onOpenChange={setOpen} title="Add delegate" holdsInput>
+        <Controlled />
+      </Modal>
+    )
+  }
+
+  // Radix mounts react-remove-scroll with the dialog, and it cancels every
+  // wheel event that lands outside the panel. The menu is portaled to the
+  // body, so the lock counted it as outside and ate the scroll.
+  it('lets the wheel through inside a dialog', async () => {
+    const user = userEvent.setup()
+    render(<InDialog />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+    expect(wheelOver(screen.getByRole('listbox')).defaultPrevented).toBe(false)
+  })
+
+  it('lets the wheel through outside a dialog', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+
+    await user.click(screen.getByRole('combobox', { name: 'Committee' }))
+    expect(wheelOver(screen.getByRole('listbox')).defaultPrevented).toBe(false)
+  })
+
+  // Pressing the scrollbar is a press on the list, not on a row. Without the
+  // guard the trigger blurred, the menu closed, and the drag hit nothing.
+  it('stays open when the scrollbar is pressed', async () => {
+    const user = userEvent.setup()
+    render(<Controlled />)
+
+    const trigger = screen.getByRole('combobox', { name: 'Committee' })
+    await user.click(trigger)
+
+    await user.pointer({ target: screen.getByRole('listbox'), keys: '[MouseLeft>]' })
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+    expect(document.activeElement).toBe(trigger)
+  })
+})

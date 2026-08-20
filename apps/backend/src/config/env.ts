@@ -61,14 +61,32 @@ export type Env = z.infer<typeof envSchema> & {
   emailEnabled: boolean
 }
 
+/**
+ * Thrown when the environment is unusable.
+ *
+ * This used to be a `process.exit(1)` here, which is correct for a server that
+ * owns its process and wrong anywhere it is only a guest. On a serverless host
+ * it kills the worker part-way through the import, so the caller gets an opaque
+ * invocation failure rather than a message naming the variable. Throwing lets
+ * the importer decide: `index.ts` still exits, `api/index.ts` answers 500 with
+ * the reason.
+ */
+export class EnvError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'EnvError'
+  }
+}
+
 function loadEnv(): Env {
   const parsed = envSchema.safeParse(process.env)
 
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n')
 
-    console.error(`\nEnvironment configuration is invalid:\n${issues}\n\nCopy .env.example to .env and fill in the missing values.\n`)
-    process.exit(1)
+    throw new EnvError(
+      `Environment configuration is invalid:\n${issues}\n\nCopy .env.example to .env and fill in the missing values.`,
+    )
   }
 
   const pushEnabled = Boolean(parsed.data.VAPID_PUBLIC_KEY && parsed.data.VAPID_PRIVATE_KEY)
