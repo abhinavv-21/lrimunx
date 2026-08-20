@@ -116,7 +116,22 @@ export function PaymentFields({
           <Select
             id={id}
             value={tier}
-            onChange={(value) => setTier(value as PriceTier)}
+            onChange={(value) => {
+              const next = value as PriceTier
+              const previousRate = rates?.[tier]
+              setTier(next)
+
+              // Follow the tier unless the amount was deliberately something
+              // else. Switching to Discount while the box still reads the Base
+              // figure is a number nobody chose, and it goes straight into the
+              // books. An amount that never matched the old rate was typed on
+              // purpose, so leave it alone.
+              const nextRate = rates?.[next]
+              if (nextRate === undefined) return
+              if (amount === '' || Number(amount) === previousRate) {
+                setAmount(String(nextRate))
+              }
+            }}
             options={options}
           />
         )}

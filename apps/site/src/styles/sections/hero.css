@@ -52,11 +52,11 @@
   position: absolute;
   z-index: -1;
 
-  inset-block-end: 6%;
-  inset-inline-end: -3%;
-  inline-size: clamp(9rem, 15vw, 15rem);
+  inset-block-end: -6%;
+  inset-inline-end: -6%;
+  inline-size: clamp(16rem, 30vw, 30rem);
   block-size: auto;
-  opacity: 0.05;
+  opacity: 0.09;
   pointer-events: none;
   user-select: none;
 }

@@ -356,9 +356,11 @@
 .committee__reveal {
   position: absolute;
   inset-inline: 0;
-  /* Clears the footer rather than covering it. Hovering a card used to hide the
-     seat count, the level tag and the Details button underneath this panel. */
-  inset-block-end: 7rem;
+  /* Sits above the footer rather than burying the seat count, the level tag
+     and the Details button. Every transform below has to add this back, or the
+     panel cannot travel far enough to leave the card. */
+  --reveal-lift: 7rem;
+  inset-block-end: var(--reveal-lift);
   max-block-size: 42%;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -366,7 +368,7 @@
   background-color: var(--color-ink);
   color: var(--color-text-inverse);
   border-block-start: 1px solid var(--hairline-gold);
-  transform: translate3d(0, 101%, 0);
+  transform: translate3d(0, calc(101% + var(--reveal-lift)), 0);
   transition: transform var(--dur-slow) var(--ease-expo);
 }
 
@@ -490,7 +492,7 @@
 
 @media (hover: none) {
   .committee__reveal {
-    transform: translate3d(0, calc(100% - var(--reveal-peek)), 0);
+    transform: translate3d(0, calc(100% + var(--reveal-lift) - var(--reveal-peek)), 0);
   }
 
   .committee__foot {

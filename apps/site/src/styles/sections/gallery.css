@@ -300,3 +300,19 @@
   border-color: var(--accent-on-ground);
   color: var(--accent-on-ground);
 }
+
+/* The section heading is indented to grid column 2 at wide sizes (base.css,
+   .section__head), while .gallery__body is a plain shell starting at the
+   gutter. That left the pending block sitting ~114px left of the heading it
+   belongs to. Put it on the same grid so the two line up. */
+@media (min-width: 1024px) {
+  .gallery__body:has(.gallery__pending) {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .gallery__pending {
+    grid-column: 2 / 10;
+  }
+}

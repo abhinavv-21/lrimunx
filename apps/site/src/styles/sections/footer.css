@@ -130,17 +130,12 @@
 }
 
 .footer__wordmark-x {
-  display: inline-grid;
-  place-items: center;
-  inline-size: 1.5em;
-  block-size: 1.5em;
-  margin-inline-start: 0.35em;
-  vertical-align: -0.28em;
-  font-size: 0.72em;
-  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  display: inline-block;
+  margin-inline-start: 0.16em;
+  font-size: 1.06em;
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
   letter-spacing: 0;
   color: var(--color-accent-gold);
-  border: 1px solid rgb(var(--rgb-gold) / 0.55);
   transition:
     background-color var(--dur-base) var(--ease-house),
     color var(--dur-base) var(--ease-house),
