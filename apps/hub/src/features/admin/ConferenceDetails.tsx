@@ -152,7 +152,7 @@ export function ConferenceDetails() {
                 id={id}
                 value={form.venue}
                 onChange={(event) => set('venue', event.target.value)}
-                placeholder="Lucknow Regional Institute, Gomti Nagar"
+                placeholder="LRI School, Kalanki, Kathmandu"
               />
             )}
           </Field>
@@ -164,7 +164,7 @@ export function ConferenceDetails() {
                 type="email"
                 value={form.contactEmail}
                 onChange={(event) => set('contactEmail', event.target.value)}
-                placeholder="secretariat@lrimun.org"
+                placeholder="mun@lrischool.edu.np"
                 className="font-mono"
               />
             )}

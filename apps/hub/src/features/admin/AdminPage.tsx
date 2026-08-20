@@ -45,19 +45,19 @@ export function AdminPage() {
       </nav>
 
       <div className="flex flex-col gap-8">
-        <div id="conference" className="scroll-mt-6">
+        <div id="conference" className="scroll-mt-24">
           <ConferenceDetails />
         </div>
-        <div id="prices" className="scroll-mt-6">
+        <div id="prices" className="scroll-mt-24">
           <PricingSection />
         </div>
-        <div id="allocation-emails" className="scroll-mt-6">
+        <div id="allocation-emails" className="scroll-mt-24">
           <AnnouncementSection />
         </div>
-        <div id="audit-log" className="scroll-mt-6">
+        <div id="audit-log" className="scroll-mt-24">
           <AuditLogSection />
         </div>
-        <div id="danger-zone" className="scroll-mt-6">
+        <div id="danger-zone" className="scroll-mt-24">
           <DangerZone />
         </div>
       </div>
