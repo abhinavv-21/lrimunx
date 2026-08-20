@@ -13,11 +13,12 @@ import type { ConferenceDay, ConferenceMode } from '@/types/api'
 /**
  * The day a screen opens on. Mirrors the server's own default: the active day
  * while the conference is running, day 1 before it starts, because a rehearsal
- * check-in has to land somewhere.
+ * check-in has to land somewhere, and the day it finished on once it has ended,
+ * because that is the day still being argued about the morning after.
  */
 export function defaultDay(mode: ConferenceMode | undefined): number {
   if (!mode) return 1
-  return mode.state === 'RUNNING' ? mode.activeDay : 1
+  return mode.state === 'PREPARING' ? 1 : mode.activeDay
 }
 
 /** "21 Nov" — short enough for a tab on a 390px screen. */

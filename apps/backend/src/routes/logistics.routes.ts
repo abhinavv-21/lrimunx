@@ -5,7 +5,7 @@ import { ApiError } from '../lib/errors.js'
 import { auditRequest } from '../lib/audit.js'
 import { notifyAdmins } from '../lib/push.js'
 import { computePriority, type PriorityLevel } from '../lib/logistics.js'
-import { defaultDay, readConferenceMode } from '../lib/conference.js'
+import { assertConferenceOpen, defaultDay, readConferenceMode } from '../lib/conference.js'
 import { asyncHandler, validate } from '../middleware/validate.js'
 import { currentUser } from '../middleware/auth.js'
 import { requireAdmin } from '../middleware/rbac.js'
@@ -180,6 +180,7 @@ logisticsRouter.post(
     // no day: pinning three weeks of pre-conference errands to day 1 would bury
     // the first morning's queue under them.
     const mode = await readConferenceMode()
+    assertConferenceOpen(mode)
     const day = body.day ?? (mode.state === 'RUNNING' ? defaultDay(mode) : null)
 
     if (committeeId) {
@@ -263,6 +264,9 @@ logisticsRouter.patch(
     const body = req.body as { status?: RequestStatus; committeeId?: string | null; day?: number | null }
     const actor = currentUser(req)
 
+    const mode = await readConferenceMode()
+    assertConferenceOpen(mode)
+
     const before = await prisma.logisticsReq.findUnique({ where: { id }, select: requestView })
     if (!before) throw ApiError.notFound('Logistics request not found')
 
@@ -287,7 +291,6 @@ logisticsRouter.patch(
       payloadAfter: after,
     })
 
-    const mode = await readConferenceMode()
     res.json(withPriority(after, mode.state === 'RUNNING', new Date()))
   }),
 )
@@ -298,6 +301,8 @@ logisticsRouter.delete(
   validate(uuidParam, 'params'),
   asyncHandler(async (req, res) => {
     const { id } = req.params as { id: string }
+
+    assertConferenceOpen(await readConferenceMode())
 
     const before = await prisma.logisticsReq.findUnique({ where: { id }, select: requestView })
     if (!before) throw ApiError.notFound('Logistics request not found')

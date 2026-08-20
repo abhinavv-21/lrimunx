@@ -75,6 +75,10 @@ describe('which day a screen opens on', () => {
     expect(defaultDay(mode('PREPARING', 2))).toBe(1)
   })
 
+  it('stays on the day the conference finished on once it has ended', () => {
+    expect(defaultDay(mode('ENDED', 3))).toBe(3)
+  })
+
   it('falls back to day 1 while the conference state is still loading', () => {
     expect(defaultDay(undefined)).toBe(1)
   })

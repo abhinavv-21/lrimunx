@@ -106,6 +106,27 @@ export function useStartConference() {
   })
 }
 
+/**
+ * Ending the conference and reopening it are the owner's, and separate
+ * mutations rather than one toggle, because the confirmation each needs to ask
+ * is a different question.
+ */
+export function useEndConference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<ConferenceMode>('/conference/end', { method: 'POST' }),
+    onSuccess: (mode) => conferenceChanged(queryClient, mode),
+  })
+}
+
+export function useReopenConference() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<ConferenceMode>('/conference/reopen', { method: 'POST' }),
+    onSuccess: (mode) => conferenceChanged(queryClient, mode),
+  })
+}
+
 export function useSetConferenceDay() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -581,6 +602,10 @@ export function useRecordPayment() {
       invalidateRegistrations()
 
       void queryClient.invalidateQueries({ queryKey: ['ledger'] })
+      // A delegate carries what their registration was charged, so the same
+      // payment can be recorded from the delegate form. Without this the list
+      // behind it and the form still open on top of it keep the old figure.
+      void queryClient.invalidateQueries({ queryKey: ['delegates'] })
     },
   })
 }

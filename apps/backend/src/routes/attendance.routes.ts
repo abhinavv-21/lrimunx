@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import type { PrismaTransaction } from '../lib/prisma.js'
 import { ApiError } from '../lib/errors.js'
 import { recordAudit } from '../lib/audit.js'
-import { CONFERENCE_DAYS, defaultDay, readConferenceMode } from '../lib/conference.js'
+import { CONFERENCE_DAYS, assertConferenceOpen, defaultDay, readConferenceMode } from '../lib/conference.js'
 import { runSerializable } from '../lib/transaction.js'
 import { asyncHandler, validate } from '../middleware/validate.js'
 import { currentUser } from '../middleware/auth.js'
@@ -113,6 +113,7 @@ attendanceRouter.post(
     const actor = currentUser(req)
 
     const mode = await readConferenceMode()
+    assertConferenceOpen(mode)
     const day = requested ?? defaultDay(mode)
 
     // Serializable: two tables move together here — the day row and the mirror
@@ -183,6 +184,7 @@ attendanceRouter.post(
     const actor = currentUser(req)
 
     const mode = await readConferenceMode()
+    assertConferenceOpen(mode)
     const day = requested ?? defaultDay(mode)
 
     const result = await runSerializable(async (tx) => {

@@ -43,7 +43,10 @@ const TIER_COLUMNS: Array<ColumnDef<TierRow, unknown>> = [
     header: 'Tier',
     accessorFn: (row) => row.tier,
     cell: ({ row }) => (
-      <div className="min-w-0">
+      // Capped at max-w-cell so the tier meaning cannot claim the surplus width
+      // an auto-layout table hands to whichever column asks for the most. Left
+      // uncapped it wraps to one long line and squeezes the five money columns.
+      <div className="min-w-0 max-w-cell">
         <span className="font-medium text-ink">{TIER_LABELS[row.original.tier]}</span>
         <span className="block text-body-sm text-ink-secondary">{TIER_MEANING[row.original.tier]}</span>
       </div>
@@ -138,7 +141,13 @@ function RegistrationIncome({ summary }: { summary: LedgerSummary }) {
         }
       />
 
-      <dl className="mt-4 grid gap-3 border-t border-edge pt-4 sm:grid-cols-3">
+      {/*
+        Wrapping row rather than sm:grid-cols-3: a Tailwind breakpoint reads the
+        viewport, not this card, so a three-column rule stays on however narrow
+        the card's own track gets. Wrapping keys off the space that is actually
+        here.
+      */}
+      <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-edge pt-4">
         <div>
           <dt className="text-label uppercase text-ink-secondary">Collected</dt>
           <dd className="mt-1"><Money amount={registrations.collected} /></dd>
@@ -179,7 +188,7 @@ function LedgerByCategory({ summary }: { summary: LedgerSummary }) {
           cheque and it appears here.
         </p>
       ) : (
-        <dl className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-4">
+        <dl className="grid max-w-prose grid-cols-[minmax(0,1fr)_auto_auto] gap-x-4">
           <div className="border-b border-edge pb-2 text-label uppercase text-ink-secondary">Category</div>
           <div className="border-b border-edge pb-2 text-right text-label uppercase text-ink-secondary">In</div>
           <div className="border-b border-edge pb-2 text-right text-label uppercase text-ink-secondary">Out</div>
@@ -249,9 +258,16 @@ function BudgetSummary() {
         </Callout>
       ) : null}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <LedgerByCategory summary={data} />
+      {/*
+        Registration income takes the wide track: it carries a six-column table
+        whose columns will not compress below about 660px, while the category
+        list beside it is three short columns. The split waits for 2xl because
+        below that the wide track is still too narrow for the table — 523px at
+        1280 — and a full-width card beats a table scrolling inside a card.
+      */}
+      <div className="mt-6 grid gap-6 2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <RegistrationIncome summary={data} />
+        <LedgerByCategory summary={data} />
       </div>
     </>
   )

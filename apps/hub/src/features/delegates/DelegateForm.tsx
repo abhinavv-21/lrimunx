@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Callout } from '@/components/ui/Callout'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,7 @@ import { useCommitteePlacementOptions, useCountryOptions } from '@/lib/selectOpt
 import { errorMessage } from '@/lib/api'
 import { useCommittees, useCreateDelegate, useUpdateDelegate } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
+import { PaymentFields } from '@/features/registrations/PaymentFields'
 import type { Delegate, DelegateInput } from '@/types/api'
 
 type FormState = {
@@ -58,6 +59,11 @@ export function DelegateForm({
 }) {
   const [form, setForm] = useState<FormState>(BLANK)
   const [error, setError] = useState<string | null>(null)
+
+  // The delegate fields and the payment fields are two forms saving to two
+  // endpoints, so they cannot nest. The submit button lives outside its form
+  // and points back at it by id.
+  const formId = useId()
 
   const create = useCreateDelegate()
   const update = useUpdateDelegate()
@@ -142,7 +148,7 @@ export function DelegateForm({
       description={delegate ? delegate.email : undefined}
       holdsInput
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {error ? (
           <Callout tone="danger" alert>
             {error}
@@ -274,16 +280,44 @@ export function DelegateForm({
             )}
           </Field>
         </div>
-
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancel
-          </Button>
-          <Button type="submit" loading={saving}>
-            {delegate ? 'Save changes' : 'Add delegate'}
-          </Button>
-        </div>
       </form>
+
+      {/*
+        The payment lives on the registration, not the delegate: PATCH
+        /delegates/:id will not accept it, and POST /registrations/:id/payment
+        is what writes it. So this is a second form saving to a second endpoint,
+        sitting outside the delegate form rather than inside it.
+      */}
+      <section className="mt-6 border-t border-edge pt-5">
+        <h3 className="text-label uppercase text-ink-secondary">Payment</h3>
+
+        {delegate?.registration ? (
+          <>
+            <p className="mt-1 max-w-prose text-body-sm text-ink-secondary">
+              Against registration {delegate.registration.reference}. Recording it saves on its own,
+              straight away, and feeds the budget. The rest of this form still needs saving separately.
+            </p>
+            <div className="mt-4">
+              <PaymentFields payable={delegate.registration} payerName={delegate.fullName} />
+            </div>
+          </>
+        ) : (
+          <p className="mt-1 max-w-prose text-body-sm text-ink-secondary">
+            {delegate
+              ? 'This delegate was added by hand rather than through a registration, so there is no charge to record against them.'
+              : 'A payment is recorded against the registration a delegate came in through. One added here has none, so there is nothing to charge.'}
+          </p>
+        )}
+      </section>
+
+      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={saving}>
+          Cancel
+        </Button>
+        <Button type="submit" form={formId} loading={saving}>
+          {delegate ? 'Save changes' : 'Add delegate'}
+        </Button>
+      </div>
     </Modal>
   )
 }

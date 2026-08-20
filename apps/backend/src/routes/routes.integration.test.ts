@@ -1462,6 +1462,70 @@ describe.skipIf(!boot.ready)('API integration', () => {
       ).toBe(403)
     })
 
+    it('ends the conference, freezes the record, and lets the owner reopen it', async () => {
+      // Picks up from the test above: RUNNING, on day 2.
+      const notOwner = await api.request('post', '/api/v1/conference/end', { token: adminToken }).send({})
+      expect(notOwner.status).toBe(403)
+      expect((notOwner.body as ApiErrorBody).error).toMatch(/owner/i)
+
+      await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: true } })
+      try {
+        const ended = await api.request('post', '/api/v1/conference/end', { token: adminToken }).send({})
+        expect(ended.status).toBe(200)
+        expect(ended.body).toMatchObject({ state: 'ENDED', activeDay: 2 })
+
+        // The state has to come back out of Setting as ENDED on a fresh read,
+        // not collapse to PREPARING the way an unrecognised value would.
+        const reread = await api.request('get', '/api/v1/conference', { token: contributorToken })
+        expect(reread.body).toMatchObject({ state: 'ENDED', activeDay: 2 })
+
+        const checkIn = await api
+          .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+          .send({ delegateId: fixtures.delegateId, day: 1, status: AttendanceStatus.CHECKED_IN })
+        expect(checkIn.status).toBe(409)
+        expect((checkIn.body as ApiErrorBody).error).toMatch(/conference has ended/i)
+
+        const filed = await api
+          .request('post', '/api/v1/logistics-requests', { token: contributorToken })
+          .send({
+            title: `${NS.displayName}Chairs back to the hall`,
+            category: 'LOGISTICS',
+            description: 'The forty chairs borrowed from the library have to go back tomorrow.',
+          })
+        expect(filed.status).toBe(409)
+        expect((filed.body as ApiErrorBody).error).toMatch(/read-only/i)
+
+        // Reading stays open, because the record is the point of keeping it.
+        expect(
+          (await api.request('get', '/api/v1/attendance/summary', { token: contributorToken })).status,
+        ).toBe(200)
+
+        const dayMove = await api
+          .request('post', '/api/v1/conference/day', { token: adminToken })
+          .send({ day: 1 })
+        expect(dayMove.status).toBe(409)
+
+        const reopened = await api
+          .request('post', '/api/v1/conference/reopen', { token: adminToken })
+          .send({})
+        expect(reopened.status).toBe(200)
+        expect(reopened.body).toMatchObject({ state: 'RUNNING', activeDay: 2 })
+
+        const again = await api
+          .request('post', '/api/v1/attendance/check-in', { token: contributorToken })
+          .send({ delegateId: fixtures.delegateId, day: 1, status: AttendanceStatus.ABSENT })
+        expect(again.status).toBe(200)
+
+        const nothingToReopen = await api
+          .request('post', '/api/v1/conference/reopen', { token: adminToken })
+          .send({})
+        expect(nothingToReopen.status).toBe(409)
+        expect((nothingToReopen.body as ApiErrorBody).error).toMatch(/has not ended/i)
+      } finally {
+        await prisma.user.update({ where: { id: fixtures.adminId }, data: { isOwner: false } })
+      }
+    })
+
     it('sorts the logistics queue by the computed priority', async () => {
       const response = await api.request(
         'get',

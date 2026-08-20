@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, Globe2, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, Globe2, Plus, Trash2, Upload } from 'lucide-react'
 import { useAddMatrixCountry, useMatrix, useRemoveMatrixCountry } from '@/lib/hooks'
 import { useToast } from '@/providers/ToastProvider'
 import { ApiError, errorMessage } from '@/lib/api'
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Field'
 import { EmptyState, ErrorState, SkeletonRows } from '@/components/ui/States'
+import { CommitteeMatrixImportDialog } from './CommitteeMatrixImportDialog'
+import { MatrixImportDialog } from './MatrixImportDialog'
 import { cn } from '@/lib/utils'
 
 export function CountryMatrixSection({
@@ -21,6 +23,8 @@ export function CountryMatrixSection({
   isAdmin: boolean
 }) {
   const [adding, setAdding] = useState('')
+  const [scopedImportOpen, setScopedImportOpen] = useState(false)
+  const [sheetImportOpen, setSheetImportOpen] = useState(false)
 
   const { data, isPending, isError, error, refetch } = useMatrix()
   const add = useAddMatrixCountry()
@@ -93,7 +97,7 @@ export function CountryMatrixSection({
               title={`No matrix for ${committeeCode}`}
               description={
                 isAdmin
-                  ? 'Add the countries one at a time below, or import the whole sheet from the committees list — one CSV covers every room at once.'
+                  ? `Add the countries one at a time below, or paste the whole list for ${committeeCode} with “Import this committee”. “Import the whole sheet” takes one CSV covering every room at once.`
                   : 'The secretariat has not fixed the countries for this room, so any country can be allocated to it.'
               }
             />
@@ -132,33 +136,56 @@ export function CountryMatrixSection({
           )}
 
           {isAdmin ? (
-            <div className="mt-3 flex gap-2">
-              <Input
-                value={adding}
-                onChange={(event) => setAdding(event.target.value)}
-                aria-label={`Add a country to ${committeeCode}`}
-                placeholder={`Add a country to ${committeeCode}`}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    void handleAdd()
-                  }
-                }}
-              />
-              <Button
-                variant="secondary"
-                onClick={() => void handleAdd()}
-                disabled={!adding.trim()}
-                loading={add.isPending}
-                className="shrink-0"
-              >
-                <Plus size={16} aria-hidden />
-                Add
-              </Button>
-            </div>
+            <>
+              <div className="mt-3 flex gap-2">
+                <Input
+                  value={adding}
+                  onChange={(event) => setAdding(event.target.value)}
+                  aria-label={`Add a country to ${committeeCode}`}
+                  placeholder={`Add a country to ${committeeCode}`}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      void handleAdd()
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => void handleAdd()}
+                  disabled={!adding.trim()}
+                  loading={add.isPending}
+                  className="shrink-0"
+                >
+                  <Plus size={16} aria-hidden />
+                  Add
+                </Button>
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setScopedImportOpen(true)}>
+                  <Upload size={16} aria-hidden />
+                  Import this committee
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSheetImportOpen(true)}>
+                  Import the whole sheet
+                </Button>
+              </div>
+            </>
           ) : null}
         </>
       )}
+
+      {isAdmin ? (
+        <>
+          <CommitteeMatrixImportDialog
+            open={scopedImportOpen}
+            onOpenChange={setScopedImportOpen}
+            committeeCode={committeeCode}
+          />
+          <MatrixImportDialog open={sheetImportOpen} onOpenChange={setSheetImportOpen} />
+        </>
+      ) : null}
     </Card>
   )
 }

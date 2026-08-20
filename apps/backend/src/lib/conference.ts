@@ -1,4 +1,5 @@
 import { PriceTier } from '@prisma/client'
+import { ApiError } from './errors.js'
 import { prisma } from './prisma.js'
 import type { PrismaTransaction } from './prisma.js'
 
@@ -23,7 +24,17 @@ export const CONFERENCE_DAYS = [
 export const FIRST_DAY = 1
 export const LAST_DAY = CONFERENCE_DAYS.length
 
-export type ConferenceState = 'PREPARING' | 'RUNNING'
+/**
+ * PREPARING before the doors open, RUNNING for the three days, ENDED once the
+ * secretariat closes it.
+ *
+ * The path through is PREPARING → RUNNING → ENDED, and back from ENDED to
+ * RUNNING through /conference/reopen, which is the owner's to do. There is no
+ * way back to PREPARING short of a reset: "we have not started" is a claim
+ * about a conference with no check-ins behind it, and once there are, saying it
+ * again would be a lie the hub told on every screen.
+ */
+export type ConferenceState = 'PREPARING' | 'RUNNING' | 'ENDED'
 
 export const PRICE_TIERS: readonly PriceTier[] = [
   PriceTier.BASE,
@@ -79,9 +90,26 @@ export function parsePrice(stored: string | undefined, fallback: number): number
 
 export interface ConferenceMode {
   state: ConferenceState
-  /** The day the conference is on. Meaningful only while RUNNING. */
+  /**
+   * The day the conference is on, or the day it finished on once ENDED.
+   * Meaningless only while PREPARING, when nothing has happened on any day yet.
+   */
   activeDay: number
   days: typeof CONFERENCE_DAYS
+}
+
+/**
+ * Parses the stored state. Written out rather than cast, because Setting holds
+ * strings and an unrecognised one has to land somewhere: PREPARING is the only
+ * safe guess, since it is the state that grants nothing and blocks nothing.
+ *
+ * ENDED has to be named here explicitly. Fall through to PREPARING and an ended
+ * conference would silently reopen itself on the very next read.
+ */
+export function parseConferenceState(stored: string | undefined): ConferenceState {
+  if (stored === 'RUNNING') return 'RUNNING'
+  if (stored === 'ENDED') return 'ENDED'
+  return 'PREPARING'
 }
 
 async function readKeys(keys: string[], client: PrismaTransaction | typeof prisma): Promise<Map<string, string>> {
@@ -125,7 +153,7 @@ export async function readConferenceMode(
   const day = Number(stored.get(CONFERENCE_DAY_KEY))
 
   return {
-    state: stored.get(CONFERENCE_STATE_KEY) === 'RUNNING' ? 'RUNNING' : 'PREPARING',
+    state: parseConferenceState(stored.get(CONFERENCE_STATE_KEY)),
     activeDay: isConferenceDay(day) ? day : FIRST_DAY,
     days: CONFERENCE_DAYS,
   }
@@ -147,12 +175,38 @@ export async function writeConferenceMode(
 }
 
 /**
- * The day a check-in or a logistics request lands on when the caller did not
- * name one: the active day while the conference is running, and the first day
- * before it starts, because a rehearsal check-in has to go somewhere.
+ * The day a check-in, a logistics request or an unqualified attendance summary
+ * lands on when the caller did not name one: the active day while the
+ * conference is running, and the first day before it starts, because a
+ * rehearsal check-in has to go somewhere.
+ *
+ * ENDED keeps the last active day rather than dropping back to day 1. Writes
+ * are refused by then (see assertConferenceOpen), so what this actually decides
+ * is which day the attendance screen opens on the morning after, and that is
+ * day 3, the one people are still arguing about, not day 1.
  */
 export function defaultDay(mode: ConferenceMode): number {
-  return mode.state === 'RUNNING' ? mode.activeDay : FIRST_DAY
+  return mode.state === 'PREPARING' ? FIRST_DAY : mode.activeDay
+}
+
+/**
+ * Refuses a write that would change the record after the conference is over.
+ *
+ * Attendance and logistics are the two things this guards, because they are the
+ * two the hub writes during the three days and the two an audit would ask about
+ * afterwards. A check-in backdated a week later is indistinguishable from one
+ * made at the desk, so once the secretariat ends the conference, both go
+ * read-only until an owner reopens it.
+ *
+ * 409 rather than 403: the caller has every permission they need, and the same
+ * request would have worked yesterday. What is wrong is the state, so the
+ * message says which state and how to leave it.
+ */
+export function assertConferenceOpen(mode: ConferenceMode): void {
+  if (mode.state !== 'ENDED') return
+  throw ApiError.conflict(
+    'The conference has ended, so attendance and logistics are read-only. The hub owner can reopen it.',
+  )
 }
 
 /**

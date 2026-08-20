@@ -2,7 +2,7 @@ export type Role = 'ADMIN' | 'CONTRIBUTOR'
 export type AttendanceStatus = 'ABSENT' | 'CHECKED_IN'
 export type RequestCategory = 'PLACARD' | 'STATIONERY' | 'AWARDS' | 'LOGISTICS'
 export type RequestStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
-export type ConferenceState = 'PREPARING' | 'RUNNING'
+export type ConferenceState = 'PREPARING' | 'RUNNING' | 'ENDED'
 export type PriorityLevel = 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW'
 
 export interface ConferenceDay {

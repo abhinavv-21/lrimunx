@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays } from 'lucide-react'
+import { CalendarCheck2, CalendarClock, CalendarDays } from 'lucide-react'
 import { useConference } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 import { findDay, formatDayDate } from './conference'
@@ -37,6 +37,20 @@ export function ConferencePill({ className }: { className?: string }) {
       >
         <CalendarClock size={14} className="shrink-0" aria-hidden />
         Preparing
+      </span>
+    )
+  }
+
+  if (data.state === 'ENDED') {
+    return (
+      <span
+        role="status"
+        aria-live="polite"
+        className={cn(PILL, 'border-edge-strong bg-surface-sunken text-ink-secondary', className)}
+      >
+        <CalendarCheck2 size={14} className="shrink-0" aria-hidden />
+        Ended
+        <span className="hidden sm:inline">· after day {data.activeDay}</span>
       </span>
     )
   }
