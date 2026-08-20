@@ -11,6 +11,7 @@ export function initHero({ gsap, reduced }) {
   const wash = hero.querySelector('.hero__wash')
   const lines = Array.from(hero.querySelectorAll('[data-hero-line] > *'))
   const seal = hero.querySelector('[data-hero-seal]')
+  const glyph = hero.querySelector('[data-hero-glyph]')
   const mark = hero.querySelector('.hero__seal-mark')
 
   const ribbon = new Ribbon(hero)
@@ -89,6 +90,9 @@ export function initHero({ gsap, reduced }) {
   const layers = [
     [wash, 12],
     [seal, 6], // a whisper, so the seal feels seated in the page
+    // Against the drift of everything else, which is what stops it reading as
+    // part of the background plate.
+    [glyph, -9],
   ]
 
   layers.forEach(([el, distance]) => {

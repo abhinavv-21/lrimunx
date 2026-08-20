@@ -49,11 +49,11 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     if (slots.code) slots.code.textContent = code
     if (slots.name) slots.name.textContent = name
     if (slots.blurb) slots.blurb.textContent = text(card.querySelector('.committee__blurb'))
-    if (slots.agenda) slots.agenda.textContent = text(card.querySelector('.committee__reveal-text'))
-    if (slots.blockLabel) {
-      slots.blockLabel.textContent = text(card.querySelector('.committee__reveal-label')) || 'Agenda'
-    }
-    if (slots.note) slots.note.textContent = text(card.querySelector('.committee__reveal-note'))
+    // From the dataset rather than a hidden panel in the card. The panel is
+    // gone; this is now the only place the agenda block is rendered.
+    if (slots.agenda) slots.agenda.textContent = item.dataset.blockText || 'To be announced'
+    if (slots.blockLabel) slots.blockLabel.textContent = item.dataset.blockLabel || 'Agenda'
+    if (slots.note) slots.note.textContent = item.dataset.blockNote || ''
 
     if (slots.chair) slots.chair.textContent = item.dataset.chair || 'To be announced'
     if (slots.vice) slots.vice.textContent = item.dataset.viceChair || 'To be announced'

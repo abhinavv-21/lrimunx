@@ -1,5 +1,8 @@
+/* No top margin. .section__head already carries clamp(--sp-7, 4vw, --sp-10)
+   below it, and stacking a second gap on top of that left about 120px of
+   nothing between the intro and the rail's position readout. */
 .committees__rail-wrap {
-  margin-block-start: clamp(var(--sp-6), 3vw, var(--sp-8));
+  margin-block-start: 0;
 }
 
 .committees {
@@ -143,12 +146,14 @@
 }
 
 .committee__card {
-  --reveal-peek: calc(var(--sp-5) + 1.25rem + var(--sp-1));
   position: relative;
   display: flex;
   flex-direction: column;
   block-size: 100%;
-  min-block-size: 27rem;
+  /* Was 27rem, which reserved room for a panel that slid up over the footer.
+     The panel is gone, so the floor is now only what stops a two-line name
+     and a short blurb from collapsing into a stub next to its neighbours. */
+  min-block-size: 21rem;
   padding: var(--sp-6);
   background-color: var(--color-paper);
   border: 1px solid var(--color-border);
@@ -196,7 +201,7 @@
   inline-size: 1.75rem;
   block-size: 1.75rem;
   opacity: 0.9;
-  margin-block-end: var(--sp-6);
+  margin-block-end: var(--sp-5);
   transition: transform var(--dur-slow) var(--ease-spring);
 }
 
@@ -224,8 +229,8 @@
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--color-primary);
-  padding-block-end: var(--sp-5);
-  margin-block-end: var(--sp-5);
+  padding-block-end: var(--sp-4);
+  margin-block-end: var(--sp-4);
   border-block-end: 1px solid var(--color-border);
 }
 
@@ -252,22 +257,25 @@
   font-size: var(--fs-300);
   line-height: 1.62;
   color: var(--on-ground-muted);
-  /* Bounded so the reveal panel can never cut through a line of it. */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
-  overflow: hidden;
+  text-wrap: pretty;
+  /* No line clamp. It existed so the panel could not cut a line in half; with
+     the panel gone the blurbs are three or four lines and say so. */
 }
 
+/* Two rows on purpose. As one flex row the seat count, the level tag and the
+   Details button needed about 300px and a three-up card gives them 260, so
+   Details wrapped on some cards and not others and the rail looked shuffled.
+   Fixed rows read the same on every card at every width. */
 .committee__foot {
   margin-block-start: auto;
-  padding-block-start: var(--sp-6);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2) var(--sp-3);
+  /* The gap to the blurb, not a void: the card's floor no longer pushes the
+     footer half a card away from the text above it. */
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--color-border);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-3);
 }
 
 .committee__seats {
@@ -275,7 +283,10 @@
   align-items: baseline;
   gap: var(--sp-2);
   margin: 0;
-  flex: 1 0 auto;
+}
+
+.committee__foot .tag {
+  justify-self: end;
 }
 
 .committee__seats-figure {
@@ -301,11 +312,13 @@
 }
 
 .committee__toggle {
+  grid-column: 1 / -1;
   display: inline-flex;
   align-items: center;
+  justify-self: start;
   gap: var(--sp-2);
 
-  min-block-size: 3rem;
+  min-block-size: 2.5rem;
   padding: var(--sp-2) 0;
   font-size: var(--fs-100);
   font-weight: 600;
@@ -330,32 +343,6 @@
   transform: rotate(180deg);
 }
 
-.committee__reveal {
-  position: absolute;
-  inset-inline: 0;
-  /* Sits above the footer rather than burying the seat count, the level tag
-     and the Details button. Every transform below has to add this back, or the
-     panel cannot travel far enough to leave the card. */
-  --reveal-lift: 7rem;
-  inset-block-end: var(--reveal-lift);
-  max-block-size: 42%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--sp-5) var(--sp-6) var(--sp-6);
-  background-color: var(--color-ink);
-  color: var(--color-text-inverse);
-  border-block-start: 1px solid var(--hairline-gold);
-  transform: translate3d(0, calc(101% + var(--reveal-lift)), 0);
-  transition: transform var(--dur-slow) var(--ease-expo);
-}
-
-.committees__rail:not(.is-hover-synced) .committee:hover .committee__reveal,
-.committee.is-hovered .committee__reveal,
-.committee__card:has(:focus-visible) .committee__reveal,
-.committee__reveal.is-open {
-  transform: translate3d(0, 0, 0);
-}
-
 @supports not selector(:has(*)) {
   .committee__card:focus-within {
     border-color: rgb(var(--rgb-primary) / 0.55);
@@ -365,30 +352,6 @@
     opacity: 0.16;
     transform: translateY(-2px);
   }
-
-  .committee__card:focus-within .committee__reveal {
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.committee__reveal-label {
-  min-block-size: 1.25rem;
-  color: var(--color-accent-gold);
-  margin-block-end: var(--sp-2);
-}
-
-.committee__reveal-text {
-  font-size: var(--fs-500);
-  font-family: var(--font-display);
-  font-variation-settings: 'opsz' 24, 'WONK' 1;
-  line-height: 1.28;
-  margin-block-end: var(--sp-3);
-}
-
-.committee__reveal-note {
-  font-size: var(--fs-200);
-  line-height: 1.55;
-  color: rgb(var(--rgb-text-inverse) / 0.72);
 }
 
 /* With JavaScript off the rail is never populated, so the arrows, the position
@@ -455,25 +418,8 @@
   }
 
   .committee__card {
-    min-block-size: 24rem;
+    min-block-size: 19rem;
     padding: var(--sp-5);
-  }
-}
-
-@media (max-width: 700px) {
-  .committee__foot {
-    justify-content: flex-start;
-    column-gap: var(--sp-5);
-  }
-}
-
-@media (hover: none) {
-  .committee__reveal {
-    transform: translate3d(0, calc(100% + var(--reveal-lift) - var(--reveal-peek)), 0);
-  }
-
-  .committee__foot {
-    padding-block-end: var(--reveal-peek);
   }
 }
 

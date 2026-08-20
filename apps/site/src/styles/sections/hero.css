@@ -45,6 +45,34 @@
   );
 }
 
+/* The tenth edition, ghosted. The X used to sit inside the seal; the seal is
+   the logo now, and the logo has no room for it. This keeps the mark on the
+   page at a strength that reads as texture head-on and only resolves into a
+   letter once the eye rests. Sized against the hero's height rather than its
+   width so it cannot decide the layout, and clipped by the hero's own
+   overflow: hidden on anything narrow. */
+.hero__glyph {
+  position: absolute;
+  z-index: -1;
+  inset-block-start: 46%;
+  inset-inline-start: 50%;
+  /* Centred with margins, not a transform: hero.js scrubs yPercent on this
+     element and a transform here would be the thing it overwrites. */
+  margin-inline-start: -0.317em;
+  margin-block-start: -0.39em;
+
+  font-family: var(--font-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+  font-weight: 500;
+  font-size: clamp(18rem, 58vh, 42rem);
+  line-height: 0.78;
+  color: var(--color-accent-gold);
+  opacity: 0.055;
+
+  pointer-events: none;
+  user-select: none;
+}
+
 .hero__grain {
   position: absolute;
   inset: 0;
@@ -371,6 +399,13 @@ html.has-motion .hero__title-line {
   .hero__seal-caption {
     font-size: 0.625rem;
     letter-spacing: 0.2em;
+  }
+
+  /* Behind a centred, stacked headline it has nowhere to sit without landing
+     on the type, so it drops back further and stays clear of the edges. */
+  .hero__glyph {
+    font-size: clamp(14rem, 42vh, 22rem);
+    opacity: 0.04;
   }
 
   .hero__title {

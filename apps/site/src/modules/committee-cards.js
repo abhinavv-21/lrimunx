@@ -43,16 +43,17 @@ function card(committee, index) {
   li.dataset.viceChair = committee.viceChair ?? 'To be announced'
 
   const offPattern = committee.kind !== STANDARD_KIND
-  const agendaId = `committee-agenda-${index + 1}`
 
-  // While an agenda is pending, the panel leads on format instead. Twelve cards
-  // whose headline slot all read "To be announced." present the card's payload
-  // as empty; format and size are the real thing a delegate is choosing between,
-  // and they are known today.
+  // The card used to hide this behind a panel that slid up on hover. It now
+  // rides on the element as data and only the dialog renders it, so the card
+  // is what it looks like and nothing is stacked on top of the seat count.
+  // While an agenda is pending the block leads on format instead: twelve rooms
+  // all reading "To be announced" is an empty answer, and format and size are
+  // the real thing a delegate is choosing between.
   const pending = !committee.agenda
-  const revealLabel = pending ? 'Format' : 'Agenda'
-  const revealText = pending ? committee.meta.join(', ') : committee.agenda
-  const revealNote = pending ? 'Agenda to be announced.' : metaLine(committee)
+  li.dataset.blockLabel = pending ? 'Format' : 'Agenda'
+  li.dataset.blockText = pending ? committee.meta.join(', ') : committee.agenda
+  li.dataset.blockNote = pending ? 'Agenda to be announced.' : metaLine(committee)
 
   li.innerHTML = `
     <article class="committee__card${offPattern ? ' committee__card--offpattern' : ''}">
@@ -83,12 +84,6 @@ function card(committee, index) {
           ${ARROW}
         </button>
       </footer>
-
-      <div class="committee__reveal" id="${agendaId}" data-committee-reveal>
-        <p class="label committee__reveal-label">${revealLabel}</p>
-        <p class="committee__reveal-text">${escape(revealText)}</p>
-        <p class="committee__reveal-note">${escape(revealNote)}</p>
-      </div>
     </article>
   `
 
