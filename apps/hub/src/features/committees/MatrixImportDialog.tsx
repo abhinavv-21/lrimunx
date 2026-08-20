@@ -69,7 +69,7 @@ export function MatrixImportDialog({
 
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" size="sm" asChild>
-            <label className="cursor-pointer">
+            <label className="inline-flex min-h-tap cursor-pointer items-center gap-2 rounded-control border border-edge-strong bg-surface px-4 text-body font-medium text-ink transition-colors duration-micro hover:bg-surface-sunken active:bg-edge focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2 focus-within:ring-offset-canvas md:min-h-10">
               <Upload size={16} aria-hidden />
               Choose a CSV
               <input type="file" accept=".csv,text/csv" className="sr-only" onChange={handleFile} />

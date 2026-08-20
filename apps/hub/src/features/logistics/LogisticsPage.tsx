@@ -412,7 +412,7 @@ export function LogisticsPage() {
                 type="button"
                 onClick={() => setShowResolved((open) => !open)}
                 aria-expanded={showResolved}
-                className="flex min-h-tap w-full items-center gap-2 border-b border-edge pb-2 text-left md:min-h-11"
+                className="-mx-2 flex min-h-tap w-full items-center gap-2 rounded-control border-b border-edge px-2 pb-2 text-left transition-colors duration-micro hover:bg-surface-sunken active:bg-edge md:min-h-11"
               >
                 <CheckCircle2 size={18} className="text-success" aria-hidden />
                 <h2 className="font-heading text-h2 text-ink">Resolved</h2>

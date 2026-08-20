@@ -8,8 +8,8 @@ type Size = 'md' | 'sm' | 'icon'
 
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-accent text-white hover:bg-accent-hover active:bg-accent-pressed disabled:bg-surface-sunken disabled:text-ink-tertiary',
-  secondary: 'bg-surface text-ink border border-edge-strong hover:bg-surface-sunken disabled:text-ink-tertiary',
-  ghost: 'bg-transparent text-ink-secondary hover:bg-surface-sunken hover:text-ink disabled:text-ink-tertiary',
+  secondary: 'bg-surface text-ink border border-edge-strong hover:bg-surface-sunken active:bg-edge disabled:text-ink-tertiary disabled:hover:bg-surface',
+  ghost: 'bg-transparent text-ink-secondary hover:bg-surface-sunken hover:text-ink active:bg-edge disabled:text-ink-tertiary disabled:hover:bg-transparent',
   destructive: 'bg-danger text-white hover:brightness-110 active:brightness-95 disabled:bg-surface-sunken disabled:text-ink-tertiary',
 }
 

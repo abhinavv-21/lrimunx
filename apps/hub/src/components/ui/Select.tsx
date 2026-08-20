@@ -136,6 +136,26 @@ export function Select({
     scrollRowIntoView(listRef.current, state.highlighted)
   }, [state.open, state.highlighted])
 
+  // The menu is portaled to the body so a dialog cannot clip it, and that is
+  // exactly what breaks the wheel: Radix mounts react-remove-scroll alongside
+  // the dialog, its document listener cancels every wheel event that did not
+  // land inside the panel, and by that measure the menu is outside. The list
+  // then shows a scrollbar it refuses to move. Stopping the event at the menu
+  // means the lock never sees it; `overscroll-contain` on the list is what
+  // keeps the page behind from scrolling once the list has run out.
+  useEffect(() => {
+    const menu = refs.floating.current
+    if (!state.open || !menu) return
+
+    const keep = (event: Event) => event.stopPropagation()
+    menu.addEventListener('wheel', keep)
+    menu.addEventListener('touchmove', keep)
+    return () => {
+      menu.removeEventListener('wheel', keep)
+      menu.removeEventListener('touchmove', keep)
+    }
+  }, [state.open, refs.floating])
+
   useEffect(() => {
     if (!state.open) return
     function onPointerDown(event: PointerEvent) {
@@ -201,9 +221,10 @@ export function Select({
   const chrome = cn(
     CONTROL,
     'flex w-full items-center py-2 pr-9 text-left',
-    // A button is not a link, so nothing gives it a pointer for free.
-    'cursor-pointer hover:bg-surface-sunken',
-    'disabled:cursor-not-allowed disabled:hover:bg-surface-sunken',
+    // Tailwind v3 preflight already gives button a pointer. It does not undo
+    // hover on a disabled button, and it resets disabled cursors to default.
+    'hover:bg-surface-sunken',
+    'disabled:cursor-not-allowed disabled:hover:bg-surface',
     className,
   )
 
@@ -266,6 +287,10 @@ export function Select({
               ref={refs.setFloating}
 
               style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
+              // Anywhere in the menu, not just on a row: pressing the scrollbar
+              // is a press on the list, and letting it move focus closed the
+              // menu the moment the treasurer reached for it.
+              onMouseDown={(event) => event.preventDefault()}
               className={cn(
                 'z-popover flex flex-col overflow-hidden rounded-card border border-edge bg-surface shadow-overlay',
                 isPositioned && placement.startsWith('bottom') && 'animate-slide-up',
@@ -301,12 +326,11 @@ export function Select({
                           'flex min-h-tap items-center gap-2 px-3 py-2 text-body',
                           'transition-colors duration-micro ease-out',
                           rowDisabled ? 'cursor-not-allowed text-ink-tertiary' : 'cursor-pointer',
-                          isActive && !rowDisabled && 'bg-surface-sunken',
+                          isActive && !rowDisabled && 'bg-edge',
                           isSelected && !rowDisabled && 'font-medium text-accent',
                           isSelected && isActive && !rowDisabled && 'bg-accent-wash',
                         )}
 
-                        onMouseDown={(event) => event.preventDefault()}
                         onMouseEnter={() => dispatch({ type: 'highlight', index })}
                         onClick={() => {
                           if (rowDisabled) return

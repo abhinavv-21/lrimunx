@@ -64,28 +64,12 @@ enum PriceTier {
   DISCOUNT
 }
 
-/// Where a ledger line belongs in the closing statement. An enum rather than
-/// free text because the summary groups on it; `particular` is where the
-/// treasurer writes what actually happened.
 /// The outcome of one delegate's allocation email. Absence of a row means
 /// nobody has tried yet; SENT is the idempotency guard that stops a second
 /// press of the button mailing four hundred students twice.
 enum AnnouncementStatus {
   SENT
   FAILED
-}
-
-enum LedgerCategory {
-  REGISTRATION
-  SPONSORSHIP
-  VENUE
-  FOOD
-  PRINTING
-  AWARDS
-  TRANSPORT
-  HOSPITALITY
-  MARKETING
-  MISC
 }
 
 model User {
@@ -425,7 +409,14 @@ model LedgerEntry {
   /// this one closes the books, `createdAt` says who was catching up on what.
   entryDate    DateTime
   particular   String
-  category     LedgerCategory
+  /// Where the line belongs in the closing statement, in the treasurer's own
+  /// words. Free text and not an enum: a conference always turns up an expense
+  /// nobody listed in advance, and a fixed set means every one of them lands in
+  /// MISC, which is the same as not categorising it at all. The ten the
+  /// secretariat has always used are offered as suggestions in the hub, and the
+  /// API folds a new one onto an existing spelling that differs only in case,
+  /// so "venue" and "Venue" stay one row in the summary rather than two.
+  category     String
   /// Money in and money out, in WHOLE NEPALI RUPEES — the same unit as
   /// Registration.amountPaid, so the two can be added without a conversion.
   credit       Int            @default(0)

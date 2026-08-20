@@ -75,8 +75,8 @@ export function DataTable<T>({
                   className={cn(
                     'h-row border-b border-edge last:border-b-0',
                     'transition-colors duration-micro ease-out',
-                    onRowClick && 'cursor-pointer',
-                    isSelected ? 'bg-accent-wash shadow-[inset_3px_0_0_0_theme(colors.accent.DEFAULT)]' : 'hover:bg-accent-wash',
+                    onRowClick && 'cursor-pointer hover:bg-edge',
+                    isSelected && 'bg-accent-wash shadow-[inset_3px_0_0_0_theme(colors.accent.DEFAULT)]',
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (

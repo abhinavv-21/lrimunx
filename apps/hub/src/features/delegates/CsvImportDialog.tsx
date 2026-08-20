@@ -130,7 +130,7 @@ export function CsvImportDialog({
             <div>
               <label
                 htmlFor="csv-file"
-                className="inline-flex min-h-tap cursor-pointer items-center gap-2 rounded-control border border-edge-strong bg-surface px-4 text-body font-medium text-ink transition-colors duration-micro hover:bg-surface-sunken md:min-h-10"
+                className="inline-flex min-h-tap cursor-pointer items-center gap-2 rounded-control border border-edge-strong bg-surface px-4 text-body font-medium text-ink transition-colors duration-micro hover:bg-surface-sunken md:min-h-10 focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2 focus-within:ring-offset-canvas active:bg-edge"
               >
                 <Upload size={16} aria-hidden />
                 Choose CSV file
