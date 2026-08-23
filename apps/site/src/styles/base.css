@@ -725,8 +725,39 @@ html.has-motion [data-reveal] {
   display: inline-block;
 }
 
-html:not(.app-ready) body > *:not(#site-loader):not(.to-top) {
+/* The preloader's curtain.
+   
+   Opt-in, via a class written into index.html's markup, because only the
+   landing page has a preloader to hand over from. It used to be opt-out, which
+   meant every other page had to cancel it with an inline script in its head —
+   and helmet's Content-Security-Policy on the Express deploy blocks inline
+   scripts, so on that deployment the register, editions, privacy, colophon and
+   404 pages all rendered at opacity 0. A blank purple screen.
+   
+   The failsafe is CSS now for the same reason. It used to be a four-second
+   setTimeout in an inline script, which is exactly the thing CSP refuses to
+   run, so the net that existed to catch a broken bundle was itself broken by
+   the deployment. An animation cannot be blocked by a script policy. */
+html.is-gated:not(.app-ready) body > *:not(#site-loader):not(.to-top) {
   opacity: 0;
+  animation: lri-failsafe 1ms linear 4s forwards;
+}
+
+html.is-gated:not(.app-ready) #site-loader {
+  animation: lri-failsafe-curtain 1ms linear 4.2s forwards;
+}
+
+@keyframes lri-failsafe {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lri-failsafe-curtain {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 html.app-ready body > *:not(#site-loader):not(.to-top) {

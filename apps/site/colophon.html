@@ -6,18 +6,12 @@
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#2B0A21" />
 
-    <title>Past editions I to IX — LRI Model UN X</title>
-    <meta
-      name="description"
-      content="The archive of LRI Model UN, editions I to IX, at LRI School in Kalanki, Kathmandu. Photographs from nine conferences before the tenth edition in November 2026."
-    />
+    <title>Colophon — LRI Model UN X</title>
+    <meta name="description" content="How the LRI Model UN X site is built: the typefaces, the tools behind it, and where to read the source." />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Past editions I to IX — LRI Model UN X" />
-    <meta
-      property="og:description"
-      content="Nine conferences at LRI School, Kalanki, before the tenth edition."
-    />
+    <meta property="og:title" content="Colophon — LRI Model UN X" />
+    <meta property="og:description" content="How the LRI Model UN X site is built: the typefaces, the tools behind it, and where to read the source." />
     <meta property="og:image" content="/assets/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -25,11 +19,8 @@
     <meta property="og:site_name" content="LRI Model UN X" />
     <meta property="og:locale" content="en_NP" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Past editions I to IX — LRI Model UN X" />
-    <meta
-      name="twitter:description"
-      content="Nine conferences at LRI School, Kalanki, before the tenth edition."
-    />
+    <meta name="twitter:title" content="Colophon — LRI Model UN X" />
+    <meta name="twitter:description" content="How the LRI Model UN X site is built: the typefaces, the tools behind it, and where to read the source." />
     <meta name="twitter:image" content="/assets/og-image.png" />
 
     <link rel="icon" href="/assets/lri-mun-logo.png" type="image/png" />
@@ -61,7 +52,7 @@
       crossorigin
     />
 
-    <script type="module" src="/src/editions-main.js"></script>
+    <script type="module" src="/src/page-main.js"></script>
   </head>
 
   <body>
@@ -108,7 +99,7 @@
             <li><a class="nav__link" href="./#about">About</a></li>
             <li><a class="nav__link" href="./#committees">Committees</a></li>
             <li><a class="nav__link" href="./#secretariat">Secretariat</a></li>
-            <li><a class="nav__link" href="./editions" aria-current="page">Past Editions</a></li>
+            <li><a class="nav__link" href="./editions">Past Editions</a></li>
           </ul>
         </nav>
 
@@ -164,7 +155,7 @@
             >
           </li>
           <li>
-            <a href="./editions" aria-current="page"
+            <a href="./editions"
               ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Past
               Editions</a
             >
@@ -190,8 +181,8 @@
               >Visit the school site ↗</a
             >
 
-            <a class="btn nav-overlay__cta" href="./register"
-              >Register now<span class="btn__mount" aria-hidden="true"></span></a
+            <a class="btn nav-overlay__cta" href="./#committees" data-nav-overlay-link
+              >See the committees<span class="btn__mount" aria-hidden="true"></span></a
             >
           </div>
         </div>
@@ -199,58 +190,56 @@
     </div>
 
     <main id="main">
-      <section class="edpage__head ground-ink" id="top" aria-labelledby="edpage-title">
-        <div class="shell edpage__head-inner">
-          <p class="section__eyebrow label">Editions I&ndash;IX</p>
-          <h1 class="edpage__title" id="edpage-title">Nine conferences before this one.</h1>
-          <p class="lede edpage__lede">
-            LRI Model UN has run at the school in Kalanki nine times. The photographs are still
-            being collected from the people who took them, edition by edition.
+      <section class="doc ground-ink" id="top" aria-labelledby="doc-title">
+        <div class="shell doc__head">
+          <p class="section__eyebrow label">Colophon</p>
+          <h1 class="doc__title" id="doc-title">How this was made.</h1>
+          <p class="lede doc__lede">
+            If you were about to press Ctrl+U to see what is underneath, this page saves you the
+            trouble.
           </p>
-          <a class="edpage__back" href="./">
-            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <path
-                d="M14 8H3M7 4L3 8l4 4"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="square"
-              />
-            </svg>
-            Back to the tenth edition
-          </a>
         </div>
       </section>
 
-      <div class="gallery__marquee ground-blush" aria-hidden="true" data-gallery-marquee>
-        <div class="gallery__marquee-track" data-gallery-marquee-track></div>
-      </div>
+      <section class="doc__body ground-paper" aria-label="Colophon">
+        <div class="shell doc__prose">
+          <h2>Type</h2>
+          <p>
+            Headings are set in <strong>Fraunces</strong>, a variable serif by Undercase Type, with
+            its optical size and wonk axes doing real work: the same family is a 108px masthead here
+            and a 14px seat count there, and it is not the same shape at both. Everything else is
+            <strong>General Sans</strong> by the Indian Type Foundry. Both are open source, and both
+            are served from this domain rather than from a font service.
+          </p>
 
-      <section class="section gallery ground-blush edpage__archive" aria-labelledby="editions-title">
-        <div class="shell grid">
-          <header class="section__head">
-            <p class="section__eyebrow label">The archive</p>
-            <h2 class="section__title" id="editions-title">Editions I to IX</h2>
-            <p class="lede section__intro">
-              Every conference the school has run, in order. Where a photograph is missing it is
-              because nobody has sent it in yet, not because the edition did not happen.
-            </p>
-          </header>
-        </div>
+          <h2>Build</h2>
+          <p>
+            The public site is hand-written HTML, CSS and JavaScript, bundled by Vite. No framework
+            and no component library: five pages did not need one. Motion is GSAP with ScrollTrigger,
+            smooth scrolling is Lenis, and both switch off entirely for anyone whose system asks for
+            reduced motion.
+          </p>
+          <p>
+            Behind it the organising committee runs a separate operations hub, in React and Tailwind
+            against an Express and PostgreSQL API, with a service worker so it keeps working when
+            the venue Wi-Fi does not. It is password-protected and it is not part of this site.
+          </p>
 
-        <div class="shell gallery__body" data-gallery-root>
-          <noscript>
-            <p class="shell body-copy">
-              The edition archive is rendered with JavaScript. Photographs from past conferences are
-              available at
-              <a
-                href="https://www.instagram.com/lrimunx/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >@lrimunx on Instagram</a
-              >.
-            </p>
-          </noscript>
+          <h2>Source</h2>
+          <p>
+            The whole thing is on
+            <a href="https://github.com/abhinavv-21/lrimunx" target="_blank" rel="noopener noreferrer"
+              >GitHub</a
+            >, comments and all. If you are building a conference site of your own, take whatever is
+            useful.
+          </p>
+
+          <h2>Who</h2>
+          <p>
+            Designed and built by the LRI Model UN X organising committee, students of Learning
+            Realm Int'l School in Kalanki, Kathmandu. Anything wrong with it is ours; send it to
+            <a href="mailto:lrimodelun@gmail.com">lrimodelun@gmail.com</a>.
+          </p>
         </div>
       </section>
     </main>
@@ -304,7 +293,7 @@
             <li><a href="./#about">About</a></li>
             <li><a href="./#committees">Committees</a></li>
             <li><a href="./#secretariat">Secretariat</a></li>
-            <li><a href="./editions" aria-current="page">Past editions</a></li>
+            <li><a href="./editions">Past editions</a></li>
             <li><a href="./register" aria-current="true">Register</a></li>
           </ul>
         </nav>
@@ -349,7 +338,7 @@
         </p>
         <nav class="footer__meta" aria-label="Site information">
           <a href="./privacy">Privacy</a>
-          <a href="./colophon">Colophon</a>
+          <a href="./colophon" aria-current="page">Colophon</a>
         </nav>
         <p class="footer__credit label">Designed and built by the LRI MUN X organising committee.</p>
       </div>

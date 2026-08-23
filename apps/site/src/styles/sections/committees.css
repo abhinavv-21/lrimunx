@@ -243,10 +243,113 @@
   }
 }
 
-@media (max-width: 600px) {
+/* On a phone the twelve cards are a list, not a grid.
+   
+   Stacked one per row at full height they came to 5,466px, about six and a half
+   screens of the sixteen this page runs to, and "see all the committees" stops
+   being true the moment seeing them all takes six swipes. So below 700px the
+   card folds into a row: number, name, code, seats, level, and a way in. The
+   blurb and the icon are the two things that do not survive the fold, and both
+   are already in the dialog the row opens.
+   
+   No markup change and no JavaScript: committee-dialog.js already opens on a
+   click anywhere in [data-committee], so the whole row is the target. */
+@media (max-width: 699px) {
+  .committees__grid {
+    gap: 0;
+    border-block-start: 1px solid var(--color-border);
+  }
+
   .committee__card {
-    min-block-size: 19rem;
-    padding: var(--sp-5);
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'index name  level'
+      'index abbr  abbr'
+      'index seats go';
+    align-items: center;
+    column-gap: var(--sp-4);
+    row-gap: var(--sp-2);
+
+    min-block-size: 0;
+    padding: var(--sp-5) 0;
+    border: 0;
+    border-block-end: 1px solid var(--color-border);
+    border-radius: 0;
+    background-color: transparent;
+  }
+
+  /* The gold edge marked a structural difference across a grid of cards. In a
+     list of hairline rows a top edge would read as a divider, so the same
+     signal moves to the room's own kind, which is on the row anyway. */
+  .committee__card--offpattern {
+    border-block-start: 0;
+  }
+
+  .committee__card--offpattern .committee__kind {
+    color: var(--color-accent-gold);
+  }
+
+  .committee__card--feature {
+    background-color: transparent;
+  }
+
+  /* From a watermark behind the card to the row's own number. */
+  .committee__index {
+    grid-area: index;
+    position: static;
+    z-index: auto;
+    inset: auto;
+    align-self: start;
+    font-size: var(--fs-500);
+    opacity: 0.45;
+  }
+
+  .committee__icon,
+  .committee__blurb {
+    display: none;
+  }
+
+  .committee__name {
+    grid-area: name;
+    margin: 0;
+    max-width: none;
+    font-size: var(--fs-500);
+    font-variation-settings: 'opsz' 24, 'WONK' 1;
+  }
+
+  .committee__abbr {
+    grid-area: abbr;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  /* So the footer's three children become rows of the card's own grid rather
+     than a block sitting inside one cell. */
+  .committee__foot {
+    display: contents;
+  }
+
+  .committee__seats {
+    grid-area: seats;
+  }
+
+  .committee__seats-figure {
+    font-size: var(--fs-600);
+  }
+
+  .committee__foot .tag {
+    grid-area: level;
+    align-self: start;
+    justify-self: end;
+  }
+
+  .committee__toggle {
+    grid-area: go;
+    justify-self: end;
+    min-block-size: 0;
+    padding: 0;
   }
 }
 

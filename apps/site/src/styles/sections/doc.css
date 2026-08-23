@@ -1,0 +1,142 @@
+/* Privacy, colophon and 404: a masthead on ink, then prose on paper.
+   
+   One stylesheet for all three because they are the same document shape, and
+   three near-identical files would be three places to forget. */
+.doc {
+  padding-block: calc(var(--nav-h) + clamp(var(--sp-8), 6vw, var(--sp-11)))
+    clamp(var(--sp-8), 6vw, var(--sp-10));
+}
+
+.doc__title {
+  margin: 0;
+  margin-block-start: var(--sp-4);
+  font-size: var(--fs-800);
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  max-width: 18ch;
+}
+
+.doc__lede {
+  margin-block-start: var(--sp-5);
+}
+
+.doc__stamp {
+  margin-block-start: clamp(var(--sp-6), 4vw, var(--sp-8));
+  color: var(--on-ground-muted);
+}
+
+.doc__body {
+  padding-block: clamp(var(--sp-8), 6vw, var(--sp-11));
+}
+
+/* A measure, not a column: legal text nobody can read is legal text nobody
+   reads. 62ch is the same measure the rest of the site's body copy uses. */
+.doc__prose {
+  max-width: calc(var(--measure) + var(--gutter) * 2);
+  margin-inline: auto;
+}
+
+.doc__prose h2 {
+  font-size: var(--fs-600);
+  font-variation-settings: 'opsz' 32, 'WONK' 1;
+  margin-block-start: clamp(var(--sp-7), 4vw, var(--sp-9));
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--hairline);
+}
+
+.doc__prose h2:first-child {
+  margin-block-start: 0;
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.doc__prose p {
+  margin-block: var(--sp-4) 0;
+  font-size: var(--fs-400);
+  line-height: var(--lh-body);
+  color: var(--on-ground-muted);
+}
+
+.doc__prose strong {
+  font-weight: 600;
+  color: var(--on-ground);
+}
+
+.doc__prose a {
+  color: var(--accent-on-ground);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.doc__prose a:hover,
+.doc__prose a:focus-visible {
+  color: var(--color-primary-dark);
+}
+
+/* The 404's three ways out. A list rather than buttons, because none of them is
+   more likely to be the one you wanted. */
+.doc__links {
+  list-style: none;
+  margin: clamp(var(--sp-7), 4vw, var(--sp-9)) 0 0;
+  padding: 0;
+  border-block-start: 1px solid var(--hairline);
+  max-width: var(--measure);
+}
+
+.doc__links a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-block: var(--sp-5);
+  border-block-end: 1px solid var(--hairline);
+  text-decoration: none;
+  color: inherit;
+  transition: padding-inline-start var(--dur-base) var(--ease-expo);
+}
+
+.doc__link-name {
+  font-family: var(--font-display);
+  font-size: var(--fs-500);
+  font-variation-settings: 'opsz' 24, 'WONK' 1;
+  letter-spacing: var(--tracking-display);
+}
+
+.doc__link-note {
+  font-size: var(--fs-300);
+  color: var(--on-ground-muted);
+}
+
+.doc__links a::after {
+  content: '→';
+  position: absolute;
+  inset-inline-end: 0;
+  color: var(--accent-on-ground);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-house);
+}
+
+.doc__links li {
+  position: relative;
+}
+
+.doc__links a:hover,
+.doc__links a:focus-visible {
+  padding-inline-start: var(--sp-4);
+}
+
+.doc__links a:hover .doc__link-name,
+.doc__links a:focus-visible .doc__link-name {
+  color: var(--accent-on-ground);
+}
+
+.doc__links a:hover::after,
+.doc__links a:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc__links a:hover,
+  .doc__links a:focus-visible {
+    padding-inline-start: 0;
+  }
+}

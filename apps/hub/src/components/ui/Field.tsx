@@ -1,4 +1,5 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const CONTROL = cn(
@@ -48,6 +49,54 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     return <input ref={ref} className={cn(CONTROL, 'py-2', className)} {...props} />
   },
 )
+
+/**
+ * A password box you can read back.
+ *
+ * Worth having for the reason people usually mistype: these accounts are issued
+ * by the secretariat, so the password is being copied off a message rather than
+ * recalled, and a wrong character is invisible until the whole thing is
+ * refused. The toggle is a button, not a checkbox, because it acts immediately
+ * rather than setting something to be submitted.
+ *
+ * type is deliberately not accepted: this component is the password one.
+ */
+export const PasswordInput = forwardRef<
+  HTMLInputElement,
+  Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>
+>(function PasswordInput({ className, ...props }, ref) {
+  const [shown, setShown] = useState(false)
+  const Icon = shown ? EyeOff : Eye
+
+  return (
+    <div className="relative">
+      <input
+        ref={ref}
+        type={shown ? 'text' : 'password'}
+        className={cn(CONTROL, 'py-2 pr-12', className)}
+        {...props}
+      />
+      <button
+        type="button"
+        onClick={() => setShown((current) => !current)}
+        aria-pressed={shown}
+        // The field it belongs to is named by its own label; this button needs
+        // to say what IT does, and "Show password" alone reads as a statement
+        // of the current state rather than an action.
+        aria-label={shown ? 'Hide the password' : 'Show the password'}
+        title={shown ? 'Hide the password' : 'Show the password'}
+        className={cn(
+          'absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-control',
+          'text-ink-tertiary transition-colors duration-micro',
+          'hover:text-ink focus-visible:text-ink',
+          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent',
+        )}
+      >
+        <Icon size={18} aria-hidden />
+      </button>
+    </div>
+  )
+})
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
   function Textarea({ className, rows = 4, ...props }, ref) {

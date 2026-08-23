@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { AlertTriangle, Clock } from 'lucide-react'
 import { useAuth } from '@/providers/AuthProvider'
 import { Button } from '@/components/ui/Button'
-import { Field, Input } from '@/components/ui/Field'
+import { Field, Input, PasswordInput } from '@/components/ui/Field'
 import { ApiError, warmApi } from '@/lib/api'
 import { asset } from '@/lib/utils'
 
@@ -118,10 +118,9 @@ export function LoginPage() {
 
             <Field label="Password" required>
               {({ id, invalid }) => (
-                <Input
+                <PasswordInput
                   id={id}
                   name="password"
-                  type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"

@@ -17,6 +17,9 @@ export function mountStatic(app: Express, root: string): void {
   const siteIndex = path.join(root, 'index.html')
   const registerPage = path.join(root, 'register.html')
   const editionsPage = path.join(root, 'editions.html')
+  const privacyPage = path.join(root, 'privacy.html')
+  const colophonPage = path.join(root, 'colophon.html')
+  const notFoundPage = path.join(root, '404.html')
   const adminIndex = path.join(root, 'admin', 'index.html')
 
   app.use((req, res, next) => {
@@ -40,6 +43,14 @@ export function mountStatic(app: Express, root: string): void {
     res.sendFile(editionsPage)
   })
 
+  app.get('/privacy', (_req, res) => {
+    res.sendFile(privacyPage)
+  })
+
+  app.get('/colophon', (_req, res) => {
+    res.sendFile(colophonPage)
+  })
+
   app.use(
     express.static(root, {
       index: false,
@@ -59,5 +70,29 @@ export function mountStatic(app: Express, root: string): void {
       return
     }
     res.sendFile(adminIndex)
+  })
+
+  /**
+   * A browser asking for a page that is not here gets the 404 page. Everything
+   * else falls through to notFoundHandler and its JSON body.
+   *
+   * Without this the JSON handler answered every miss, so a mistyped URL on
+   * this deployment rendered {"error":"No route for GET /whatever"} as the
+   * page. Vercel serves dist/404.html for the same case on its own.
+   */
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      next()
+      return
+    }
+    if (req.path.startsWith('/api/')) {
+      next()
+      return
+    }
+    if (!req.accepts('html')) {
+      next()
+      return
+    }
+    res.status(404).sendFile(notFoundPage)
   })
 }

@@ -30,6 +30,14 @@
       "destination": "/editions.html"
     },
     {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/colophon",
+      "destination": "/colophon.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     },

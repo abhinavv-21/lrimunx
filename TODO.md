@@ -408,26 +408,40 @@ icon, so the site is safe to launch with gaps here.
 
 # 6. Contact details
 
-- [ ] **A real email address.** The footer of both pages reads "Email and phone
-      to be announced", and five copy blocks tell people to reach the secretariat
-      through the footer.
+- [ ] **A real email address.** `lrimodelun@gmail.com` is in use as a
+      placeholder and you have said it will change. It appears in three places
+      and all three have to move together:
 
-  Edit `apps/site/index.html` and `apps/site/register.html`, search for
-  `footer__pending`.
+  ```
+  apps/site/privacy.html          twice, in the body copy
+  apps/site/colophon.html         once, at the end
+  apps/site/src/modules/structured-data.js   the Organization email
+  ```
+
+  The footer of every page still reads "Email and phone to be announced" — search
+  for `footer__pending`. Worth doing at the same time, because the privacy page
+  tells people to write to us and the footer tells them they cannot.
+
+  This matters more than the other items in this section: a privacy policy is
+  the one page where the contact address has to actually work.
 
 - [ ] **A phone number**, same place.
 
 - [ ] **Confirm `@lrimunx` is the right handle.** It is live in the footer, the
       nav overlay, the archive section and two no-JavaScript fallbacks.
 
-- [ ] **The final domain.** `og:url` was removed rather than left pointing at
-      `example.org`, which is correct for now: scrapers fall back to whatever URL
-      they fetched. Add it back to both HTML files once the domain exists, and
-      update CORS:
+- [ ] **The final domain.** This is now one environment variable rather than an
+      edit across six files. `scripts/build-seo.mjs` stamps every canonical and
+      `og:url` and writes `sitemap.xml` and `robots.txt` from `SITE_URL`, which
+      defaults to `https://lrimunx.vercel.app`.
 
   ```bash
+  npx vercel env add SITE_URL production --force --value "https://mun.lrischool.edu.np"
   npx vercel env add CORS_ORIGIN production --force --value "https://mun.lrischool.edu.np"
   ```
+
+  Nothing else needs touching. If you forget, the site is still correct, it just
+  advertises the Vercel address to search engines.
 
 ---
 

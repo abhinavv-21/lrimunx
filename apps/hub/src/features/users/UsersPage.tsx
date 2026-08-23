@@ -7,7 +7,7 @@ import { ApiError, errorMessage } from '@/lib/api'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Field, Input } from '@/components/ui/Field'
+import { Field, Input, PasswordInput } from '@/components/ui/Field'
 import { Select, type SelectOption } from '@/components/ui/Select'
 import { RoleBadge } from '@/components/ui/Badge'
 import { CONFIRM_PHRASE, ConfirmDialog, Modal } from '@/components/ui/Modal'
@@ -118,9 +118,8 @@ function UserForm({
           required={!user}
         >
           {({ id }) => (
-            <Input
+            <PasswordInput
               id={id}
-              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"

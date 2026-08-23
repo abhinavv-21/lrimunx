@@ -47,17 +47,6 @@
       }
     </style>
 
-    <script>
-      /* base.css holds the document back until `app-ready` is on <html>, because
-         on the landing page that class is what the preloader hands over with.
-         There is no preloader here, so the class is set inline, before first
-         paint. Written as a blocking script rather than as a rule in the style
-         block above so the two files keep one relationship: base.css owns the
-         gate, and this page simply opens it immediately.
-
-         It also means a scripting failure downstream cannot leave a blank page. */
-      document.documentElement.classList.add('app-ready')
-    </script>
 
     <link
       rel="preload"
@@ -1189,6 +1178,10 @@
         <p class="footer__copy label">
           © <span data-footer-year>2026</span> LRI MUN X Organising Committee. All rights reserved.
         </p>
+        <nav class="footer__meta" aria-label="Site information">
+          <a href="./privacy">Privacy</a>
+          <a href="./colophon">Colophon</a>
+        </nav>
         <p class="footer__credit label">Designed and built by the LRI MUN X organising committee.</p>
       </div>
     </footer>

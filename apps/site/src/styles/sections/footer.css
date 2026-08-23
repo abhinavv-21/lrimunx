@@ -359,3 +359,28 @@
     padding-inline: clamp(0px, 3vw, 4rem);
   }
 }
+
+/* Privacy and the colophon, on the base line beside the copyright. Small on
+   purpose: they are the two pages nobody comes here for and everybody should be
+   able to find. */
+.footer__meta {
+  display: flex;
+  gap: var(--sp-5);
+  font-family: var(--font-ui);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.footer__meta a {
+  color: var(--on-ground-muted);
+  text-decoration: none;
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.footer__meta a:hover,
+.footer__meta a:focus-visible,
+.footer__meta a[aria-current='page'] {
+  color: var(--accent-on-ground);
+}

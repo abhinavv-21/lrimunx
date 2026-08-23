@@ -20,6 +20,7 @@ import { initCommittees } from './modules/committees.js'
 import { initCommitteeDialog } from './modules/committee-dialog.js'
 import { initOc } from './modules/oc.js'
 import { initFooter } from './modules/footer.js'
+import { initStructuredData } from './modules/structured-data.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -75,6 +76,7 @@ function boot() {
   initCommitteeDialog(ctx)
   initOc(ctx)
   initFooter(ctx)
+  initStructuredData()
 
   initAnchors()
   initReveals()
@@ -117,6 +119,20 @@ function revealApp() {
   }, wait)
 }
 
+/**
+ * In-page links, and the URL that goes with them.
+ *
+ * preventDefault stops the browser's jump so Lenis can do the scroll, but it
+ * also stopped the address bar from ever changing: every section link left the
+ * URL exactly as it was found. Arrive at /#committees, click the logo, and you
+ * scrolled to the top while the URL still said #committees.
+ *
+ * So the history entry is written by hand. pushState for a section, because a
+ * reader who has scrolled to the committees should be able to send that link
+ * and use Back to retrace it; replaceState back to the bare path for #top,
+ * because the top of the page is where the path already points and an entry
+ * saying so is one more Back press between the reader and the page before.
+ */
 function initAnchors() {
   document.addEventListener('click', (event) => {
     const link = event.target.closest('a[href^="#"]')
@@ -131,8 +147,20 @@ function initAnchors() {
     event.preventDefault()
     ctx.scrollTo(target)
 
+    if (hash === '#top') {
+      history.replaceState(null, '', location.pathname + location.search)
+    } else if (location.hash !== hash) {
+      history.pushState(null, '', hash)
+    }
+
     target.setAttribute('tabindex', '-1')
     target.focus({ preventScroll: true })
+  })
+
+  // Back and Forward move the page, not just the address bar.
+  window.addEventListener('popstate', () => {
+    const target = location.hash ? document.querySelector(location.hash) : document.querySelector('#top')
+    if (target) ctx.scrollTo(target)
   })
 }
 

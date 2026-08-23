@@ -39,6 +39,9 @@ export default defineConfig({
         main: resolve(import.meta.dirname, 'index.html'),
         register: resolve(import.meta.dirname, 'register.html'),
         editions: resolve(import.meta.dirname, 'editions.html'),
+        privacy: resolve(import.meta.dirname, 'privacy.html'),
+        colophon: resolve(import.meta.dirname, 'colophon.html'),
+        notFound: resolve(import.meta.dirname, '404.html'),
       },
       output: {
         entryFileNames: 'assets/build/[name].[hash].js',

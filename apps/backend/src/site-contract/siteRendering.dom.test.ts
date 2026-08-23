@@ -49,8 +49,15 @@ const catalogue = COMMITTEES as Committee[]
 const here = path.dirname(fileURLToPath(import.meta.url))
 const siteRoot = path.resolve(here, '../../../site')
 
-const INDEX_HTML = readFileSync(path.join(siteRoot, 'index.html'), 'utf8')
-const BODY = INDEX_HTML.replace(/[\s\S]*<body[^>]*>/i, '').replace(/<\/body>[\s\S]*/i, '')
+const bodyOf = (name: string) =>
+  readFileSync(path.join(siteRoot, name), 'utf8')
+    .replace(/[\s\S]*<body[^>]*>/i, '')
+    .replace(/<\/body>[\s\S]*/i, '')
+
+const BODY = bodyOf('index.html')
+
+/** The archive is its own page now, so the gallery tests need its DOM. */
+const EDITIONS_BODY = bodyOf('editions.html')
 
 /** Enough of gsap for the modules under test; none of them assert on animation. */
 function stubGsap() {
@@ -93,16 +100,15 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('the committee rail on index.html', () => {
+describe('the committee grid on index.html', () => {
   it('has the container the renderer looks for, so the section is not silently empty', () => {
-    expect(document.querySelector('[data-committees-rail]')).not.toBeNull()
+    expect(document.querySelector('[data-committees-grid]')).not.toBeNull()
     expect(document.querySelector('[data-committees-eyebrow]')).not.toBeNull()
-    expect(document.querySelector('[data-committees-total]')).not.toBeNull()
   })
 
-  it('ships no hardcoded committee markup: the rail starts empty', () => {
-    const rail = document.querySelector('[data-committees-rail]') as HTMLElement
-    expect(rail.querySelectorAll('[data-committee]')).toHaveLength(0)
+  it('ships no hardcoded committee markup: the grid starts empty', () => {
+    const grid = document.querySelector('[data-committees-grid]') as HTMLElement
+    expect(grid.querySelectorAll('[data-committee]')).toHaveLength(0)
   })
 
   it('renders one card per committee, in catalogue order', () => {
@@ -112,7 +118,7 @@ describe('the committee rail on index.html', () => {
     expect(cards.map((c) => c.dataset['code'])).toEqual(catalogue.map((c) => c.code))
   })
 
-  it('is idempotent, so a second render does not double the rail', () => {
+  it('is idempotent, so a second render does not double the grid', () => {
     renderCommitteeCards()
     renderCommitteeCards()
     expect(document.querySelectorAll('[data-committee]')).toHaveLength(12)
@@ -141,35 +147,36 @@ describe('the committee rail on index.html', () => {
       '.committee__name',
       '.committee__blurb',
       '.committee__seats',
-      '.committee__reveal-text',
-      '.committee__reveal-note',
       '.tag',
       '[data-committee-open]',
     ]) {
       expect(card.querySelector(selector), `card is missing ${selector}`).not.toBeNull()
     }
+
+    // The agenda block used to be a hidden .committee__reveal panel inside the
+    // card, which the dialog scraped back out of the DOM. The panel is gone and
+    // the same content rides on the element as data, so these are now the
+    // nodes-that-are-not-nodes the dialog reads.
+    for (const key of ['blockLabel', 'blockText', 'blockNote']) {
+      expect(card.dataset[key], `card is missing data-${key}`).toBeTruthy()
+    }
     expect(card.dataset['chair']).toBe('To be announced')
     expect(card.dataset['viceChair']).toBe('To be announced')
   })
 
-  it('leads the reveal panel on format while every agenda is still null', () => {
+  it('leads the block on format while every agenda is still null', () => {
     expect(catalogue.every((c) => c.agenda === null)).toBe(true)
     renderCommitteeCards()
 
-    const labels = Array.from(document.querySelectorAll('.committee__reveal-label')).map(
-      (el) => el.textContent,
-    )
-    expect(new Set(labels)).toEqual(new Set(['Format']))
+    const cards = Array.from(document.querySelectorAll('[data-committee]')) as HTMLElement[]
 
-    const texts = Array.from(document.querySelectorAll('.committee__reveal-text')).map(
-      (el) => el.textContent,
+    expect(new Set(cards.map((c) => c.dataset['blockLabel']))).toEqual(new Set(['Format']))
+    expect(cards.map((c) => c.dataset['blockText'])).toEqual(
+      catalogue.map((c) => c.meta.join(', ')),
     )
-    expect(texts).toEqual(catalogue.map((c) => c.meta.join(', ')))
-
-    const notes = Array.from(document.querySelectorAll('.committee__reveal-note')).map(
-      (el) => el.textContent,
+    expect(new Set(cards.map((c) => c.dataset['blockNote']))).toEqual(
+      new Set(['Agenda to be announced.']),
     )
-    expect(new Set(notes)).toEqual(new Set(['Agenda to be announced.']))
   })
 
   it('prints the seat count and noun from the catalogue', () => {
@@ -199,12 +206,13 @@ describe('the committee rail on index.html', () => {
     expect(eyebrow.textContent).toBe('Twelve committees')
   })
 
-  it('lets initCommittees overwrite the hardcoded total in the HTML', () => {
-    const total = document.querySelector('[data-committees-total]') as HTMLElement
-    expect(total.textContent?.trim()).toBe('12') // the stale literal in index.html
+  it('survives initCommittees, which no longer measures anything', () => {
+    // The position readout, the progress bar and the arrows went with the rail.
+    // What is left is the entry animation, and the contract that matters is
+    // that running it does not disturb the cards the renderer just wrote.
     renderCommitteeCards()
     initCommittees(stubGsap())
-    expect(total.textContent).toBe('12')
+    expect(document.querySelectorAll('[data-committee]')).toHaveLength(catalogue.length)
   })
 
   it('escapes card text rather than injecting it raw', () => {
@@ -267,10 +275,10 @@ describe('the details dialog, filled from a rendered card', () => {
     // thing the card says. While agendas are pending the card leads on format,
     // so a hardcoded "Agenda" label here would sit above a format phrase.
     expect((block.querySelector('.cdlg__block-label') as HTMLElement).textContent).toBe(
-      (card.querySelector('.committee__reveal-label') as HTMLElement).textContent,
+      card.dataset['blockLabel'],
     )
     expect((dialog.querySelector('[data-cdlg-agenda]') as HTMLElement).textContent).toBe(
-      (card.querySelector('.committee__reveal-text') as HTMLElement).textContent,
+      card.dataset['blockText'],
     )
   })
 
@@ -282,8 +290,14 @@ describe('the details dialog, filled from a rendered card', () => {
   })
 })
 
-describe('the gallery', () => {
+describe('the gallery, on editions.html', () => {
   const source = readFileSync(path.join(siteRoot, 'src/modules/gallery.js'), 'utf8')
+
+  // The archive was a section on the landing page and is a page of its own now.
+  // The outer beforeEach loads index.html, which no longer has any of this.
+  beforeEach(() => {
+    document.body.innerHTML = EDITIONS_BODY
+  })
 
   it('is gated off while the photographs are not in the repository', () => {
     // Both halves have to hold together: the flag is off AND the files are absent.

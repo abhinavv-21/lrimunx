@@ -245,10 +245,13 @@ existed" warning stays.
   variables exist, so the server correctly answers `503` and the form says
   uploads are not switched on. Deferred to Oracle, where Object Storage is
   documented in `SETUP.md` §14. Registration completes without one.
-- **Nothing here was seen in a browser.** No browser automation was available.
-  Every width figure is derived from token values and font advances. The
-  arithmetic matched the reported symptom glyph for glyph, but the first person
-  to actually look at it will be a human.
+- ~~**Nothing here was seen in a browser.**~~ **No longer true.** Playwright and
+  Chromium are installed now, and both apps have been driven in a real browser:
+  the site at seven viewports across all six pages, and the hub signed in and
+  walked through all eleven routes at 390 and 1440. That pass found three things
+  the arithmetic could not have: an About plate that collapsed to 2x3px, a nav
+  link that broke over two lines at 900px, and every subpage rendering invisible
+  under the Express deployment's Content-Security-Policy. All three are fixed.
 - **The backend suite crashes on exit roughly one run in fifteen** with
   `Error: Worker exited unexpectedly`. Every test passes first; it is a segfault
   during teardown from Prisma 5.22 against Node 24. Production runs Node 20.

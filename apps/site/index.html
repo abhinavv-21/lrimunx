@@ -1,5 +1,9 @@
 <!doctype html>
-<html lang="en">
+<!-- is-gated: this page has a preloader, so its content waits behind the
+     curtain until the bundle says it is ready. A class in the markup rather
+     than one set by script, because a Content-Security-Policy that blocks
+     inline scripts would otherwise leave the page blank. -->
+<html lang="en" class="is-gated">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -42,11 +46,6 @@
         margin: 0;
         background: #2b0a21;
         font-family: 'General Sans', Inter, system-ui, sans-serif;
-      }
-      /* Hold the document back until the app says it is ready. The fallback
-         timer below guarantees this is always removed. */
-      html:not(.app-ready) body > *:not(#site-loader) {
-        opacity: 0;
       }
       #site-loader {
         position: fixed;
@@ -135,19 +134,11 @@
       }
     </style>
 
-    <script>
-      // Safety net. If the module bundle fails to execute for any reason, the
-      // document must still be readable — never leave the curtain up.
-      window.__lriReveal = function () {
-        document.documentElement.classList.add('app-ready')
-      }
-      setTimeout(window.__lriReveal, 4000)
-    </script>
-
     <noscript>
       <style>
-        html:not(.app-ready) body > *:not(#site-loader) {
+        html.is-gated:not(.app-ready) body > *:not(#site-loader):not(.to-top) {
           opacity: 1 !important;
+          animation: none !important;
         }
         #site-loader {
           display: none !important;
@@ -797,6 +788,10 @@
         <p class="footer__copy label">
           © <span data-footer-year>2026</span> LRI MUN X Organising Committee. All rights reserved.
         </p>
+        <nav class="footer__meta" aria-label="Site information">
+          <a href="./privacy">Privacy</a>
+          <a href="./colophon">Colophon</a>
+        </nav>
         <p class="footer__credit label">Designed and built by the LRI MUN X organising committee.</p>
       </div>
     </footer>
