@@ -433,14 +433,6 @@
         </div>
 
         <div class="shell grid about__inner">
-          <!-- No <img> until there is a photograph: Vite hashes every src written
-               here and fails the build on a missing file. Drop the file at
-               assets/about/, add the <img> and remove is-missing. -->
-          <figure class="about__media media-plate is-missing" data-reveal>
-            <span class="media-plate__fallback" aria-hidden="true">X</span>
-            <figcaption class="about__caption">Photograph to come &mdash; Edition IX</figcaption>
-          </figure>
-
           <div class="about__body">
             <header class="section__head about__head">
               <p class="section__eyebrow label">About the conference</p>
@@ -474,6 +466,24 @@
               </div>
             </dl>
           </div>
+
+          <!-- Second in the DOM so the sentence that explains the conference is
+               read first and lands first on a phone; the grid puts it on the
+               right at 900px and up.
+
+               No <img> until there is a photograph: Vite hashes every src
+               written here and fails the build on a missing file. Drop the file
+               at assets/about/, add the <img> and remove is-missing. -->
+          <figure class="about__media media-plate is-missing" data-reveal>
+            <span class="media-plate__fallback" aria-hidden="true">X</span>
+            <figcaption class="about__caption">Photograph to come &mdash; Edition IX</figcaption>
+          </figure>
+        </div>
+
+        <!-- The same strip the Editions section runs, on ink. Ten marks, the
+             tenth in gold: it says "ten editions in" without a sentence. -->
+        <div class="gallery__marquee about__marquee" aria-hidden="true">
+          <div class="gallery__marquee-track" data-gallery-marquee-track></div>
         </div>
       </section>
 

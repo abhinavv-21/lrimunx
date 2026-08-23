@@ -6,11 +6,42 @@
    the first light break) and suits the media plate, which is drawn on ink. */
 .about {
   border-block-start: 1px solid var(--hairline-on-ink);
+
+  /* A screenful, and the content centred in it.
+     
+     The section is the first thing the About link jumps to, and at its natural
+     height it filled about three quarters of the window: a tall dark block, a
+     band of nothing, then a sliver of the next section's paper along the
+     bottom edge. Nothing was wrong with it except that it stopped early. */
+  min-block-size: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-content: stretch;
 }
 
 .about__inner {
+  align-self: center;
   row-gap: clamp(var(--sp-7), 5vw, var(--sp-9));
   align-items: center;
+}
+
+/* The same strip the Editions section runs, on ink. It sits on the section's
+   bottom edge rather than above the copy, because the hero's own marquee is
+   only a few hundred pixels above and two scrolling strips in one screen read
+   as a glitch. */
+.gallery__marquee.about__marquee {
+  /* Two classes on purpose: gallery.css is imported after this file, so a
+     single-class override here loses to .gallery__marquee on source order and
+     the numerals come out near-black on plum, which is to say invisible.
+     
+     0.16 is right for dark type on paper and reads as nothing for cream on ink,
+     where the ground is only a little darker than the type is faint. */
+  --marquee-type: rgb(var(--rgb-text-inverse) / 0.32);
+  --marquee-rule: var(--hairline-on-ink);
+
+  align-self: end;
+  margin-block-end: 0;
+  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-9));
 }
 
 .about__media,
@@ -127,39 +158,34 @@
 }
 
 @media (min-width: 900px) {
-  .about__media {
-    grid-column: 1 / 6;
+  .about__body {
+    grid-column: 1 / 8;
   }
 
-  .about__body {
-    grid-column: 6 / -1;
+  .about__media {
+    grid-column: 8 / -1;
   }
 }
 
 /* Column 2 is where every .section__head starts at this width (base.css), and
    the vertical section label lives in column 1. */
 @media (min-width: 1024px) {
-  .about__media {
-    grid-column: 2 / 6;
+  .about__body {
+    grid-column: 2 / 9;
   }
 
-  .about__body {
-    grid-column: 7 / -1;
+  .about__media {
+    grid-column: 9 / -1;
   }
 }
 
 @media (max-width: 899px) {
-  /* Below the copy on a phone. The name and the sentence that explains the
-     conference land first; a 4:5 plate at the top of the section would push
-     both of them off the screen. */
+  /* Under the copy on a phone, where the DOM order already puts it. The name
+     and the sentence that explains the conference have to land first; a 4:5
+     plate above them would push both off the screen. */
   .about__media {
-    order: 2;
     inline-size: 100%;
     max-inline-size: 20rem;
     justify-self: start;
-  }
-
-  .about__body {
-    order: 1;
   }
 }
