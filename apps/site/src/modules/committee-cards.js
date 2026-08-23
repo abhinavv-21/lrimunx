@@ -13,20 +13,20 @@ const ARROW = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
 </svg>`
 
 /**
- * Renders the committee rail from src/data/committees.js.
+ * Renders the committee grid from src/data/committees.js.
  *
  * Emits the markup committees.css already targets, and committee-dialog.js
  * reads a card back out of the DOM, so neither needed changing when the cards
  * moved out of index.html.
  *
- * Runs before initCommittees, which measures the cards it finds.
+ * Runs before initCommittees, which animates the cards it finds.
  */
 export function renderCommitteeCards() {
-  const rail = document.querySelector('[data-committees-rail]')
-  if (!rail) return
+  const grid = document.querySelector('[data-committees-grid]')
+  if (!grid) return
 
-  rail.innerHTML = ''
-  COMMITTEES.forEach((committee, index) => rail.append(card(committee, index)))
+  grid.innerHTML = ''
+  COMMITTEES.forEach((committee, index) => grid.append(card(committee, index)))
 
   // The eyebrow counts the list rather than hardcoding a number that goes stale
   // the moment a committee is added.
@@ -88,7 +88,7 @@ function card(committee, index) {
   `
 
   // Hide rather than remove, so a missing icon does not pull the whole card up
-  // by 1.75rem and break the rail's rhythm.
+  // by 1.75rem and break the grid's rhythm.
   const icon = li.querySelector('.committee__icon')
   icon?.addEventListener('error', () => icon.classList.add('is-missing'), { once: true })
 

@@ -145,6 +145,13 @@
   margin: 0;
 }
 
+/* Four links fit at 900px, the narrowest width these are shown at, but only
+   just: without this "Past Editions" breaks over two lines inside its own box
+   and pushes the rest of the bar out of line. */
+.nav__link {
+  white-space: nowrap;
+}
+
 .nav__link {
   position: relative;
   display: inline-flex;

@@ -223,6 +223,7 @@
 
         <nav class="nav__links" aria-label="Section navigation">
           <ul class="nav__list">
+            <li><a class="nav__link" href="#about" data-nav-link>About</a></li>
             <li><a class="nav__link" href="#committees" data-nav-link>Committees</a></li>
             <li><a class="nav__link" href="#secretariat" data-nav-link>Secretariat</a></li>
             <li><a class="nav__link" href="#editions" data-nav-link>Past Editions</a></li>
@@ -264,26 +265,32 @@
         <p class="label nav-overlay__eyebrow">LRI Model UN X</p>
         <ul class="nav-overlay__list">
           <li>
-            <a href="#committees" data-nav-overlay-link
+            <a href="#about" data-nav-overlay-link
               ><span class="nav-overlay__index numeral" aria-hidden="true">01</span
+              >About</a
+            >
+          </li>
+          <li>
+            <a href="#committees" data-nav-overlay-link
+              ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
               >Committees</a
             >
           </li>
           <li>
             <a href="#secretariat" data-nav-overlay-link
-              ><span class="nav-overlay__index numeral" aria-hidden="true">02</span
+              ><span class="nav-overlay__index numeral" aria-hidden="true">03</span
               >Secretariat</a
             >
           </li>
           <li>
             <a href="#editions" data-nav-overlay-link
-              ><span class="nav-overlay__index numeral" aria-hidden="true">03</span>Past
+              ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Past
               Editions</a
             >
           </li>
           <li>
             <a href="#register" data-nav-overlay-link
-              ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Register</a
+              ><span class="nav-overlay__index numeral" aria-hidden="true">05</span>Register</a
             >
           </li>
         </ul>
@@ -362,14 +369,21 @@
               <div class="hero__fact">
                 <dt class="label">Dates</dt>
                 <dd>
-                  <time datetime="2026-11-21">21</time>&ndash;<time datetime="2026-11-23">23</time>
-                  November 2026
-                  <span class="hero__fact-alt">Mangshir 5&ndash;7, 2083 <abbr title="Bikram Sambat">BS</abbr></span>
+                  <span class="hero__fact-value">
+                    <time datetime="2026-11-21">21</time>&ndash;<time datetime="2026-11-23">23</time>
+                    November 2026
+                  </span>
+                  <span class="hero__fact-alt"
+                    >Mangshir 5&ndash;7, 2083 <abbr title="Bikram Sambat">BS</abbr></span
+                  >
                 </dd>
               </div>
               <div class="hero__fact">
                 <dt class="label">Venue</dt>
-                <dd>LRI School, Kalanki</dd>
+                <dd>
+                  <span class="hero__fact-value">LRI School</span>
+                  <span class="hero__fact-alt">Kalanki, Kathmandu</span>
+                </dd>
               </div>
 
             </dl>
@@ -411,14 +425,65 @@
         </div>
       </section>
 
+      <section class="section about ground-ink" id="about" aria-labelledby="about-title">
+        <div class="section__margin" aria-hidden="true">
+          <span class="numeral">01</span>
+          <span class="section__margin__rule"></span>
+          <span class="section__margin__label">About</span>
+        </div>
+
+        <div class="shell grid about__inner">
+          <!-- No <img> until there is a photograph: Vite hashes every src written
+               here and fails the build on a missing file. Drop the file at
+               assets/about/, add the <img> and remove is-missing. -->
+          <figure class="about__media media-plate is-missing" data-reveal>
+            <span class="media-plate__fallback" aria-hidden="true">X</span>
+            <figcaption class="about__caption">Photograph to come &mdash; Edition IX</figcaption>
+          </figure>
+
+          <div class="about__body">
+            <header class="section__head about__head">
+              <p class="section__eyebrow label">About the conference</p>
+              <h2 class="section__title" id="about-title">Ten editions in, still run by students.</h2>
+              <p class="lede section__intro">
+                The tenth edition opens on 21 November 2026 and runs for three days at LRI School
+                in Kalanki. Twelve committees, four hundred seats, and a conference put together
+                by the same people who will be sitting in it.
+              </p>
+            </header>
+
+            <p class="body-copy about__copy" data-reveal>
+              Nine conferences have run here before this one, each organised by the students of the
+              year that hosted it. This one is no different. The agendas, the country matrices and
+              the running order are all student work, and three faculty advisors from LRI School
+              sign off on the rest.
+            </p>
+
+            <dl class="about__facts" data-reveal>
+              <div class="about__fact">
+                <dt class="label">Seats</dt>
+                <dd data-about-seats>400</dd>
+              </div>
+              <div class="about__fact">
+                <dt class="label">Committees</dt>
+                <dd data-about-committees>12</dd>
+              </div>
+              <div class="about__fact">
+                <dt class="label">Past editions</dt>
+                <dd>IX</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
       <section
         class="section committees ground-paper"
         id="committees"
         aria-labelledby="committees-title"
-        data-committees-section
       >
         <div class="section__margin" aria-hidden="true">
-          <span class="numeral">01</span>
+          <span class="numeral">02</span>
           <span class="section__margin__rule"></span>
           <span class="section__margin__label">Committees</span>
         </div>
@@ -435,77 +500,16 @@
           </header>
         </div>
 
-        <div class="committees__rail-wrap">
-          <div class="shell committees__toolbar">
-            <p class="label committees__count">
-              <span data-committees-position>01</span>
-              <span class="committees__count-sep" aria-hidden="true">—</span>
-              <span data-committees-total>12</span>
-            </p>
-            <div class="committees__nav">
-              <button
-                class="committees__arrow"
-                type="button"
-                data-committees-prev
-                aria-label="Previous committee"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path
-                    d="M14 8H3M7 4L3 8l4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="square"
-                  />
-                </svg>
-              </button>
-              <button
-                class="committees__arrow"
-                type="button"
-                data-committees-next
-                aria-label="Next committee"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-                  <path
-                    d="M2 8h11M9 4l4 4-4 4"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="square"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
+        <div class="shell grid">
+          <ul class="committees__grid" data-committees-grid></ul>
+        </div>
 
-          <div class="shell committees__viewport">
-          <ul
-            class="committees__rail"
-            data-committees-rail
-            data-lenis-prevent
-            tabindex="0"
-            role="region"
-            aria-label="Committees — scrollable list, use left and right arrow keys"
-          >
-          </ul>
-          </div>
-
-            <noscript>
-              <p class="shell committees__noscript">
-                The committee list is rendered with JavaScript. Enable JavaScript, or write
-                to the conference at the contact in the footer for the full line-up and the
-                agendas.
-              </p>
-            </noscript>
-
-          <div class="shell committees__progress-wrap">
-            <div class="committees__progress" aria-hidden="true">
-              <span class="committees__progress-bar" data-committees-progress></span>
-            </div>
-            <p class="committees__hint label" data-committees-hint>
-              Scroll, drag or use <kbd>←</kbd> <kbd>→</kbd>
-            </p>
-          </div>
+        <noscript>
+          <p class="shell body-copy">
+            The committee list is rendered with JavaScript. Enable JavaScript, or write to the
+            conference at the contact in the footer for the full line-up and the agendas.
+          </p>
+        </noscript>
 
         <dialog
           class="cdlg"
@@ -581,12 +585,11 @@
             </footer>
           </article>
         </dialog>
-        </div>
       </section>
 
       <section class="section oc ground-ink" id="secretariat" aria-labelledby="oc-title">
         <div class="section__margin" aria-hidden="true">
-          <span class="numeral">02</span>
+          <span class="numeral">03</span>
           <span class="section__margin__rule"></span>
           <span class="section__margin__label">Secretariat</span>
         </div>
@@ -619,7 +622,7 @@
 
       <section class="section gallery ground-blush" id="editions" aria-labelledby="editions-title">
         <div class="section__margin" aria-hidden="true">
-          <span class="numeral">03</span>
+          <span class="numeral">04</span>
           <span class="section__margin__rule"></span>
           <span class="section__margin__label">Editions</span>
         </div>
@@ -758,6 +761,7 @@
           <h2 class="label footer__heading">Sections</h2>
           <ul class="footer__list">
             <li><a href="#top">Home</a></li>
+            <li><a href="#about">About</a></li>
             <li><a href="#committees">Committees</a></li>
             <li><a href="#secretariat">Secretariat</a></li>
             <li><a href="#editions">Past editions</a></li>

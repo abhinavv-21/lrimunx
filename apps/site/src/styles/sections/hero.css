@@ -215,38 +215,67 @@ html.has-motion .hero__title-line {
   padding-block: clamp(var(--sp-5), 3vw, var(--sp-6));
 }
 
+/* Three named tracks instead of space-between on a wrapping flex row, which
+   rearranged itself into a different layout at every width between 900 and
+   1200. Facts on the left, buttons on the right, the scroll cue in the margin. */
+@media (min-width: 900px) {
+  .hero__plinth-inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: clamp(var(--sp-6), 4vw, var(--sp-9));
+  }
+
+  .hero__actions {
+    justify-self: end;
+  }
+}
+
+/* Both facts are label, value, sub-line, in that order and at those sizes.
+   Dates used to have a sub-line and Venue did not, and that sub-line flipped to
+   an inline middot run-on at 900px, so the two never looked like one block. */
 .hero__facts {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-5) clamp(var(--sp-5), 4vw, var(--sp-8));
+  gap: var(--sp-5) 0;
   margin: 0;
 }
 
 .hero__fact dt {
+  font-size: var(--fs-200);
   color: var(--accent-on-ground);
   margin-block-end: var(--sp-2);
 }
 
 .hero__fact dd {
   margin: 0;
-  font-size: var(--fs-300);
   color: var(--on-ground);
 }
 
-/* The Bikram Sambat date, under the Gregorian one on narrow screens and beside
-   it once there is room. Kept at 0.78 rather than --on-ground-muted because 12px
-   over the animated hero wash needs the headroom. */
+/* The date and the venue in the display serif, at roughly the size of a card
+   heading. At --fs-300 they read as a caption on the CTA next to them, which is
+   the wrong way round: they are the two facts a delegate came for. */
+.hero__fact-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--fs-600);
+  font-variation-settings: 'opsz' 32, 'WONK' 1;
+  line-height: 1.16;
+  letter-spacing: var(--tracking-display);
+}
+
+/* The Bikram Sambat date under one, the locality under the other. */
 .hero__fact-alt {
   display: block;
-  margin-block-start: var(--sp-1);
-  font-size: var(--fs-200);
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-300);
   letter-spacing: var(--tracking-body);
-  color: rgb(var(--rgb-text-inverse) / 0.78);
+  color: rgb(var(--rgb-text-inverse) / 0.72);
 }
 
 .hero__fact-alt abbr {
-  font-size: var(--fs-100);
-  letter-spacing: var(--tracking-label);
+  font-size: var(--fs-200);
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--color-accent-gold);
   text-decoration: none;
@@ -254,16 +283,16 @@ html.has-motion .hero__title-line {
 }
 
 @media (min-width: 900px) {
-  .hero__fact-alt {
-    display: inline;
-    margin-block-start: 0;
-    margin-inline-start: var(--sp-3);
+  /* A rule between the two, not just a gap. Only at this width: below it the
+     plinth is a stacked column and a start-edge border would land on top of a
+     fact rather than between two. */
+  .hero__fact + .hero__fact {
+    padding-inline-start: clamp(var(--sp-5), 3vw, var(--sp-7));
+    border-inline-start: 1px solid var(--hairline-gold);
   }
 
-  .hero__fact-alt::before {
-    content: '·';
-    margin-inline-end: var(--sp-3);
-    color: rgb(var(--rgb-gold) / 0.55);
+  .hero__fact:first-child {
+    padding-inline-end: clamp(var(--sp-5), 3vw, var(--sp-7));
   }
 }
 
@@ -370,13 +399,23 @@ html.has-motion .hero__title-line {
   }
 }
 
-/* At 1440x760 the plinth that holds both CTAs was pushed below the fold. */
+/* At 1440x760 the plinth that holds both CTAs was pushed below the fold. The
+   larger facts spend some of the margin this bought back, so the two sub-lines
+   go with the tagline. They are the secondary half of each fact by definition. */
 @media (min-width: 900px) and (max-height: 800px) {
   .hero__title {
     font-size: clamp(2.6rem, 1.1rem + 5.2vw, 5.25rem);
   }
 
   .hero__tagline {
+    display: none;
+  }
+
+  .hero__fact-value {
+    font-size: var(--fs-500);
+  }
+
+  .hero__fact-alt {
     display: none;
   }
 }

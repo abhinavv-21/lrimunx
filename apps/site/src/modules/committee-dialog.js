@@ -2,8 +2,8 @@ const DRAG_SLOP = 8
 
 export function initCommitteeDialog({ lenis, reduced } = {}) {
   const dialog = document.querySelector('[data-committee-dialog]')
-  const rail = document.querySelector('[data-committees-rail]')
-  if (!dialog || !rail) return null
+  const grid = document.querySelector('[data-committees-grid]')
+  if (!dialog || !grid) return null
 
   const slots = {
     icon: dialog.querySelector('[data-cdlg-icon]'),
@@ -179,7 +179,7 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
 
   let press = null
 
-  rail.addEventListener(
+  grid.addEventListener(
     'pointerdown',
     (event) => {
       press = { x: event.clientX, y: event.clientY }
@@ -187,7 +187,7 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     { passive: true }
   )
 
-  rail.addEventListener('click', (event) => {
+  grid.addEventListener('click', (event) => {
     const item = event.target.closest('[data-committee]')
     if (!item) return
 

@@ -82,6 +82,47 @@ for (const code of seedByCode.keys()) {
 if (problems.length > 0) fail(problems)
 
 const seats = COMMITTEES.reduce((total, c) => total + c.seats, 0)
+
+/**
+ * The About section quotes both totals as plain text in the markup.
+ *
+ * Same failure this file exists to prevent, one surface further out: a
+ * committee gets added or a seat count moves, and the landing page keeps
+ * advertising a number nobody remembered to change. There is no way to compute
+ * these in static HTML, so they are checked instead.
+ */
+const aboutFigures = [
+  ['data-about-seats', seats],
+  ['data-about-committees', COMMITTEES.length],
+]
+
+const indexHtml = readFileSync(resolve(root, 'apps/site/index.html'), 'utf8')
+const stale = []
+
+for (const [attribute, expected] of aboutFigures) {
+  const found = indexHtml.match(new RegExp(`${attribute}>([^<]*)<`))
+
+  if (!found) {
+    stale.push(`[${attribute}] is not in apps/site/index.html any more. Was the About section removed?`)
+    continue
+  }
+
+  if (found[1].trim() !== String(expected)) {
+    stale.push(`[${attribute}]: the About section says "${found[1].trim()}", the data says ${expected}.`)
+  }
+}
+
+if (stale.length > 0) {
+  console.error('')
+  console.error('The About section on the landing page is out of date:')
+  console.error('')
+  for (const line of stale) console.error(`  ${line}`)
+  console.error('')
+  console.error('Edit the figures in apps/site/index.html to match src/data/committees.js.')
+  console.error('')
+  process.exit(1)
+}
+
 console.log(
   `[committees] ${COMMITTEES.length} committees, ${seats} seats, site and seed agree.`,
 )

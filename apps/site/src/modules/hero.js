@@ -1,6 +1,14 @@
-// The headline now says "LRI Model United Nations" at full size, so the ribbon
-// carries only what the headline does not.
-const RIBBON = ['Tenth Edition', 'Kalanki · Kathmandu', '21–23 November 2026']
+import { COMMITTEES } from '../data/committees.js'
+
+// The twelve rooms, in the order they appear further down the page.
+//
+// This used to read 'Tenth Edition', 'Kalanki · Kathmandu', '21–23 November
+// 2026', which is exactly what the plinth two rows above it already says, at
+// 11px and 62% opacity. Saying the same three facts twice in two illegible
+// sizes is why the whole block read as noise. Codes are new information, they
+// set up the committees section, and reading them from the data file means the
+// marquee cannot go stale the way a hardcoded list would.
+const RIBBON = COMMITTEES.map((committee) => committee.code)
 
 const RIBBON_SPEED = 46
 

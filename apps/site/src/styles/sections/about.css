@@ -1,0 +1,165 @@
+/* Ink, not blush, deliberately.
+
+   Blush is #fdf4f9 and the committees section below is #faf7f3. Stacked, those
+   two read as one long light block with a seam in the middle rather than as two
+   sections. Staying dark keeps the page alternating (dark opening, committees as
+   the first light break) and suits the media plate, which is drawn on ink. */
+.about {
+  border-block-start: 1px solid var(--hairline-on-ink);
+}
+
+.about__inner {
+  row-gap: clamp(var(--sp-7), 5vw, var(--sp-9));
+  align-items: center;
+}
+
+.about__media,
+.about__body {
+  grid-column: 1 / -1;
+}
+
+/* The photograph is not taken yet, so there is no <img> here at all: Vite
+   resolves and hashes every src written into the HTML, and one pointing at a
+   file that does not exist fails the build. The plate ships in the state
+   .media-plate already has for exactly this, a gold mark on ink, which is also
+   what the secretariat portraits show while they are being photographed.
+
+   When the photograph lands: drop it at assets/about/, add the <img> back and
+   remove is-missing from the figure. */
+.about__media {
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--hairline-gold);
+  border-radius: var(--radius-sm);
+}
+
+.about__caption {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  padding: var(--sp-4);
+  font-size: var(--fs-100);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: rgb(var(--rgb-text-inverse) / 0.55);
+  background-image: linear-gradient(to top, rgb(var(--rgb-ink) / 0.9), transparent);
+}
+
+/* The heading sits directly above its own body copy here, not above a
+   full-width grid of cards, so it does not want a section's worth of air. */
+.about__head {
+  margin-bottom: var(--sp-5);
+}
+
+.about__copy {
+  margin-block-start: var(--sp-5);
+  color: var(--on-ground-muted);
+}
+
+/* The same shape as the hero plinth facts: a small gold label over a figure in
+   the display serif. Repeating the pattern is what makes the two blocks read as
+   one system rather than two designs.
+
+   A grid rather than a wrapping flex row, because the divider has to know which
+   facts share a row. As flex, the third fact wrapped onto its own line on a
+   phone and took its start-edge border with it, leaving a rule hanging in space
+   to the left of it. */
+.about__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5) 0;
+  margin-block-start: clamp(var(--sp-6), 4vw, var(--sp-8));
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--hairline-on-ink);
+}
+
+/* dt comes before dd in the markup, because that is what a description list
+   means. The figure has to read first, so the two are ordered back visually. */
+.about__fact {
+  display: flex;
+  flex-direction: column;
+  padding-inline-end: var(--sp-5);
+}
+
+/* Everything except the first of a row. */
+.about__fact:not(:nth-child(2n + 1)) {
+  padding-inline-start: var(--sp-5);
+  border-inline-start: 1px solid var(--hairline-gold);
+}
+
+@media (min-width: 640px) {
+  .about__facts {
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+  }
+
+  .about__fact {
+    padding-inline-end: clamp(var(--sp-5), 4vw, var(--sp-8));
+  }
+
+  .about__fact:nth-child(3n + 1) {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+
+  .about__fact:not(:nth-child(3n + 1)) {
+    padding-inline-start: clamp(var(--sp-5), 4vw, var(--sp-8));
+    border-inline-start: 1px solid var(--hairline-gold);
+  }
+}
+
+.about__fact dt {
+  order: 2;
+  margin-block-start: var(--sp-2);
+  font-size: var(--fs-100);
+  color: var(--accent-on-ground);
+}
+
+.about__fact dd {
+  order: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-700);
+  font-variation-settings: 'opsz' 40, 'WONK' 1;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--on-ground);
+}
+
+@media (min-width: 900px) {
+  .about__media {
+    grid-column: 1 / 6;
+  }
+
+  .about__body {
+    grid-column: 6 / -1;
+  }
+}
+
+/* Column 2 is where every .section__head starts at this width (base.css), and
+   the vertical section label lives in column 1. */
+@media (min-width: 1024px) {
+  .about__media {
+    grid-column: 2 / 6;
+  }
+
+  .about__body {
+    grid-column: 7 / -1;
+  }
+}
+
+@media (max-width: 899px) {
+  /* Below the copy on a phone. The name and the sentence that explains the
+     conference land first; a 4:5 plate at the top of the section would push
+     both of them off the screen. */
+  .about__media {
+    order: 2;
+    inline-size: 100%;
+    max-inline-size: 20rem;
+    justify-self: start;
+  }
+
+  .about__body {
+    order: 1;
+  }
+}

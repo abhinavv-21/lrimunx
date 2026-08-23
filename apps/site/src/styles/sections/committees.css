@@ -1,148 +1,45 @@
-/* No top margin. .section__head already carries clamp(--sp-7, 4vw, --sp-10)
-   below it, and stacking a second gap on top of that left about 120px of
-   nothing between the intro and the rail's position readout. */
-.committees__rail-wrap {
-  margin-block-start: 0;
-}
-
 .committees {
   padding-block-end: clamp(var(--sp-8), 5vw, var(--sp-10));
 }
 
-.committees__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  padding-block-end: var(--sp-5);
-}
+/* All twelve at once.
 
-.committees__count {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--on-ground-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.committees__count-sep {
-  inline-size: 1.5rem;
-  block-size: 1px;
-  background-color: var(--color-primary);
-}
-
-.committees__nav {
-  display: flex;
-  gap: var(--sp-3);
-}
-
-.committees__arrow {
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
+   What used to be here was a horizontal rail: arrows, a position readout, a
+   progress bar, drag-to-scroll, a wheel hijack and a scroll-snap, all so three
+   cards could be on screen at a time. The advisors asked to see the whole
+   line-up, and a grid does it without any of that. It also gives CSS :hover its
+   job back, because nothing moves under a stationary pointer any more. */
+.committees__grid {
+  grid-column: 1 / -1;
   display: grid;
-  place-items: center;
-
-  border: 1px solid var(--border-interactive);
-  border-radius: var(--radius-pill);
-  color: var(--on-ground);
-  transition:
-    background-color var(--dur-base) var(--ease-house),
-    border-color var(--dur-base) var(--ease-house),
-    color var(--dur-base) var(--ease-house),
-    transform var(--dur-base) var(--ease-spring);
-}
-
-.committees__arrow svg {
-  inline-size: 1rem;
-}
-
-.committees__arrow:hover:not(:disabled) {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-text-inverse);
-  transform: scale(1.06);
-}
-
-.committees__arrow:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.committees__viewport {
-  position: relative;
-}
-
-.committees__rail {
-  display: flex;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--grid-gap);
   margin: 0;
-  padding-inline: 0;
-  padding-block: var(--sp-2) var(--sp-6);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  padding: 0;
+  list-style: none;
 }
 
-.committees__rail::-webkit-scrollbar {
-  display: none;
-}
-
-.committees__rail:focus-visible {
-  outline: var(--focus-ring-w) solid var(--focus-ring);
-  outline-offset: 4px;
-}
-
-/* Snapping is for everyone. It used to be inside a (hover: none) query, so a
-   mouse could leave a card sheared exactly on the gutter line and the rail had
-   no way to tidy itself up. Proximity rather than mandatory on pointer devices,
-   so a deliberate half-scroll to peek at the next card is still allowed. */
-.committees__rail {
-  scroll-snap-type: x proximity;
-}
-
-.committee {
-  scroll-snap-align: start;
-}
-
-@media (hover: none) {
-  .committees__rail {
-    scroll-snap-type: x mandatory;
+@media (min-width: 700px) {
+  .committees__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.committees__rail.is-wheel-active {
-  cursor: ew-resize;
-}
-
-/* Only on devices with a real pointer: on touch the rail pans natively and a
-   grab cursor would be meaningless. */
-@media (hover: hover) and (pointer: fine) {
-  .committees__rail {
-    cursor: grab;
-  }
-
-  .committees__rail.is-dragging {
-    cursor: grabbing;
-    scroll-behavior: auto;
-  }
-
-  /* Stops the browser starting a native text or image drag mid-swipe. Not
-     pointer-events: none, which also blinded elementFromPoint and killed every
-     card's hover state for the duration of the drag. */
-  .committees__rail.is-dragging * {
-    user-select: none;
-  }
-
-  .committees__rail.is-dragging img {
-    -webkit-user-drag: none;
+@media (min-width: 1100px) {
+  .committees__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-.committee {
-  --cols: 1.12;
-  flex: 0 0 auto;
-  inline-size: calc((100% - (var(--cols) - 1) * var(--grid-gap)) / var(--cols));
+/* Column 2 is where every .section__head starts at this width (base.css), so
+   card 01's left edge lands on the heading's instead of 114px left of it. The
+   grid does the alignment now. It used to be a padding calculation against
+   100% of the section, which is only the same as the shell's width at exactly
+   1440px and drifted on anything wider. */
+@media (min-width: 1024px) {
+  .committees__grid {
+    grid-column: 2 / -1;
+  }
 }
 
 .committee__card {
@@ -150,9 +47,8 @@
   display: flex;
   flex-direction: column;
   block-size: 100%;
-  /* Was 27rem, which reserved room for a panel that slid up over the footer.
-     The panel is gone, so the floor is now only what stops a two-line name
-     and a short blurb from collapsing into a stub next to its neighbours. */
+  /* Only what stops a two-line name and a short blurb from collapsing into a
+     stub. Rows equalise themselves, so this matters most at one card per row. */
   min-block-size: 21rem;
   padding: var(--sp-6);
   background-color: var(--color-paper);
@@ -165,14 +61,12 @@
     transform var(--dur-slow) var(--ease-expo);
 }
 
-.committees__rail:not(.is-hover-synced) .committee:hover .committee__card,
-.committee.is-hovered .committee__card,
+.committee:hover .committee__card,
 .committee__card:has(:focus-visible) {
   border-color: rgb(var(--rgb-primary) / 0.55);
 }
 
-.committees__rail:not(.is-hover-synced) .committee:hover .committee__index,
-.committee.is-hovered .committee__index,
+.committee:hover .committee__index,
 .committee__card:has(:focus-visible) .committee__index {
   opacity: 0.16;
   transform: translateY(-2px);
@@ -205,8 +99,7 @@
   transition: transform var(--dur-slow) var(--ease-spring);
 }
 
-.committees__rail:not(.is-hover-synced) .committee:hover .committee__icon,
-.committee.is-hovered .committee__icon {
+.committee:hover .committee__icon {
   transform: translateY(-3px) scale(1.08);
 }
 
@@ -235,8 +128,8 @@
 }
 
 /* What sort of room it is. ICJ, FPN and IP do not run country delegations, and
-   in a twelve-card rail people skim, so the difference has to be visible
-   without reading the blurb. */
+   across twelve cards people skim, so the difference has to be visible without
+   reading the blurb. */
 .committee__kind {
   color: var(--on-ground-muted);
 }
@@ -258,18 +151,14 @@
   line-height: 1.62;
   color: var(--on-ground-muted);
   text-wrap: pretty;
-  /* No line clamp. It existed so the panel could not cut a line in half; with
-     the panel gone the blurbs are three or four lines and say so. */
 }
 
 /* Two rows on purpose. As one flex row the seat count, the level tag and the
    Details button needed about 300px and a three-up card gives them 260, so
-   Details wrapped on some cards and not others and the rail looked shuffled.
+   Details wrapped on some cards and not others and the grid looked shuffled.
    Fixed rows read the same on every card at every width. */
 .committee__foot {
   margin-block-start: auto;
-  /* The gap to the blurb, not a void: the card's floor no longer pushes the
-     footer half a card away from the text above it. */
   padding-block-start: var(--sp-5);
   border-block-start: 1px solid var(--color-border);
   display: grid;
@@ -354,69 +243,7 @@
   }
 }
 
-/* With JavaScript off the rail is never populated, so the arrows, the position
-   readout, the progress bar and the keyboard hint all drive nothing. */
-.committees__rail-wrap:has(.committees__rail:empty) .committees__toolbar,
-.committees__rail-wrap:has(.committees__rail:empty) .committees__progress-wrap {
-  display: none;
-}
-
-.committees__progress-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-5);
-  flex-wrap: wrap;
-}
-
-.committees__progress {
-  position: relative;
-  flex: 1 1 12rem;
-  block-size: 2px;
-  background-color: var(--color-border);
-}
-
-.committees__progress-bar {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  inline-size: 20%;
-  background-color: var(--color-primary);
-  transform-origin: left;
-  transition: transform var(--dur-base) var(--ease-house);
-}
-
-.committees__hint {
-  color: var(--on-ground-muted);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-
-.committees__hint kbd {
-  font-family: var(--font-ui);
-  font-size: inherit;
-  padding: 0.1em 0.4em;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-@media (min-width: 700px) {
-  .committee {
-    --cols: 2;
-  }
-}
-
-@media (min-width: 1100px) {
-  .committee {
-    --cols: 3;
-  }
-}
-
 @media (max-width: 600px) {
-  .committees__hint {
-    display: none;
-  }
-
   .committee__card {
     min-block-size: 19rem;
     padding: var(--sp-5);
@@ -424,31 +251,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .committee.is-hovered .committee__index,
   .committee:hover .committee__index,
   .committee__card:has(:focus-visible) .committee__index {
     transform: none;
   }
 
-  .committee.is-hovered .committee__icon,
   .committee:hover .committee__icon {
     transform: none;
-  }
-}
-
-/* The heading is indented to grid column 2 at wide sizes (base.css,
-   .section__head) while the rail is a plain shell starting at the gutter, so
-   card 01 sat 114px left of its own heading.
-   
-   The rail moves, not the heading: pulling the heading out to column 1 puts it
-   under the vertical section label in the margin. One grid column plus one gap
-   is exactly the offset. */
-@media (min-width: 1024px) {
-  .committees__toolbar,
-  .committees__viewport,
-  .committees__progress-wrap {
-    padding-inline-start: calc(
-      var(--gutter) + (100% - var(--gutter) * 2 - var(--grid-gap) * 11) / 12 + var(--grid-gap)
-    );
   }
 }

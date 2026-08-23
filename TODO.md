@@ -341,7 +341,38 @@ icon, so the site is safe to launch with gaps here.
       sub-roles for three named real people. One line each in
       `apps/site/src/modules/oc.js` if you want specific titles.
 
-## 5.2 Past editions
+## 5.2 About section photograph
+
+- [ ] One photograph for the About section, **800 x 1000 px** (a 4:5 crop),
+      under about **150 KB**. A committee in session reads better here than a
+      posed group: this is the only image on the page that shows what the
+      conference actually looks like.
+
+  Create `apps/site/assets/about/` and drop it in as `edition-ix.jpg`.
+
+  Then two edits in `apps/site/index.html`, both inside `<figure class="about__media">`:
+  add the image tag, and remove `is-missing` from the figure's class list.
+
+  ```html
+  <img
+    src="/assets/about/edition-ix.jpg"
+    alt="Delegates in session at the ninth edition of LRI Model UN"
+    width="800"
+    height="1000"
+    loading="lazy"
+    decoding="async"
+  />
+  ```
+
+  Until then the plate shows a gold X on ink with the caption "Photograph to
+  come". There is deliberately no image tag in the markup: Vite resolves every
+  `src` written into the HTML at build time and fails on a file that is not
+  there yet.
+
+- [ ] Update the caption once the photograph is in. It currently reads
+      "Photograph to come — Edition IX".
+
+## 5.3 Past editions
 
 - [ ] Nine photographs, one per edition:
 
