@@ -176,8 +176,8 @@ export function initGallery({ gsap, ScrollTrigger, reduced }) {
 }
 
 function buildMarquee() {
-  const tracks = document.querySelectorAll('[data-gallery-marquee-track]')
-  if (!tracks.length) return
+  const track = document.querySelector('[data-gallery-marquee-track]')
+  if (!track) return
 
   const sequence = [...ROMAN, 'X']
   const run = sequence
@@ -187,9 +187,7 @@ function buildMarquee() {
     )
     .join('')
 
-  tracks.forEach((track) => {
-    track.innerHTML = run + run
-  })
+  track.innerHTML = run + run
 }
 
 function renderFilters() {

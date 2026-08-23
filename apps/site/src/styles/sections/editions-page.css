@@ -1,0 +1,70 @@
+/* The masthead on the past editions page. Deliberately not a hero: it is a
+   heading with a way back, not a second front door. */
+.edpage__head {
+  padding-block: calc(var(--nav-h) + clamp(var(--sp-8), 6vw, var(--sp-11)))
+    clamp(var(--sp-8), 6vw, var(--sp-10));
+}
+
+.edpage__title {
+  margin: 0;
+  margin-block-start: var(--sp-4);
+  font-size: var(--fs-800);
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  max-width: 20ch;
+}
+
+.edpage__lede {
+  margin-block-start: var(--sp-5);
+}
+
+.edpage__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-start: clamp(var(--sp-6), 4vw, var(--sp-8));
+  min-block-size: 2.75rem;
+  font-family: var(--font-ui);
+  font-size: var(--fs-200);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-ground-muted);
+  transition: color var(--dur-base) var(--ease-house);
+}
+
+.edpage__back svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform var(--dur-base) var(--ease-expo);
+}
+
+.edpage__back:hover,
+.edpage__back:focus-visible {
+  color: var(--accent-on-ground);
+}
+
+.edpage__back:hover svg,
+.edpage__back:focus-visible svg {
+  transform: translateX(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edpage__back:hover svg,
+  .edpage__back:focus-visible svg {
+    transform: none;
+  }
+}
+
+/* The marquee sits between the masthead and the archive, outside the section,
+   so the section's own top padding does not push it into the middle of a void.
+   That leaves it carrying the join, which wants less air below it than the
+   in-section version does. */
+.edpage__archive {
+  padding-block-start: clamp(var(--sp-7), 4vw, var(--sp-9));
+}
+
+.gallery__marquee.ground-blush {
+  margin-block-end: 0;
+  border-block-start: 0;
+}

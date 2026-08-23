@@ -226,7 +226,7 @@
             <li><a class="nav__link" href="#about" data-nav-link>About</a></li>
             <li><a class="nav__link" href="#committees" data-nav-link>Committees</a></li>
             <li><a class="nav__link" href="#secretariat" data-nav-link>Secretariat</a></li>
-            <li><a class="nav__link" href="#editions" data-nav-link>Past Editions</a></li>
+            <li><a class="nav__link" href="./editions">Past Editions</a></li>
           </ul>
         </nav>
 
@@ -283,7 +283,7 @@
             >
           </li>
           <li>
-            <a href="#editions" data-nav-overlay-link
+            <a href="./editions"
               ><span class="nav-overlay__index numeral" aria-hidden="true">04</span>Past
               Editions</a
             >
@@ -425,7 +425,7 @@
         </div>
       </section>
 
-      <section class="section about ground-ink" id="about" aria-labelledby="about-title">
+      <section class="section about ground-blush" id="about" aria-labelledby="about-title">
         <div class="section__margin" aria-hidden="true">
           <span class="numeral">01</span>
           <span class="section__margin__rule"></span>
@@ -479,12 +479,30 @@
             <figcaption class="about__caption">Photograph to come &mdash; Edition IX</figcaption>
           </figure>
         </div>
+      </section>
 
-        <!-- The same strip the Editions section runs, on ink. Ten marks, the
-             tenth in gold: it says "ten editions in" without a sentence. -->
-        <div class="gallery__marquee about__marquee" aria-hidden="true">
-          <div class="gallery__marquee-track" data-gallery-marquee-track></div>
-        </div>
+      <section class="editions-cta ground-magenta" aria-labelledby="editions-cta-title">
+        <a class="shell editions-cta__inner" href="./editions">
+          <span class="editions-cta__marks numeral" aria-hidden="true">I&ndash;IX</span>
+          <span class="editions-cta__text">
+            <span class="label editions-cta__eyebrow">The archive</span>
+            <span class="editions-cta__title" id="editions-cta-title"
+              >Nine editions came before this one.</span
+            >
+          </span>
+          <span class="editions-cta__go">
+            Explore past editions
+            <svg class="editions-cta__arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path
+              d="M2 8h11M9 4l4 4-4 4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="square"
+            />
+          </svg>
+          </span>
+        </a>
       </section>
 
       <section
@@ -630,44 +648,6 @@
         </div>
       </section>
 
-      <section class="section gallery ground-blush" id="editions" aria-labelledby="editions-title">
-        <div class="section__margin" aria-hidden="true">
-          <span class="numeral">04</span>
-          <span class="section__margin__rule"></span>
-          <span class="section__margin__label">Editions</span>
-        </div>
-
-        <div class="gallery__marquee" aria-hidden="true" data-gallery-marquee>
-          <div class="gallery__marquee-track" data-gallery-marquee-track></div>
-        </div>
-
-        <div class="shell grid">
-          <header class="section__head">
-            <p class="section__eyebrow label">Editions I–IX</p>
-            <h2 class="section__title" id="editions-title">Editions I to IX</h2>
-            <p class="lede section__intro">
-              Nine conferences have run at LRI School before this one. The photographs are still
-              being collected from the people who took them.
-            </p>
-          </header>
-        </div>
-
-        <div class="shell gallery__body" data-gallery-root>
-          <noscript>
-            <p class="shell body-copy">
-              The edition archive is rendered with JavaScript. Photographs from past conferences are
-              available at
-
-              <a
-                href="https://www.instagram.com/lrimunx/"
-                target="_blank"
-                rel="noopener noreferrer"
-                >@lrimunx on Instagram</a
-              >.
-            </p>
-          </noscript>
-        </div>
-      </section>
 
       <section class="register ground-magenta" id="register" aria-labelledby="register-title">
         <div class="shell register__inner">
@@ -761,7 +741,7 @@
               decoding="async"
             />
             <span class="footer__endorse-text">
-              <span class="label footer__endorse-label">Presented by</span>
+              <span class="label footer__endorse-label">Presented by students of</span>
               <span class="footer__endorse-name">Learning Realm Int'l School ↗</span>
             </span>
           </a>
@@ -774,7 +754,7 @@
             <li><a href="#about">About</a></li>
             <li><a href="#committees">Committees</a></li>
             <li><a href="#secretariat">Secretariat</a></li>
-            <li><a href="#editions">Past editions</a></li>
+            <li><a href="./editions">Past editions</a></li>
             <li><a href="#register">Register</a></li>
           </ul>
         </nav>
@@ -815,10 +795,9 @@
 
       <div class="shell footer__base">
         <p class="footer__copy label">
-          © <span data-footer-year>2026</span> LRI Model United Nations, LRI School. All rights
-          reserved.
+          © <span data-footer-year>2026</span> LRI MUN X Organising Committee. All rights reserved.
         </p>
-        <p class="footer__credit label">Designed and built by the LRI MUN organising committee.</p>
+        <p class="footer__credit label">Designed and built by the LRI MUN X organising committee.</p>
       </div>
     </footer>
 

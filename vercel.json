@@ -26,6 +26,10 @@
       "destination": "/register.html"
     },
     {
+      "source": "/editions",
+      "destination": "/editions.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     },

@@ -1,13 +1,9 @@
 .gallery__marquee {
-  /* Overridable, because the About section runs this same strip on ink. */
-  --marquee-type: rgb(var(--rgb-text-primary) / 0.16);
-  --marquee-rule: var(--color-border);
-
   position: relative;
   overflow: hidden;
   margin-block-end: clamp(var(--sp-6), 4vw, var(--sp-8));
   padding-block: var(--sp-3);
-  border-block: 1px solid var(--marquee-rule);
+  border-block: 1px solid var(--color-border);
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
@@ -29,7 +25,7 @@
   font-size: clamp(1.35rem, 2.6vw, 2.25rem);
   font-variation-settings: 'opsz' 72, 'WONK' 1;
   letter-spacing: var(--tracking-display);
-  color: var(--marquee-type);
+  color: rgb(var(--rgb-text-primary) / 0.16);
   white-space: nowrap;
 }
 

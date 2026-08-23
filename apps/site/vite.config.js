@@ -38,6 +38,7 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         register: resolve(import.meta.dirname, 'register.html'),
+        editions: resolve(import.meta.dirname, 'editions.html'),
       },
       output: {
         entryFileNames: 'assets/build/[name].[hash].js',

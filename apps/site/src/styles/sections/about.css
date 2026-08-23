@@ -1,47 +1,21 @@
-/* Ink, not blush, deliberately.
+/* The light break, straight after the hero.
 
-   Blush is #fdf4f9 and the committees section below is #faf7f3. Stacked, those
-   two read as one long light block with a seam in the middle rather than as two
-   sections. Staying dark keeps the page alternating (dark opening, committees as
-   the first light break) and suits the media plate, which is drawn on ink. */
+   Blush rather than the committees' paper because the two sections no longer
+   touch: the editions strip sits between them, and a band of magenta is a
+   clearer division than any amount of space between two near-identical whites. */
 .about {
-  border-block-start: 1px solid var(--hairline-on-ink);
-
-  /* A screenful, and the content centred in it.
-     
-     The section is the first thing the About link jumps to, and at its natural
-     height it filled about three quarters of the window: a tall dark block, a
-     band of nothing, then a sliver of the next section's paper along the
-     bottom edge. Nothing was wrong with it except that it stopped early. */
+  /* A screenful, with the content centred in it. At its natural height the
+     section filled about three quarters of the window, so the About link jumped
+     to a block of copy, a band of nothing, and a sliver of the next section
+     along the bottom edge. */
   min-block-size: 100svh;
   display: grid;
-  grid-template-rows: 1fr auto;
-  align-content: stretch;
+  align-content: center;
 }
 
 .about__inner {
-  align-self: center;
   row-gap: clamp(var(--sp-7), 5vw, var(--sp-9));
   align-items: center;
-}
-
-/* The same strip the Editions section runs, on ink. It sits on the section's
-   bottom edge rather than above the copy, because the hero's own marquee is
-   only a few hundred pixels above and two scrolling strips in one screen read
-   as a glitch. */
-.gallery__marquee.about__marquee {
-  /* Two classes on purpose: gallery.css is imported after this file, so a
-     single-class override here loses to .gallery__marquee on source order and
-     the numerals come out near-black on plum, which is to say invisible.
-     
-     0.16 is right for dark type on paper and reads as nothing for cream on ink,
-     where the ground is only a little darker than the type is faint. */
-  --marquee-type: rgb(var(--rgb-text-inverse) / 0.32);
-  --marquee-rule: var(--hairline-on-ink);
-
-  align-self: end;
-  margin-block-end: 0;
-  margin-block-start: clamp(var(--sp-7), 5vw, var(--sp-9));
 }
 
 .about__media,
@@ -59,7 +33,7 @@
    remove is-missing from the figure. */
 .about__media {
   aspect-ratio: 4 / 5;
-  border: 1px solid var(--hairline-gold);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
 }
 
@@ -101,7 +75,7 @@
   gap: var(--sp-5) 0;
   margin-block-start: clamp(var(--sp-6), 4vw, var(--sp-8));
   padding-block-start: var(--sp-5);
-  border-block-start: 1px solid var(--hairline-on-ink);
+  border-block-start: 1px solid var(--hairline);
 }
 
 /* dt comes before dd in the markup, because that is what a description list
@@ -115,7 +89,7 @@
 /* Everything except the first of a row. */
 .about__fact:not(:nth-child(2n + 1)) {
   padding-inline-start: var(--sp-5);
-  border-inline-start: 1px solid var(--hairline-gold);
+  border-inline-start: 1px solid var(--hairline);
 }
 
 @media (min-width: 640px) {
@@ -135,7 +109,7 @@
 
   .about__fact:not(:nth-child(3n + 1)) {
     padding-inline-start: clamp(var(--sp-5), 4vw, var(--sp-8));
-    border-inline-start: 1px solid var(--hairline-gold);
+    border-inline-start: 1px solid var(--hairline);
   }
 }
 

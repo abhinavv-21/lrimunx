@@ -16,6 +16,7 @@ export function mountStatic(app: Express, root: string): void {
 
   const siteIndex = path.join(root, 'index.html')
   const registerPage = path.join(root, 'register.html')
+  const editionsPage = path.join(root, 'editions.html')
   const adminIndex = path.join(root, 'admin', 'index.html')
 
   app.use((req, res, next) => {
@@ -33,6 +34,10 @@ export function mountStatic(app: Express, root: string): void {
 
   app.get('/register', (_req, res) => {
     res.sendFile(registerPage)
+  })
+
+  app.get('/editions', (_req, res) => {
+    res.sendFile(editionsPage)
   })
 
   app.use(

@@ -49,8 +49,13 @@ export function initNav({ ScrollTrigger, lenis, reduced }) {
     })
   }
 
+  // Only in-page links. querySelector('./editions') is a SyntaxError, and one
+  // page link in the nav would otherwise take the whole scroll spy down with it.
   const sections = links
-    .map((link) => document.querySelector(link.getAttribute('href')))
+    .map((link) => {
+      const href = link.getAttribute('href')
+      return href && href.startsWith('#') ? document.querySelector(href) : null
+    })
     .filter(Boolean)
 
   if (sections.length) {
