@@ -24,8 +24,14 @@
  *           resolutions.
  * agenda    null renders "To be announced." Replace with the motion text.
  *
- * Seat counts are working defaults sized to each body, not confirmed numbers.
- * Sweep them once before registration opens.
+ * Seat counts are provisional. Thirty is the house size; the Security Council
+ * is deliberately small, the press corps sits at twenty-four and the Federal
+ * Parliament at sixty because a legislature with thirty members is not one.
+ *
+ * They are advertised as provisional on the committees section, so they can
+ * move before registration opens. What cannot move quietly is the seed: the API
+ * enforces the seeded number at allocation time, so `npm run check:committees`
+ * fails if this file and prisma/seed.ts ever disagree.
  */
 export const COMMITTEES = [
   {
@@ -48,8 +54,8 @@ export const COMMITTEES = [
     kind: 'Court',
     name: 'International Court of Justice',
     icon: 'icj',
-    level: 'Advanced',
-    seats: 15,
+    level: 'Intermediate',
+    seats: 30,
     seatNoun: 'places',
     meta: ['Advocates and justices', 'Memorial required'],
     blurb:
@@ -63,12 +69,12 @@ export const COMMITTEES = [
     kind: 'Country delegation',
     name: 'Economic and Social Council',
     icon: 'ecosoc',
-    level: 'Intermediate',
-    seats: 40,
+    level: 'Beginner',
+    seats: 30,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'Working-paper focused'],
+    meta: ['Single-delegate', 'First-time delegates welcome'],
     blurb:
-      'Forty seats and the widest brief in the conference: the economic, social and environmental work the rest of the UN system leans on.',
+      'The widest brief in the conference: the economic, social and environmental work the rest of the UN system leans on.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -78,12 +84,12 @@ export const COMMITTEES = [
     kind: 'Country delegation',
     name: 'Disarmament and International Security Committee',
     icon: 'disec',
-    level: 'Beginner',
-    seats: 50,
+    level: 'Advanced',
+    seats: 30,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: ['Single-delegate', 'Position paper required'],
     blurb:
-      'The First Committee of the General Assembly, and the largest room here. Fifty seats on disarmament and on the threats states argue are worth arming against.',
+      'The First Committee of the General Assembly: disarmament, and the threats states argue are worth arming against. One of the two rooms that wants a position paper before you arrive.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -93,10 +99,10 @@ export const COMMITTEES = [
     kind: 'Country delegation',
     name: 'United Nations Office on Drugs and Crime',
     icon: 'unodc',
-    level: 'Intermediate',
-    seats: 35,
+    level: 'Beginner',
+    seats: 30,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'Position paper required'],
+    meta: ['Single-delegate', 'First-time delegates welcome'],
     blurb:
       'Trafficking, organised crime, corruption and terrorism, and the treaties that are meant to bind states to act on them.',
     agenda: null,
@@ -109,11 +115,11 @@ export const COMMITTEES = [
     name: 'United Nations Human Rights Council',
     icon: 'unhrc',
     level: 'Intermediate',
-    seats: 45,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Single-delegate', 'Position paper required'],
     blurb:
-      'Violations get named here, and the state named gets to answer. Forty-five seats, position paper required.',
+      'Violations get named here, and the state named gets to answer for them on the record.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -124,11 +130,11 @@ export const COMMITTEES = [
     name: 'United Nations High Commissioner for Refugees',
     icon: 'unhcr',
     level: 'Intermediate',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Single-delegate', 'Position paper required'],
     blurb:
-      'Asylum, statelessness and resettlement. Thirty-five seats deciding what states owe people who have had to leave.',
+      'Asylum, statelessness and resettlement, and what states owe the people who have had to leave.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -143,7 +149,7 @@ export const COMMITTEES = [
     seatNoun: 'seats',
     meta: ['Single-delegate', 'First-time delegates welcome'],
     blurb:
-      'Political representation, economic rights, and violence against women. Thirty seats, and a reasonable first committee if you have never sat in one.',
+      'Political representation, economic rights, and violence against women. A reasonable first committee if you have never sat in one.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -153,12 +159,12 @@ export const COMMITTEES = [
     kind: 'Parliament',
     name: 'Federal Parliament of Nepal',
     icon: 'fpn',
-    level: 'Advanced',
-    seats: 35,
+    level: 'Beginner',
+    seats: 60,
     seatNoun: 'seats',
     meta: ['Portfolio powers', 'No country delegations'],
     blurb:
-      'The federal legislature of Nepal, simulated. Members hold real political portfolios and argue national policy under parliamentary procedure.',
+      'The federal legislature of Nepal, simulated, and the largest room at the conference. Members hold real political portfolios and argue national policy under parliamentary procedure.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -168,8 +174,8 @@ export const COMMITTEES = [
     kind: 'Press corps',
     name: 'International Press',
     icon: 'ip',
-    level: 'Intermediate',
-    seats: 15,
+    level: 'Beginner',
+    seats: 24,
     seatNoun: 'places',
     meta: ['Reporters and photographers', 'Portfolio by outlet'],
     blurb:
@@ -184,7 +190,7 @@ export const COMMITTEES = [
     name: 'Economic and Financial Committee',
     icon: 'ecofin',
     level: 'Beginner',
-    seats: 40,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Single-delegate', 'First-time delegates welcome'],
     blurb:
@@ -199,7 +205,7 @@ export const COMMITTEES = [
     name: 'Social, Humanitarian and Cultural Committee',
     icon: 'sochum',
     level: 'Beginner',
-    seats: 45,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Single-delegate', 'First-time delegates welcome'],
     blurb:

@@ -364,7 +364,7 @@ model Award {
 
 /// One delegate's attendance on one day of the conference.
 ///
-/// The conference runs 21, 22 and 23 November 2026, and a delegate who came on
+/// The conference runs 20, 21 and 22 November 2026, and a delegate who came on
 /// Saturday and not on Sunday is a fact the old single `attendanceStatus` could
 /// not hold: checking someone in on day 2 silently overwrote day 1, so the only
 /// honest report the hub could produce was "ever seen".

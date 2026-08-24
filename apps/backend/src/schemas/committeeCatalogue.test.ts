@@ -77,8 +77,34 @@ describe('the committee catalogue', () => {
     }
   })
 
-  it('advertises 400 seats in total', () => {
-    expect(catalogue.reduce((total, c) => total + c.seats, 0)).toBe(400)
+  it('seats thirty in every room except the three that are deliberately not', () => {
+    // Thirty is the house size. The Security Council is small because it is
+    // fifteen members in real life, the press corps is sized to the number of
+    // outlets it runs, and a Federal Parliament with thirty members is not a
+    // parliament.
+    const deliberate: Record<string, number> = { UNSC: 15, IP: 24, FPN: 60 }
+
+    for (const committee of catalogue) {
+      expect(committee.seats, committee.code).toBe(deliberate[committee.code] ?? 30)
+    }
+  })
+
+  it('marks the level of every room, and only DISEC and UNSC as advanced', () => {
+    const byLevel = (level: string) =>
+      catalogue.filter((c) => c.level === level).map((c) => c.code).sort()
+
+    expect(byLevel('Advanced')).toEqual(['DISEC', 'UNSC'])
+    expect(byLevel('Intermediate')).toEqual(['ICJ', 'UNHCR', 'UNHRC'])
+    expect(byLevel('Beginner')).toHaveLength(catalogue.length - 5)
+  })
+
+  it('never asks a beginner room for a position paper', () => {
+    // The committees section tells readers that beginner rooms take first-time
+    // delegates and advanced ones want a paper. A beginner card whose meta line
+    // demands one contradicts the paragraph directly above it.
+    for (const committee of catalogue.filter((c) => c.level === 'Beginner')) {
+      expect(committee.meta.join(' '), committee.code).not.toMatch(/position paper/i)
+    }
   })
 
   it('gives every committee a seat count the hub would accept for a committee record', () => {
@@ -172,8 +198,8 @@ describe('the meta line under each card', () => {
     expect(metaLine(catalogue.find((c) => c.code === 'UNSC'))).toBe(
       '15 seats · Double-delegate · Position paper required',
     )
-    expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('15 places')
-    expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('15 places')
+    expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('30 places')
+    expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('24 places')
   })
 
   it('uses "places" only where a delegate holds no country', () => {

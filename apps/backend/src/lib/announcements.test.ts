@@ -149,12 +149,12 @@ describe('isRateLimitFailure', () => {
 
 describe('formatDateRange', () => {
   it('writes the conference dates the way a person says them', () => {
-    expect(formatDateRange('2026-11-21', '2026-11-23')).toBe('21-23 November 2026')
+    expect(formatDateRange('2026-11-20', '2026-11-22')).toBe('20-22 November 2026')
   })
 
   it('collapses a single day rather than repeating it', () => {
-    expect(formatDateRange('2026-11-21', '2026-11-21')).toBe('21 November 2026')
-    expect(formatDateRange('2026-11-21', null)).toBe('21 November 2026')
+    expect(formatDateRange('2026-11-20', '2026-11-20')).toBe('20 November 2026')
+    expect(formatDateRange('2026-11-20', null)).toBe('20 November 2026')
   })
 
   it('spans a month and a year boundary', () => {
@@ -163,7 +163,7 @@ describe('formatDateRange', () => {
   })
 
   it('invents nothing when the settings have not been filled in', () => {
-    expect(formatDateRange(null, '2026-11-23')).toBeNull()
+    expect(formatDateRange(null, '2026-11-22')).toBeNull()
     expect(formatDateRange('', '')).toBeNull()
     expect(formatDateRange('November 2026', null)).toBeNull()
   })
@@ -171,8 +171,8 @@ describe('formatDateRange', () => {
   it('drops the whole line rather than mailing half of it', () => {
     expect(conferenceWhenLine(null, null, null)).toBeNull()
     expect(conferenceWhenLine(null, null, 'LRI School, Kalanki')).toBe('LRI School, Kalanki')
-    expect(conferenceWhenLine('2026-11-21', '2026-11-23', 'LRI School, Kalanki')).toBe(
-      '21-23 November 2026, LRI School, Kalanki',
+    expect(conferenceWhenLine('2026-11-20', '2026-11-22', 'LRI School, Kalanki')).toBe(
+      '20-22 November 2026, LRI School, Kalanki',
     )
   })
 })
@@ -185,8 +185,8 @@ describe('allocationAnnouncedMail', () => {
     committeeCode: 'UNSC',
     country: 'France',
     studyGuideUrl: 'https://lrimunx.org/guides/unsc.pdf',
-    startsOn: '2026-11-21',
-    endsOn: '2026-11-23',
+    startsOn: '2026-11-20',
+    endsOn: '2026-11-22',
     venue: 'LRI School, Kalanki',
   }
 
@@ -196,7 +196,7 @@ describe('allocationAnnouncedMail', () => {
 
   it('states the committee, the country and the dates in the body', () => {
     const mail = allocationAnnouncedMail(base)
-    for (const fragment of ['France', 'United Nations Security Council', '21-23 November 2026', 'LRI School, Kalanki']) {
+    for (const fragment of ['France', 'United Nations Security Council', '20-22 November 2026', 'LRI School, Kalanki']) {
       expect(mail.text).toContain(fragment)
       expect(mail.html).toContain(fragment)
     }

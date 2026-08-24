@@ -190,7 +190,7 @@ function readIsoDate(value: string | null): { year: number; month: number; day: 
   return { year, month, day }
 }
 
-/** "21-23 November 2026", or "21 November 2026" for a single day. */
+/** "20-22 November 2026", or "20 November 2026" for a single day. */
 export function formatDateRange(startsOn: string | null, endsOn: string | null): string | null {
   const start = readIsoDate(startsOn)
   if (!start) return null
