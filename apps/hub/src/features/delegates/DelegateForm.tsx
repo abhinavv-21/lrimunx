@@ -298,7 +298,11 @@ export function DelegateForm({
               straight away, and feeds the budget. The rest of this form still needs saving separately.
             </p>
             <div className="mt-4">
-              <PaymentFields payable={delegate.registration} payerName={delegate.fullName} />
+              <PaymentFields
+                payable={delegate.registration}
+                payerName={delegate.fullName}
+                referredBy={delegate.registration.referralCodeRef ?? null}
+              />
             </div>
           </>
         ) : (

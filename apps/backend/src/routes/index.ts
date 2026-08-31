@@ -4,6 +4,7 @@ import { authRouter } from './auth.routes.js'
 import { integrationsRouter } from './integrations.routes.js'
 import { publicRouter } from './public.routes.js'
 import { registrationsRouter } from './registrations.routes.js'
+import { referralsRouter } from './referrals.routes.js'
 import { dashboardRouter } from './dashboard.routes.js'
 import { delegatesRouter } from './delegates.routes.js'
 import { committeesRouter } from './committees.routes.js'
@@ -31,6 +32,7 @@ apiRouter.use(requireAuth)
 apiRouter.use('/dashboard', dashboardRouter)
 apiRouter.use('/delegates', delegatesRouter)
 apiRouter.use('/registrations', registrationsRouter)
+apiRouter.use('/referrals', referralsRouter)
 apiRouter.use('/committees', committeesRouter)
 
 apiRouter.use('/matrix', matrixRouter)

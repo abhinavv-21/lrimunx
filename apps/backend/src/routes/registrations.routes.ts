@@ -35,6 +35,7 @@ const registrationView = {
   munsAttended: true,
   awardsWon: true,
   referralCode: true,
+  referralCodeRef: { select: { id: true, code: true, ownerName: true } },
   paymentProofUrl: true,
   dietaryNotes: true,
   accessibilityNotes: true,

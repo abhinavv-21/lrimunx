@@ -30,14 +30,33 @@ function asDateInput(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10)
 }
 
+/**
+ * A new entry with some of it already filled in.
+ *
+ * Used by the referrals page, which knows the category, the payee and the exact
+ * figure and should not make a treasurer retype any of them. Deliberately a
+ * draft and not a write: money leaves the conference when somebody presses
+ * Save, not when a count crosses a threshold.
+ */
+export interface LedgerDraft {
+  particular?: string
+  category?: string
+  amount?: number
+  note?: string
+  direction?: 'credit' | 'debit'
+}
+
 export function LedgerEntryDialog({
   open,
   onOpenChange,
   entry,
+  draft,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   entry: LedgerEntry | null
+  /** Ignored when `entry` is set: editing an existing row wins over a suggestion. */
+  draft?: LedgerDraft | null
 }) {
   const [entryDate, setEntryDate] = useState(today())
   const [particular, setParticular] = useState('')
@@ -61,13 +80,19 @@ export function LedgerEntryDialog({
   useEffect(() => {
     if (!open) return
     setEntryDate(entry ? asDateInput(entry.entryDate) : today())
-    setParticular(entry?.particular ?? '')
-    setCategory(entry?.category ?? DEFAULT_CATEGORY)
-    setDirection(entry && entry.credit > 0 ? 'credit' : 'debit')
-    setAmount(entry ? String(entry.credit > 0 ? entry.credit : entry.debit) : '')
-    setNote(entry?.note ?? '')
+    setParticular(entry?.particular ?? draft?.particular ?? '')
+    setCategory(entry?.category ?? draft?.category ?? DEFAULT_CATEGORY)
+    setDirection(entry ? (entry.credit > 0 ? 'credit' : 'debit') : (draft?.direction ?? 'debit'))
+    setAmount(
+      entry
+        ? String(entry.credit > 0 ? entry.credit : entry.debit)
+        : draft?.amount !== undefined
+          ? String(draft.amount)
+          : '',
+    )
+    setNote(entry?.note ?? draft?.note ?? '')
     setError(null)
-  }, [open, entry])
+  }, [open, entry, draft])
 
   const parsedAmount = Number(amount)
   const amountIsUsable = amount.trim() !== '' && Number.isInteger(parsedAmount) && parsedAmount > 0

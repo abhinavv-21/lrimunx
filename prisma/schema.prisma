@@ -219,6 +219,17 @@ model Registration {
   /// relation: it is whatever the applicant typed, including a name nobody on
   /// the OC recognises.
   referralCode         String?
+  /// Which code the free text above was matched to, if any.
+  ///
+  /// Both are kept on purpose. `referralCode` is what the applicant typed and is
+  /// evidence; this is the interpretation, produced by normalising that text and
+  /// looking it up. When the two disagree the typed text is the one that is true,
+  /// and someone has mistyped a code or a code was created after they applied.
+  ///
+  /// SetNull rather than Cascade: deleting a referral code must not delete the
+  /// registrations that used it.
+  referralCodeId       String?
+  referralCodeRef      ReferralCode?      @relation(fields: [referralCodeId], references: [id], onDelete: SetNull)
   /// Where the applicant's payment screenshot landed on Vercel Blob. The file
   /// goes browser → blob store directly, so this column is the only record the
   /// API holds of it. Validated against the blob host on the way in — an
@@ -254,6 +265,7 @@ model Registration {
   @@index([status, createdAt])
   @@index([email])
   @@index([priceTier])
+  @@index([referralCodeId])
 }
 
 model Committee {
@@ -403,8 +415,39 @@ model DelegateAttendance {
 /// Registration, where the tier is, and the summary endpoint adds the two
 /// together — duplicating it would give the conference two numbers for the same
 /// money and no way to tell which one drifted.
+/// A code one person hands out, and everyone who used it.
+///
+/// The point of the table is a number: how many delegates a particular person
+/// personally brought in. That number decides a payout, so it has to survive
+/// the ways a code actually arrives — typed in lower case, with a space in the
+/// middle, with an en dash off a phone keyboard. `code` holds the normalised
+/// key produced by lib/referrals.ts and nothing else ever writes to it.
+model ReferralCode {
+  id            String         @id @default(uuid())
+  /// Upper case, no whitespace, one kind of dash. Unique, because two people
+  /// cannot share a code and be paid separately for it.
+  code          String         @unique
+  /// What identity is actually decided on: letters and digits only, so
+  /// RIDGE-MUNSOC, RIDGE MUNSOC and ridgemunsoc are one code and not three.
+  /// Produced by normaliseReferralCode in lib/referrals.ts.
+  matchKey      String         @unique
+  /// The person being credited, as they want to be named on a payout.
+  ownerName     String
+  /// Anything the secretariat needs to remember: which school they are at, how
+  /// they are being paid, who approved the code.
+  note          String?
+  /// A retired code stops matching new registrations. It is not deleted,
+  /// because the registrations that already used it still have to count.
+  active        Boolean        @default(true)
+  registrations Registration[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([ownerName])
+}
+
 model LedgerEntry {
-  id           String         @id @default(uuid())
+  id           String   @id @default(uuid())
   /// When the money moved, which is not when the row was typed. Both matter:
   /// this one closes the books, `createdAt` says who was catching up on what.
   entryDate    DateTime
@@ -419,13 +462,13 @@ model LedgerEntry {
   category     String
   /// Money in and money out, in WHOLE NEPALI RUPEES — the same unit as
   /// Registration.amountPaid, so the two can be added without a conversion.
-  credit       Int            @default(0)
-  debit        Int            @default(0)
+  credit       Int      @default(0)
+  debit        Int      @default(0)
   note         String?
   recordedById String
-  recordedBy   User           @relation("RecordedBy", fields: [recordedById], references: [id])
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  recordedBy   User     @relation("RecordedBy", fields: [recordedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([entryDate])
   @@index([category])

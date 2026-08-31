@@ -11,6 +11,7 @@ import {
 } from '../lib/storage.js'
 import { ApiError, type ApiErrorBody } from '../lib/errors.js'
 import { runSerializable } from '../lib/transaction.js'
+import { normaliseReferralCode } from '../lib/referrals.js'
 import {
   LIVE_REGISTRATION_STATUSES,
   generateReference,
@@ -106,6 +107,26 @@ async function submitRegistration(
         })
         if (existing) return { kind: 'duplicate', reference: existing.reference }
 
+        /**
+         * Match what they typed to a code, if it is one.
+         *
+         * Only active codes match. A retired code keeps the registrations that
+         * already used it and stops collecting new ones, which is the whole
+         * reason it is deactivated rather than deleted.
+         *
+         * A miss is not an error: the applicant may have invented it, mistyped
+         * it, or used a code the secretariat has not created yet. The typed
+         * text is stored either way, and creating the code later adopts them.
+         */
+        const referralKey = normaliseReferralCode(input.referralCode)
+        const matched =
+          referralKey === null
+            ? null
+            : await tx.referralCode.findFirst({
+                where: { matchKey: referralKey, active: true },
+                select: { id: true },
+              })
+
         const created = await tx.registration.create({
           data: {
             reference: generateReference(),
@@ -119,6 +140,7 @@ async function submitRegistration(
             munsAttended: input.munsAttended ?? null,
             awardsWon: input.awardsWon ?? null,
             referralCode: input.referralCode ?? null,
+            referralCodeId: matched?.id ?? null,
             paymentProofUrl: input.paymentProofUrl ?? null,
             dietaryNotes: input.dietaryNotes ?? null,
             accessibilityNotes: input.accessibilityNotes ?? null,

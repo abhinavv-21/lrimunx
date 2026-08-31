@@ -1,5 +1,5 @@
 import {
-  ClipboardList, Inbox, LayoutDashboard, Landmark, PackageSearch, ShieldCheck,
+  ClipboardList, HandCoins, Inbox, LayoutDashboard, Landmark, PackageSearch, ShieldCheck,
   UserCheck, Users, UsersRound, Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -25,6 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/allocations', label: 'Allocations', icon: ClipboardList, roles: ['ADMIN'] },
   { to: '/committees', label: 'Committees', icon: Landmark, roles: ['ADMIN', 'CONTRIBUTOR'] },
   { to: '/budget', label: 'Budget', icon: Wallet, roles: ['ADMIN'] },
+  { to: '/referrals', label: 'Referrals', icon: HandCoins, roles: ['ADMIN'] },
   { to: '/users', label: 'Users', icon: UsersRound, roles: ['ADMIN'], requires: 'canManageUsers' },
   // Renamed from Settings: it holds the conference record, the money, the
   // announcement sends and the danger zone, which is more than settings.

@@ -34,6 +34,9 @@ import type {
   MatrixCommittee,
   MatrixImportResult,
   Paginated,
+  ReferralCode,
+  ReferralCodeInput,
+  ReferralsResponse,
   Registration,
   RegistrationStats,
   ResetPreview,
@@ -709,5 +712,50 @@ export function useRestartConference() {
     mutationFn: (passphrase: string) =>
       apiFetch<RestartResult>('/danger/restart-conference', { method: 'POST', body: { passphrase } }),
     onSuccess: () => queryClient.invalidateQueries(),
+  })
+}
+
+// --- referral codes ---------------------------------------------------------
+
+export function useReferrals() {
+  return useQuery({
+    queryKey: ['referrals'],
+    queryFn: () => apiFetch<ReferralsResponse>('/referrals'),
+  })
+}
+
+export function useCreateReferral() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: ReferralCodeInput) =>
+      apiFetch<{ item: ReferralCode; adopted: number }>('/referrals', { method: 'POST', body }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['referrals'] })
+      // Creating a code adopts the registrations that already typed it, so the
+      // attribution shown on the registrations list changes too.
+      void queryClient.invalidateQueries({ queryKey: ['registrations'] })
+    },
+  })
+}
+
+export function useUpdateReferral() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: Partial<ReferralCodeInput> & { id: string; active?: boolean }) =>
+      apiFetch<{ item: ReferralCode }>(`/referrals/${id}`, { method: 'PATCH', body }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['referrals'] })
+    },
+  })
+}
+
+export function useDeleteReferral() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/referrals/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['referrals'] })
+      void queryClient.invalidateQueries({ queryKey: ['registrations'] })
+    },
   })
 }

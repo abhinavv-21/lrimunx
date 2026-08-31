@@ -153,6 +153,8 @@ export interface DelegatePayment {
   id: string
   reference: string
   priceTier: PriceTier | null
+  /** The referral code the typed answer was matched to, if any. */
+  referralCodeRef?: { id: string; code: string; ownerName: string } | null
   amountPaid: number | null
   paymentProofUrl: string | null
 }
@@ -258,6 +260,8 @@ export interface Registration {
   hasPaymentProof: boolean
 
   priceTier: PriceTier | null
+  /** The referral code the typed answer was matched to, if any. */
+  referralCodeRef?: { id: string; code: string; ownerName: string } | null
 
   amountPaid: number | null
   dietaryNotes: string | null
@@ -542,4 +546,68 @@ export interface PlaceholderCounts {
 export interface RestartResult {
   deleted: Omit<ResetCounts, 'committees'>
   seeded: PlaceholderCounts
+}
+
+/**
+ * A referral code and everything it has earned.
+ *
+ * `tally` is computed on the server from the price tier recorded against each
+ * registration, not from anything the applicant said about themselves, so the
+ * numbers here are the same ones the payout is made against.
+ */
+export interface ReferralTally {
+  outside: number
+  house: number
+  unpriced: number
+  pending: number
+  rejected: number
+  earned: number
+  payable: number
+  quotaRemaining: number
+  quotaMet: boolean
+}
+
+export interface ReferredRegistration {
+  id: string
+  reference: string
+  fullName: string
+  schoolName: string
+  status: RegistrationStatus
+  priceTier: PriceTier | null
+  /** The referral code the typed answer was matched to, if any. */
+  referralCodeRef?: { id: string; code: string; ownerName: string } | null
+  amountPaid: number | null
+  referralCode: string | null
+  createdAt: string
+}
+
+export interface ReferralCode {
+  id: string
+  code: string
+  ownerName: string
+  note: string | null
+  active: boolean
+  createdAt: string
+  updatedAt: string
+  tally: ReferralTally
+  registrations: ReferredRegistration[]
+}
+
+/** A code somebody typed that matches nothing we have created. */
+export interface UnmatchedReferral {
+  key: string
+  typed: string[]
+  count: number
+}
+
+export interface ReferralsResponse {
+  items: ReferralCode[]
+  unmatched: UnmatchedReferral[]
+  rates: { outside: number; house: number; quota: number }
+}
+
+export interface ReferralCodeInput {
+  code: string
+  ownerName: string
+  note?: string | null
 }

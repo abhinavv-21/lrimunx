@@ -10,7 +10,13 @@ export function PaymentDialog({
   registration,
   onOpenChange,
 }: {
-  registration: (Payable & { fullName: string }) | null
+  registration:
+    | (Payable & {
+        fullName: string
+        /** Passed through so the fields can offer the discounted tier. */
+        referralCodeRef?: { id: string; code: string; ownerName: string } | null
+      })
+    | null| null
   onOpenChange: (open: boolean) => void
 }) {
   return (
@@ -29,6 +35,7 @@ export function PaymentDialog({
         <PaymentFields
           payable={registration}
           payerName={registration.fullName}
+          referredBy={registration.referralCodeRef ?? null}
           onRecorded={() => onOpenChange(false)}
           onCancel={() => onOpenChange(false)}
         />

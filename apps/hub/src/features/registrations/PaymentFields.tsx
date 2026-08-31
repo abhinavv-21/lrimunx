@@ -29,12 +29,25 @@ export type Payable = Pick<DelegatePayment, 'id' | 'priceTier' | 'amountPaid'>
 export function PaymentFields({
   payable,
   payerName,
+  referredBy,
   onRecorded,
   onCancel,
 }: {
   payable: Payable
   /** Whose payment it is, for the toast. The delegate or registration supplies it. */
   payerName: string
+  /**
+   * The referral code this registration was matched to, if any.
+   *
+   * It changes what tier is offered first, and nothing else. A code earns its
+   * holder Rs 150 for a delegate from outside the school and Rs 50 for an
+   * internal or alumni one, and only the outside kind gets the discounted rate
+   * — but the registration form never asks which of the three someone is. It
+   * asks for a school name in free text. So the code proposes the discount and
+   * whoever is looking at the payment decides, which is the same person who was
+   * already deciding between the other three tiers.
+   */
+  referredBy?: { code: string; ownerName: string } | null
   onRecorded?: () => void
   onCancel?: () => void
 }) {
@@ -47,7 +60,10 @@ export function PaymentFields({
   const toast = useToast()
 
   useEffect(() => {
-    setTier(payable.priceTier ?? 'BASE')
+    // Only when nothing has been recorded yet. Once a tier is on the record it
+    // is a decision somebody made, and a referral code does not get to overrule
+    // it on the next render.
+    setTier(payable.priceTier ?? (referredBy ? 'DISCOUNT' : 'BASE'))
     // Blank means "whatever the tier charges" — the API applies the rate when
     // no amount is sent, so the field never has to guess at a figure the
     // pricing query has not delivered yet.
@@ -58,7 +74,7 @@ export function PaymentFields({
     // refetch of ['delegates'] hands back a new object with identical fields and
     // would wipe an amount someone was halfway through typing. Depending on the
     // fields still refreshes after a save, because those genuinely change.
-  }, [payable.id, payable.priceTier, payable.amountPaid])
+  }, [payable.id, payable.priceTier, payable.amountPaid, referredBy])
 
   const rates = prices.data
   const rate = rates?.[tier]
@@ -105,6 +121,15 @@ export function PaymentFields({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      {referredBy && payable.priceTier === null ? (
+        <p className="rounded-control border border-info bg-info-wash p-3 text-body-sm text-ink">
+          Referred by <strong>{referredBy.ownerName}</strong> with{' '}
+          <span className="font-mono">{referredBy.code}</span>, so the discounted rate is selected.
+          Change it if this delegate is internal or alumni — they keep their own rate, and the
+          referrer earns less for them.
+        </p>
+      ) : null}
+
       {error ? (
         <p role="alert" className="rounded-control border border-danger bg-danger-wash p-3 text-body-sm text-ink">
           {error}

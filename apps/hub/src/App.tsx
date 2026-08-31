@@ -13,6 +13,7 @@ const AllocationsPage = lazy(() => import('@/features/allocations/AllocationsPag
 const RegistrationsPage = lazy(() => import('@/features/registrations/RegistrationsPage').then((m) => ({ default: m.RegistrationsPage })))
 const AdminPage = lazy(() => import('@/features/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const BudgetPage = lazy(() => import('@/features/budget/BudgetPage').then((m) => ({ default: m.BudgetPage })))
+const ReferralsPage = lazy(() => import('@/features/referrals/ReferralsPage').then((m) => ({ default: m.ReferralsPage })))
 const LogisticsPage = lazy(() => import('@/features/logistics/LogisticsPage').then((m) => ({ default: m.LogisticsPage })))
 const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage').then((m) => ({ default: m.AttendancePage })))
 const UsersPage = lazy(() => import('@/features/users/UsersPage').then((m) => ({ default: m.UsersPage })))
@@ -92,6 +93,10 @@ export function App() {
           <Route
             path="allocations"
             element={<AdminOnly what="Allocating delegates"><AllocationsPage /></AdminOnly>}
+          />
+          <Route
+            path="referrals"
+            element={<AdminOnly what="Referral codes and payouts"><ReferralsPage /></AdminOnly>}
           />
           <Route
             path="admin"
