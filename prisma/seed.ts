@@ -15,17 +15,17 @@ function requireEnv(name: string): string {
 // copy and deliberately has no column here.
 const STANDARD_COMMITTEES = [
   { name: 'United Nations Security Council', code: 'UNSC', totalSeats: 15 },
-  { name: 'International Court of Justice', code: 'ICJ', totalSeats: 30 },
-  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 30 },
-  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 30 },
-  { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 30 },
-  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 30 },
-  { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 30 },
-  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },
+  { name: 'International Court of Justice', code: 'ICJ', totalSeats: 35 },
+  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 35 },
+  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
+  { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
+  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 35 },
+  { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 35 },
+  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },
   { name: 'Federal Parliament of Nepal', code: 'FPN', totalSeats: 60 },
-  { name: 'International Press', code: 'IP', totalSeats: 24 },
-  { name: 'Economic and Financial Committee', code: 'ECOFIN', totalSeats: 30 },
-  { name: 'Social, Humanitarian and Cultural Committee', code: 'SOCHUM', totalSeats: 30 },
+  { name: 'International Press', code: 'IP', totalSeats: 22 },
+  { name: 'Economic and Financial Committee', code: 'ECOFIN', totalSeats: 35 },
+  { name: 'Social, Humanitarian and Cultural Committee', code: 'SOCHUM', totalSeats: 35 },
 ]
 
 async function main() {

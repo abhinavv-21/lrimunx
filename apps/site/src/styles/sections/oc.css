@@ -97,6 +97,14 @@
   color: var(--on-ground);
 }
 
+/* A post with nobody in it yet. The role is the thing that matters on these
+   cards, so the placeholder name steps back rather than sitting at the same
+   weight as a person's. */
+.oc-card__name--open {
+  color: var(--on-ground-muted);
+  font-style: italic;
+}
+
 .oc-card__role {
   margin-block-start: var(--sp-2);
   font-size: var(--fs-200);

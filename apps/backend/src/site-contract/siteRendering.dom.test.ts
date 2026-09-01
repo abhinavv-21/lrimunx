@@ -351,17 +351,43 @@ describe('the organising committee section', () => {
     expect(document.querySelectorAll('.oc-card').length).toBeGreaterThan(0)
   })
 
-  it('names a real person in every card', () => {
+  it('names a real person in every card that is not an open post', () => {
     initOc(stubGsap())
-    const names = Array.from(document.querySelectorAll('.oc-card__name')).map((el) =>
-      el.textContent?.trim(),
-    )
-    expect(names.length).toBe(13)
+    const cards = Array.from(document.querySelectorAll('.oc-card__name'))
+    expect(cards.length).toBe(14)
+
+    // "To be announced" used to be forbidden outright. A post can genuinely be
+    // open now, so the rule is narrower: a placeholder is allowed only where the
+    // markup says it is one. A card that is blank, or that says "To be
+    // announced" without the class, is still a mistake.
+    const open = cards.filter((el) => el.classList.contains('oc-card__name--open'))
+    const named = cards.filter((el) => !el.classList.contains('oc-card__name--open'))
+
+    for (const el of open) {
+      expect(el.textContent?.trim()).toBe('To be announced')
+    }
+
+    const names = named.map((el) => el.textContent?.trim())
     for (const name of names) {
-      expect(name, 'an OC card still says "To be announced"').not.toBe('To be announced')
+      expect(name, 'an OC card says "To be announced" without being marked open').not.toBe(
+        'To be announced',
+      )
       expect(name).toBeTruthy()
     }
     expect(new Set(names).size, 'duplicate name in the OC list').toBe(names.length)
+  })
+
+  it('renders no image at all for an open post, rather than one that 404s', () => {
+    initOc(stubGsap())
+    const openCards = Array.from(document.querySelectorAll('.oc-card')).filter((card) =>
+      card.querySelector('.oc-card__name--open'),
+    )
+    expect(openCards.length, 'expected exactly one open post').toBe(1)
+
+    for (const card of openCards) {
+      expect(card.querySelector('img'), 'an open post requests a portrait that cannot exist').toBeNull()
+      expect(card.querySelector('.media-plate')?.classList.contains('is-missing')).toBe(true)
+    }
   })
 
   it('writes alt text that pairs the name with the role', () => {
@@ -369,6 +395,7 @@ describe('the organising committee section', () => {
     const alts = Array.from(document.querySelectorAll('.oc-card__media img')).map((img) =>
       img.getAttribute('alt'),
     )
+    // Thirteen portraits across fourteen cards: the open post has no image.
     expect(alts.length).toBe(13)
     for (const alt of alts) expect(alt).toMatch(/^.+, .+$/)
   })
@@ -386,12 +413,14 @@ describe('the organising committee section', () => {
   it('gives every portrait a monogram to fall back to', () => {
     initOc(stubGsap())
     const plates = Array.from(document.querySelectorAll('.oc-card__media'))
-    expect(plates).toHaveLength(13)
+    expect(plates).toHaveLength(14)
 
     for (const plate of plates) {
       const fallback = plate.querySelector('.media-plate__fallback')
       expect(fallback, 'a portrait with no monogram renders as an empty box').not.toBeNull()
-      expect(fallback?.textContent?.trim()).toMatch(/^[A-Z]{2,4}$/)
+      // Initials for a person, a question mark for a post nobody holds yet.
+      // Anything else is a typo that renders as a box with junk in it.
+      expect(fallback?.textContent?.trim()).toMatch(/^([A-Z]{2,4}|\?)$/)
     }
   })
 

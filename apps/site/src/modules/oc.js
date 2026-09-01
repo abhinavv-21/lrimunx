@@ -63,16 +63,24 @@ const TIERS = [
   },
   {
     id: 'under',
-    title: 'Under Secretariat',
-    caption: 'Departments',
+    title: 'Under Secretaries-General',
+    // Three of the eight are assistants rather than USGs, and their cards say so.
+    caption: 'Departments and assistants',
+    // Ordered by department, so a USG and their assistant sit together rather
+    // than the alphabet separating them.
     members: [
-      { name: 'Aditya Joshi', role: 'Head of Conference Management', photo: 'aditya-joshi.jpg', mono: 'AJ', social: null },
-      { name: 'Sparsh Sharma', role: 'Head of Delegate and Dais Affairs', photo: 'sparsh-sharma.jpg', mono: 'SS', social: null },
-      { name: 'Asia Ramdam', role: 'Media Team', photo: 'asia-ramdam.jpg', mono: 'AR', social: null },
-      { name: 'Abhigya Shrestha', role: 'Media Team', photo: 'abhigya-shrestha.jpg', mono: 'AS', social: null },
-      { name: 'Stuti Gautam', role: 'Media Team', photo: 'stuti-gautam.jpg', mono: 'SG', social: null },
-      { name: 'Krystal Gurung', role: 'Head of Outreach', photo: 'krystal-gurung.jpg', mono: 'KG', social: null },
-      { name: 'Desna KC', role: 'Head of Logistics', photo: 'desna-kc.jpg', mono: 'DK', social: null },
+      { name: 'Aditya Joshi', role: 'USG of Conference Management', photo: 'aditya-joshi.jpg', mono: 'AJ', social: null },
+      { name: 'Krystal Gurung', role: 'ASG of Conference Management', photo: 'krystal-gurung.jpg', mono: 'KG', social: null },
+      { name: 'Sparsh Sharma', role: 'USG of Delegate Affairs', photo: 'sparsh-sharma.jpg', mono: 'SS', social: null },
+      // photo: null marks a post nobody holds yet. renderCard leaves the image
+      // out entirely rather than requesting a file that is not there, and the
+      // plate shows the same pending state the photographed roles are in until
+      // their portraits arrive.
+      { name: 'To be announced', role: 'USG of Dais Affairs', photo: null, mono: '?', social: null },
+      { name: 'Asia Ramdam', role: 'USG of Media', photo: 'asia-ramdam.jpg', mono: 'AR', social: null },
+      { name: 'Abhigya Shrestha', role: 'ASG of Media', photo: 'abhigya-shrestha.jpg', mono: 'AS', social: null },
+      { name: 'Stuti Gautam', role: 'ASG of Media', photo: 'stuti-gautam.jpg', mono: 'SG', social: null },
+      { name: 'Desna KC', role: 'USG of Logistics', photo: 'desna-kc.jpg', mono: 'DK', social: null },
     ],
   },
 ]
@@ -154,26 +162,33 @@ function renderCard(member, tier) {
        </a>`
     : ''
 
-  li.innerHTML = `
-    <div class="oc-card__media media-plate">
-      <img
+  // No photo means the post is open, not that the portrait is late. Requesting
+  // assets/oc/null would 404 on every render to reach the same plate the
+  // is-missing class gives directly.
+  const portrait = member.photo
+    ? `<img
         src="${import.meta.env.BASE_URL}assets/oc/${member.photo}"
         alt="${member.name}, ${member.role}"
         loading="lazy"
         decoding="async"
         width="400"
         height="500"
-      />
+      />`
+    : ''
+
+  li.innerHTML = `
+    <div class="oc-card__media media-plate${member.photo ? '' : ' is-missing'}">
+      ${portrait}
       <span class="media-plate__fallback" aria-hidden="true">${member.mono}</span>
     </div>
-    <p class="oc-card__name">${member.name}</p>
+    <p class="oc-card__name${member.photo ? '' : ' oc-card__name--open'}">${member.name}</p>
     <p class="oc-card__role">${member.role}</p>
     ${detail}
     ${social}
   `
 
   const img = li.querySelector('img')
-  img.addEventListener('error', () => img.closest('.media-plate')?.classList.add('is-missing'), {
+  img?.addEventListener('error', () => img.closest('.media-plate')?.classList.add('is-missing'), {
     once: true,
   })
 

@@ -77,15 +77,15 @@ describe('the committee catalogue', () => {
     }
   })
 
-  it('seats thirty in every room except the three that are deliberately not', () => {
-    // Thirty is the house size. The Security Council is small because it is
+  it('seats thirty-five in every room except the three that are deliberately not', () => {
+    // Thirty-five is the house size. The Security Council is small because it is
     // fifteen members in real life, the press corps is sized to the number of
-    // outlets it runs, and a Federal Parliament with thirty members is not a
-    // parliament.
-    const deliberate: Record<string, number> = { UNSC: 15, IP: 24, FPN: 60 }
+    // outlets it runs, and a Federal Parliament the size of an ordinary
+    // committee is not a parliament.
+    const deliberate: Record<string, number> = { UNSC: 15, IP: 22, FPN: 60 }
 
     for (const committee of catalogue) {
-      expect(committee.seats, committee.code).toBe(deliberate[committee.code] ?? 30)
+      expect(committee.seats, committee.code).toBe(deliberate[committee.code] ?? 35)
     }
   })
 
@@ -198,8 +198,8 @@ describe('the meta line under each card', () => {
     expect(metaLine(catalogue.find((c) => c.code === 'UNSC'))).toBe(
       '15 seats · Double-delegate · Position paper required',
     )
-    expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('30 places')
-    expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('24 places')
+    expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('35 places')
+    expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('22 places')
   })
 
   it('uses "places" only where a delegate holds no country', () => {

@@ -336,10 +336,12 @@ icon, so the site is safe to launch with gaps here.
 - [ ] Once **all 13** are in, delete the status line in `apps/site/index.html`
       reading "Portraits are being photographed." Search for `section__status`.
 
-- [ ] **Media Team roles, if you want them split.** Asia Ramdam, Abhigya Shrestha
-      and Stuti Gautam share the label "Media Team". I did not invent three
-      sub-roles for three named real people. One line each in
-      `apps/site/src/modules/oc.js` if you want specific titles.
+- [ ] **One open post on the secretariat.** `USG of Dais Affairs` renders as a
+      "To be announced" card. When it is filled, set `name`, `mono` to their
+      initials and `photo` to the portrait filename in
+      `apps/site/src/modules/oc.js`, then correct the two lines in
+      `apps/site/index.html` that say a post is open. Search for
+      `section__status`.
 
 ## 5.2 About section photograph
 
