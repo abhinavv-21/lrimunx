@@ -19,9 +19,14 @@
  *           edge on the card, so the difference survives skimming.
  * seatNoun  'seats' for country delegations, 'places' where a delegate does not
  *           hold a country (ICJ, IP).
- * meta      The rest of the line under the agenda, joined with a middot. Kept
- *           per committee so a press corps is not described as though it passed
- *           resolutions.
+ * meta      What is worth saying about this room beyond its size and level:
+ *           a requirement a delegate has to meet, or a format that is not the
+ *           house one. Empty for an ordinary committee, because every room here
+ *           is a single delegation and the section intro says so once — twelve
+ *           cards each repeating it is noise, not information.
+ *
+ *           When it is empty the Details dialog leaves the block out entirely
+ *           rather than printing a heading with nothing under it.
  * agenda    null renders "To be announced." Replace with the motion text.
  *
  * Seat counts are provisional. Thirty-five is the house size; the Security
@@ -46,9 +51,24 @@ export const COMMITTEES = [
     level: 'Advanced',
     seats: 15,
     seatNoun: 'seats',
-    meta: ['Double-delegate', 'Position paper required'],
+    meta: ['Position paper required'],
     blurb:
       'Convenes on international peace and security, with the power to impose measures the rest of the UN can only recommend.',
+    agenda: null,
+    chair: null,
+    viceChair: null,
+  },
+  {
+    code: 'DISEC',
+    kind: 'Country delegation',
+    name: 'Disarmament and International Security Committee',
+    icon: 'disec',
+    level: 'Advanced',
+    seats: 35,
+    seatNoun: 'seats',
+    meta: ['Position paper required'],
+    blurb:
+      'The First Committee of the General Assembly: disarmament, and the threats states argue are worth arming against. One of the two rooms that wants a position paper before you arrive.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -61,7 +81,7 @@ export const COMMITTEES = [
     level: 'Intermediate',
     seats: 35,
     seatNoun: 'places',
-    meta: ['Advocates and justices', 'Memorial required'],
+    meta: ['Advocates and justices'],
     blurb:
       'The principal judicial organ of the UN. Advocates argue a case on the record and the bench rules on it, rather than negotiating a resolution.',
     agenda: null,
@@ -76,24 +96,9 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: [],
     blurb:
       'The widest brief in the conference: the economic, social and environmental work the rest of the UN system leans on.',
-    agenda: null,
-    chair: null,
-    viceChair: null,
-  },
-  {
-    code: 'DISEC',
-    kind: 'Country delegation',
-    name: 'Disarmament and International Security Committee',
-    icon: 'disec',
-    level: 'Advanced',
-    seats: 35,
-    seatNoun: 'seats',
-    meta: ['Single-delegate', 'Position paper required'],
-    blurb:
-      'The First Committee of the General Assembly: disarmament, and the threats states argue are worth arming against. One of the two rooms that wants a position paper before you arrive.',
     agenda: null,
     chair: null,
     viceChair: null,
@@ -106,7 +111,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: [],
     blurb:
       'Trafficking, organised crime, corruption and terrorism, and the treaties that are meant to bind states to act on them.',
     agenda: null,
@@ -121,7 +126,7 @@ export const COMMITTEES = [
     level: 'Intermediate',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'Position paper required'],
+    meta: ['Position paper required'],
     blurb:
       'Violations get named here, and the state named gets to answer for them on the record.',
     agenda: null,
@@ -136,7 +141,7 @@ export const COMMITTEES = [
     level: 'Intermediate',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'Position paper required'],
+    meta: ['Position paper required'],
     blurb:
       'Asylum, statelessness and resettlement, and what states owe the people who have had to leave.',
     agenda: null,
@@ -151,7 +156,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: [],
     blurb:
       'Political representation, economic rights, and violence against women. A reasonable first committee if you have never sat in one.',
     agenda: null,
@@ -166,7 +171,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 60,
     seatNoun: 'seats',
-    meta: ['Portfolio powers', 'No country delegations'],
+    meta: ['Portfolio powers, no country delegations'],
     blurb:
       'The federal legislature of Nepal, simulated, and the largest room at the conference. Members hold real political portfolios and argue national policy under parliamentary procedure.',
     agenda: null,
@@ -181,7 +186,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 22,
     seatNoun: 'places',
-    meta: ['Reporters and photographers', 'Portfolio by outlet'],
+    meta: ['Reporters and photographers'],
     blurb:
       'The conference newsroom. Reporters and photographers cover every committee on deadline, and what they file is published while the conference runs.',
     agenda: null,
@@ -196,7 +201,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: [],
     blurb:
       'The Second Committee of the General Assembly: trade, debt and development finance, which is the money underneath what every other room is arguing about.',
     agenda: null,
@@ -211,7 +216,7 @@ export const COMMITTEES = [
     level: 'Beginner',
     seats: 35,
     seatNoun: 'seats',
-    meta: ['Single-delegate', 'First-time delegates welcome'],
+    meta: [],
     blurb:
       'The Third Committee. Refugees, minorities and freedom of expression, argued at the scale of the whole General Assembly.',
     agenda: null,

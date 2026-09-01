@@ -11,6 +11,7 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     name: dialog.querySelector('#cdlg-name'),
     blurb: dialog.querySelector('[data-cdlg-blurb]'),
     agenda: dialog.querySelector('[data-cdlg-agenda]'),
+    agendaBlock: dialog.querySelector('.cdlg__block--agenda'),
     blockLabel: dialog.querySelector('[data-cdlg-block-label]'),
     chair: dialog.querySelector('[data-cdlg-chair]'),
     vice: dialog.querySelector('[data-cdlg-vice]'),
@@ -51,7 +52,15 @@ export function initCommitteeDialog({ lenis, reduced } = {}) {
     if (slots.blurb) slots.blurb.textContent = text(card.querySelector('.committee__blurb'))
     // From the dataset rather than a hidden panel in the card. The panel is
     // gone; this is now the only place the agenda block is rendered.
-    if (slots.agenda) slots.agenda.textContent = item.dataset.blockText || 'To be announced'
+    //
+    // Empty means there is nothing to say: an ordinary committee with no agenda
+    // yet. The block is hidden rather than filled with "To be announced", which
+    // under a heading reading "Format" would claim the format is undecided when
+    // it is simply the same as every other room's. The note below still says
+    // the agenda is coming.
+    const blockText = item.dataset.blockText ?? ''
+    if (slots.agendaBlock) slots.agendaBlock.hidden = blockText === ''
+    if (slots.agenda) slots.agenda.textContent = blockText
     if (slots.blockLabel) slots.blockLabel.textContent = item.dataset.blockLabel || 'Agenda'
     if (slots.note) slots.note.textContent = item.dataset.blockNote || ''
 

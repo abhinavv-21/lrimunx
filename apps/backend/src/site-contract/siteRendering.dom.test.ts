@@ -189,7 +189,7 @@ describe('the committee grid on index.html', () => {
     )
     expect(figures).toEqual(catalogue.map((c) => String(c.seats)))
     expect(nouns).toEqual(catalogue.map((c) => c.seatNoun))
-    expect(metaLine(catalogue[0])).toBe('15 seats · Double-delegate · Position paper required')
+    expect(metaLine(catalogue[0])).toBe('15 seats · Position paper required')
   })
 
   it('keeps the code and the room kind in separate elements', () => {

@@ -15,9 +15,9 @@ function requireEnv(name: string): string {
 // copy and deliberately has no column here.
 const STANDARD_COMMITTEES = [
   { name: 'United Nations Security Council', code: 'UNSC', totalSeats: 15 },
+  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
   { name: 'International Court of Justice', code: 'ICJ', totalSeats: 35 },
   { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 35 },
-  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
   { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
   { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 35 },
   { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 35 },

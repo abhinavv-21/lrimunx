@@ -54,11 +54,13 @@ function submission(fields: Record<string, unknown>): Record<string, unknown> {
 describe('the committee catalogue', () => {
   it('has the twelve committees the site and the seed agree on', () => {
     expect(catalogue).toHaveLength(12)
+    // This is the order the cards are numbered in, so it is a decision rather
+    // than an accident: the two advanced rooms open the list together.
     expect(catalogue.map((c) => c.code)).toEqual([
       'UNSC',
+      'DISEC',
       'ICJ',
       'ECOSOC',
-      'DISEC',
       'UNODC',
       'UNHRC',
       'UNHCR',
@@ -123,7 +125,14 @@ describe('the committee catalogue', () => {
       expect(committee.name.trim(), `${committee.code} name`).not.toBe('')
       expect(committee.icon.trim(), `${committee.code} icon`).not.toBe('')
       expect(committee.blurb.trim(), `${committee.code} blurb`).not.toBe('')
-      expect(committee.meta.length, `${committee.code} meta`).toBeGreaterThan(0)
+
+      // meta is allowed to be empty: an ordinary single-delegation room has
+      // nothing to add beyond its size and level, and the intro says the
+      // delegation format once for all twelve. What is not allowed is an entry
+      // that is there but says nothing.
+      for (const line of committee.meta) {
+        expect(line.trim(), `${committee.code} meta`).not.toBe('')
+      }
       expect(['Beginner', 'Intermediate', 'Advanced']).toContain(committee.level)
     }
   })
@@ -196,8 +205,10 @@ describe('what the registration form submits', () => {
 describe('the meta line under each card', () => {
   it('leads with the seat count and the right noun', () => {
     expect(metaLine(catalogue.find((c) => c.code === 'UNSC'))).toBe(
-      '15 seats · Double-delegate · Position paper required',
+      '15 seats · Position paper required',
     )
+    // An ordinary room has nothing to add, so the line is just its size.
+    expect(metaLine(catalogue.find((c) => c.code === 'SOCHUM'))).toBe('35 seats')
     expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('35 places')
     expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('22 places')
   })
