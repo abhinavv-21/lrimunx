@@ -217,12 +217,14 @@ describe('the committee grid on index.html', () => {
 
   it('escapes card text rather than injecting it raw', () => {
     renderCommitteeCards()
-    const name = document.querySelector('.committee__name') as HTMLElement
-    expect(name.innerHTML).toBe(name.textContent)
-    const withComma = Array.from(document.querySelectorAll('.committee__name')).find((el) =>
-      el.textContent?.startsWith('Social,'),
-    )
-    expect(withComma?.textContent).toBe('Social, Humanitarian and Cultural Committee')
+    // No committee name or blurb currently holds a character that has to be
+    // escaped, so this asserts the general rule rather than one string: nothing
+    // out of the catalogue reaches the DOM as markup.
+    const text = Array.from(
+      document.querySelectorAll('.committee__name, .committee__blurb, .committee__kind'),
+    ) as HTMLElement[]
+    expect(text.length).toBe(catalogue.length * 3)
+    for (const el of text) expect(el.innerHTML).toBe(el.textContent)
   })
 })
 
@@ -354,7 +356,7 @@ describe('the organising committee section', () => {
   it('names a real person in every card that is not an open post', () => {
     initOc(stubGsap())
     const cards = Array.from(document.querySelectorAll('.oc-card__name'))
-    expect(cards.length).toBe(14)
+    expect(cards.length).toBe(13)
 
     // "To be announced" used to be forbidden outright. A post can genuinely be
     // open now, so the rule is narrower: a placeholder is allowed only where the
@@ -395,13 +397,13 @@ describe('the organising committee section', () => {
     const alts = Array.from(document.querySelectorAll('.oc-card__media img')).map((img) =>
       img.getAttribute('alt'),
     )
-    // Thirteen portraits across fourteen cards: the open post has no image.
-    expect(alts.length).toBe(13)
+    // Twelve portraits across thirteen cards: the open post has no image.
+    expect(alts.length).toBe(12)
     for (const alt of alts) expect(alt).toMatch(/^.+, .+$/)
   })
 
   /**
-   * The 13 portraits are not in the repository and will not be until 13 people
+   * The 12 portraits are not in the repository and will not be until 12 people
    * are photographed. That is tracked on the launch checklist in SETUP.md, not
    * here: a test that can only go green when someone takes a photograph is a
    * build gate nobody can unblock, and a permanently red suite is one people
@@ -413,7 +415,7 @@ describe('the organising committee section', () => {
   it('gives every portrait a monogram to fall back to', () => {
     initOc(stubGsap())
     const plates = Array.from(document.querySelectorAll('.oc-card__media'))
-    expect(plates).toHaveLength(14)
+    expect(plates).toHaveLength(13)
 
     for (const plate of plates) {
       const fallback = plate.querySelector('.media-plate__fallback')
@@ -445,6 +447,6 @@ describe('the organising committee section', () => {
       console.info(`[oc] ${missing.length} of ${srcs.length} portraits are not yet in assets/oc.`)
     }
 
-    expect(srcs).toHaveLength(13)
+    expect(srcs).toHaveLength(12)
   })
 })

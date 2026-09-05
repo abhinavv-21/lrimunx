@@ -60,15 +60,15 @@ describe('the committee catalogue', () => {
       'UNSC',
       'DISEC',
       'ICJ',
-      'ECOSOC',
+      'INTERPOL',
       'UNODC',
       'UNHRC',
       'UNHCR',
       'UNWOMEN',
       'FPN',
       'IP',
-      'ECOFIN',
-      'SOCHUM',
+      'UNOOSA',
+      'HCC',
     ])
   })
 
@@ -156,13 +156,13 @@ describe('what the registration form submits', () => {
       .map((c) => preferenceValue(c))
       .sort((a: string, b: string) => b.length - a.length)[0] as string
 
-    // Not SOCHUM, which is the one that looks longest. DISEC beats it by 4.
+    // Not UNOOSA, which is the runner-up. DISEC beats it by 2.
     expect(longest).toBe('Disarmament and International Security Committee (DISEC)')
     expect(longest.length, `longest preference is ${longest.length} characters`).toBeLessThanOrEqual(160)
 
-    const sochum = preferenceValue(catalogue.find((c) => c.code === 'SOCHUM')) as string
-    expect(sochum).toBe('Social, Humanitarian and Cultural Committee (SOCHUM)')
-    expect(sochum.length).toBeLessThanOrEqual(160)
+    const unoosa = preferenceValue(catalogue.find((c) => c.code === 'UNOOSA')) as string
+    expect(unoosa).toBe('United Nations Office for Outer Space Affairs (UNOOSA)')
+    expect(unoosa.length).toBeLessThanOrEqual(160)
   })
 
   it('leaves room for a longer committee name later: nothing is close to the limit', () => {
@@ -208,7 +208,7 @@ describe('the meta line under each card', () => {
       '15 seats · Position paper required',
     )
     // An ordinary room has nothing to add, so the line is just its size.
-    expect(metaLine(catalogue.find((c) => c.code === 'SOCHUM'))).toBe('35 seats')
+    expect(metaLine(catalogue.find((c) => c.code === 'INTERPOL'))).toBe('35 seats')
     expect(metaLine(catalogue.find((c) => c.code === 'ICJ'))).toContain('35 places')
     expect(metaLine(catalogue.find((c) => c.code === 'IP'))).toContain('22 places')
   })

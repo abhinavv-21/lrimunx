@@ -197,9 +197,12 @@
 }
 
 @media (min-width: 1024px) {
+  /* Two advisors, sized to the same card width as the three below them: a
+     third of the row each, so the two tiers line up instead of the advisors
+     reading as a three-up grid with a card missing. */
   .oc__tier--advisors .oc__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    max-inline-size: 82%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-inline-size: calc((200% - var(--grid-gap)) / 3);
   }
 
   .oc__tier--under .oc__grid {

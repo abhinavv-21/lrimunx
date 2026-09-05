@@ -95,10 +95,10 @@ test('a committee renamed in the seed only is caught', () => {
 })
 
 test('a code renamed on the site only is caught', () => {
-  const result = runCheck({ committees: edit(REAL.committees, "code: 'SOCHUM'", "code: 'SOCHUM3'") })
-  mustFail(result, 'site renamed the SOCHUM code')
-  assert.match(result.stderr, /SOCHUM3 is on the site but not in prisma\/seed\.ts/)
-  assert.match(result.stderr, /SOCHUM is in prisma\/seed\.ts but not on the site/)
+  const result = runCheck({ committees: edit(REAL.committees, "code: 'HCC'", "code: 'HCC3'") })
+  mustFail(result, 'site renamed the HCC code')
+  assert.match(result.stderr, /HCC3 is on the site but not in prisma\/seed\.ts/)
+  assert.match(result.stderr, /HCC is in prisma\/seed\.ts but not on the site/)
 })
 
 // --- seat counts, the failure that only surfaces at allocation time ---------
@@ -237,7 +237,7 @@ test('reordering the seed array is not drift, because order carries no meaning t
   const end = lines.findIndex((l, i) => i > start && l.trim() === ']')
   const reordered = [...lines.slice(start + 1, end)].reverse()
   const seed = [...lines.slice(0, start + 1), ...reordered, ...lines.slice(end)].join('\n')
-  assert.ok(seed.includes("code: 'SOCHUM'"), 'the reorder lost an entry')
+  assert.ok(seed.includes("code: 'HCC'"), 'the reorder lost an entry')
   const result = runCheck({ seed })
   assert.equal(result.code, 0, `reordering the seed should still pass\n${result.stderr}`)
 })

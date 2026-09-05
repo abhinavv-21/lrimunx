@@ -6,8 +6,8 @@
  * Prisma workspace and cannot import an ESM module out of apps/site. So instead
  * of trusting people to edit both, this compares them.
  *
- * This is not hypothetical. Before it existed the site advertised HCC while the
- * seed created UNEP, and the site sold 230 seats against a database that held
+ * This is not hypothetical. Before it existed the site advertised a committee
+ * the seed never created, and sold 230 seats against a database that held
  * 178. `totalSeats` is enforced at allocation time, so that gap only surfaces
  * when a delegate is turned away.
  */

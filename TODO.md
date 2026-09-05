@@ -213,6 +213,16 @@ All of this lives in one file: `apps/site/src/data/committees.js`.
   Change a seat count and you must change it in `prisma/seed.ts` too.
   `npm run check:committees` fails the build if you forget, so you will know.
 
+- [ ] **Retire three committee rows in the database.** ECOSOC, ECOFIN and SOCHUM
+      were replaced by INTERPOL, UNOOSA and HCC on the site and in the seed. The
+      seed only ever creates (`update: {}`), so any database that was seeded
+      before that change still holds the old three, and re-seeding adds the new
+      three alongside them: 15 committees in the hub, three of them dead.
+
+      Delete them at **Committees** in the ops hub, or rename the three rows in
+      place to the new code, name and seat count. A committee with delegates
+      allocated to it cannot be deleted, so do this before allocations start.
+
 - [ ] **The 12 agendas.** Each committee has `agenda: null`, which renders as
       "Agenda to be announced." and makes the card lead on format instead.
       Replace `null` with the motion text in quotes.
@@ -320,20 +330,19 @@ icon, so the site is safe to launch with gaps here.
 
 ## 5.1 Organising committee portraits
 
-- [ ] Create `apps/site/assets/oc/` and put 13 portraits in it. Portrait crops,
+- [ ] Create `apps/site/assets/oc/` and put 12 portraits in it. Portrait crops,
       **800 x 1000 px**, under about **120 KB** each.
 
   Filenames must match exactly:
 
   ```
-  subrat-lamichhane.jpg      siddub-sharma-bidari.jpg   mhigshang-lama-yolmo.jpg
-  aaradhy-raj-pant.jpg       abhinav-gc.jpg             bidushi-sharma.jpg
-  aditya-joshi.jpg           sparsh-sharma.jpg          asia-ramdam.jpg
-  abhigya-shrestha.jpg       stuti-gautam.jpg           krystal-gurung.jpg
-  desna-kc.jpg
+  subrat-lamichhane.jpg      siddub-sharma-bidari.jpg   aaradhy-raj-pant.jpg
+  abhinav-gc.jpg             bidushi-sharma.jpg         aditya-joshi.jpg
+  ben-jung-shahi.jpg         asia-ramdam.jpg            abhigya-shrestha.jpg
+  stuti-gautam.jpg           krystal-gurung.jpg         desna-kc.jpg
   ```
 
-- [ ] Once **all 13** are in, delete the status line in `apps/site/index.html`
+- [ ] Once **all 12** are in, delete the status line in `apps/site/index.html`
       reading "Portraits are being photographed." Search for `section__status`.
 
 - [ ] **One open post on the secretariat.** `USG of Dais Affairs` renders as a

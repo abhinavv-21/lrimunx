@@ -20,14 +20,6 @@ const TIERS = [
         detail: 'Academic oversight of committee content and conduct.',
         social: null,
       },
-      {
-        name: 'Mhigshang Lama Yolmo',
-        role: 'Advisor',
-        photo: 'mhigshang-lama-yolmo.jpg',
-        mono: 'MY',
-        detail: 'Institutional liaison and delegate welfare.',
-        social: null,
-      },
     ],
   },
   {
@@ -71,7 +63,7 @@ const TIERS = [
     members: [
       { name: 'Aditya Joshi', role: 'USG of Conference Management', photo: 'aditya-joshi.jpg', mono: 'AJ', social: null },
       { name: 'Krystal Gurung', role: 'ASG of Conference Management', photo: 'krystal-gurung.jpg', mono: 'KG', social: null },
-      { name: 'Sparsh Sharma', role: 'USG of Delegate Affairs', photo: 'sparsh-sharma.jpg', mono: 'SS', social: null },
+      { name: 'Ben Jung Shahi', role: 'USG of Delegate Affairs', photo: 'ben-jung-shahi.jpg', mono: 'BS', social: null },
       // photo: null marks a post nobody holds yet. renderCard leaves the image
       // out entirely rather than requesting a file that is not there, and the
       // plate shows the same pending state the photographed roles are in until
