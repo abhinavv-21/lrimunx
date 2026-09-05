@@ -52,8 +52,8 @@ function submission(fields: Record<string, unknown>): Record<string, unknown> {
 }
 
 describe('the committee catalogue', () => {
-  it('has the twelve committees the site and the seed agree on', () => {
-    expect(catalogue).toHaveLength(12)
+  it('has the fourteen committees the site and the seed agree on', () => {
+    expect(catalogue).toHaveLength(14)
     // This is the order the cards are numbered in, so it is a decision rather
     // than an accident: the three advanced rooms open the list together.
     expect(catalogue.map((c) => c.code)).toEqual([
@@ -61,6 +61,8 @@ describe('the committee catalogue', () => {
       'DISEC',
       'HCC',
       'ICJ',
+      'ECOSOC',
+      'SPECPOL',
       'INTERPOL',
       'UNODC',
       'UNHRC',
@@ -156,13 +158,13 @@ describe('what the registration form submits', () => {
       .map((c) => preferenceValue(c))
       .sort((a: string, b: string) => b.length - a.length)[0] as string
 
-    // Not UNOOSA, which is the runner-up. DISEC beats it by 2.
-    expect(longest).toBe('Disarmament and International Security Committee (DISEC)')
-    expect(longest.length, `longest preference is ${longest.length} characters`).toBeLessThanOrEqual(160)
+    // DISEC and SPECPOL tie for longest at 56 characters, so this asserts the
+    // length rather than which of the two a stable sort happens to return.
+    expect(longest.length, `longest preference is ${longest.length} characters`).toBe(56)
+    expect(longest.length).toBeLessThanOrEqual(160)
 
-    const unoosa = preferenceValue(catalogue.find((c) => c.code === 'UNOOSA')) as string
-    expect(unoosa).toBe('United Nations Office for Outer Space Affairs (UNOOSA)')
-    expect(unoosa.length).toBeLessThanOrEqual(160)
+    const specpol = preferenceValue(catalogue.find((c) => c.code === 'SPECPOL')) as string
+    expect(specpol).toBe('Special Political and Decolonization Committee (SPECPOL)')
   })
 
   it('leaves room for a longer committee name later: nothing is close to the limit', () => {
@@ -173,7 +175,7 @@ describe('what the registration form submits', () => {
 
   it('accepts every committee in both preference slots', () => {
     for (const first of catalogue) {
-      for (const second of [catalogue[0] as Committee, catalogue[11] as Committee]) {
+      for (const second of [catalogue[0] as Committee, catalogue[13] as Committee]) {
         const parsed = publicRegistrationSchema.safeParse(
           submission({
             committeePreference: preferenceValue(first),
@@ -223,7 +225,7 @@ describe('the meta line under each card', () => {
 
 describe('the committee count quoted in register.html', () => {
   const registerHtml = readFileSync(path.join(siteRoot, 'register.html'), 'utf8')
-  const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve']
+  const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen']
 
   it('has the hook register-main.js writes into', () => {
     expect(registerHtml).toContain('data-committee-count')

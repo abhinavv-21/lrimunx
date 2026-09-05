@@ -111,9 +111,11 @@ const NUMBER_WORDS = [
   'Ten',
   'Eleven',
   'Twelve',
+  'Thirteen',
+  'Fourteen',
 ]
 
-/** "Twelve committees" reads better than "12 committees" in a section eyebrow. */
+/** "Fourteen committees" reads better than "14 committees" in a section eyebrow. */
 function spell(n) {
   return NUMBER_WORDS[n] ?? String(n)
 }

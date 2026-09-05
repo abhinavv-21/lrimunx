@@ -18,6 +18,8 @@ const STANDARD_COMMITTEES = [
   { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
   { name: 'Historical Crisis Cabinet', code: 'HCC', totalSeats: 35 },
   { name: 'International Court of Justice', code: 'ICJ', totalSeats: 35 },
+  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 35 },
+  { name: 'Special Political and Decolonization Committee', code: 'SPECPOL', totalSeats: 35 },
   { name: 'International Criminal Police Organization', code: 'INTERPOL', totalSeats: 35 },
   { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
   { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 35 },

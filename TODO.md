@@ -120,7 +120,7 @@ not be writing users into your database. Run it yourself, once.
   Use `DIRECT_URL` for both, not the pooled one. This is a one-off script, not a
   serverless function, so it wants a direct connection.
 
-  It creates your admin account **and all 12 committees**, and marks the account
+  It creates your admin account **and all 14 committees**, and marks the account
   as owner so you can reach the Admin page. Safe to run twice: it skips the
   account if any account exists and never modifies a committee already there.
 
@@ -133,12 +133,12 @@ not be writing users into your database. Run it yourself, once.
 ## 1.3 Check it actually works
 
 - [ ] On your deployment URL:
-  - `/` loads and the committee rail shows 12 cards
+  - `/` loads and the committee grid shows 14 cards
   - **Details** on a committee opens the dialog
   - **Apply** from that dialog lands on `/register` with the committee preselected
   - `/admin` shows the login page
   - you can sign in with the account from 1.2
-  - the hub's **Committees** page lists all 12
+  - the hub's **Committees** page lists all 14
   - **Admin** appears in the sidebar. It is owner-only, so if it is missing,
     `isOwner` did not get set on your account.
 
@@ -205,7 +205,7 @@ All of this lives in one file: `apps/site/src/data/committees.js`.
 
 - [ ] **Confirm the seat counts.** This is the one that will bite you.
 
-  I set working defaults sized to each real body, 400 seats across 12 committees.
+  I set working defaults sized to each real body, 482 seats across 14 committees.
   **The API enforces them.** Once a committee is full, allocation is refused with
   a message naming the numbers, so whatever the site advertises becomes a hard
   cap. Fix these before you publish, not after a delegate is turned away.
@@ -213,21 +213,21 @@ All of this lives in one file: `apps/site/src/data/committees.js`.
   Change a seat count and you must change it in `prisma/seed.ts` too.
   `npm run check:committees` fails the build if you forget, so you will know.
 
-- [ ] **Retire three committee rows in the database.** ECOSOC, ECOFIN and SOCHUM
-      were replaced by INTERPOL, UNOOSA and HCC on the site and in the seed. The
-      seed only ever creates (`update: {}`), so any database that was seeded
-      before that change still holds the old three, and re-seeding adds the new
-      three alongside them: 15 committees in the hub, three of them dead.
+- [ ] **Retire two committee rows in the database.** ECOFIN and SOCHUM are gone
+      from the site and the seed. The seed only ever creates (`update: {}`), so
+      any database seeded before that change still holds them, and re-seeding
+      adds the current fourteen alongside: sixteen committees in the hub, two of
+      them dead. (ECOSOC left and came back, so its row is fine where it is.)
 
       Delete them at **Committees** in the ops hub, or rename the three rows in
       place to the new code, name and seat count. A committee with delegates
       allocated to it cannot be deleted, so do this before allocations start.
 
-- [ ] **The 12 agendas.** Each committee has `agenda: null`, which renders as
+- [ ] **The 14 agendas.** Each committee has `agenda: null`, which renders as
       "Agenda to be announced." and makes the card lead on format instead.
       Replace `null` with the motion text in quotes.
 
-- [ ] **24 names**, a `chair` and a `viceChair` per committee. Same file.
+- [ ] **28 names**, a `chair` and a `viceChair` per committee. Same file.
 
 - [ ] **The two undecided committees.** To add one:
   1. Copy an existing entry in `committees.js` and edit it.
@@ -245,7 +245,7 @@ All of this lives in one file: `apps/site/src/data/committees.js`.
   with a delegate representing "Fance".
 
 - [ ] **Official committee logos, if you still want them.** I cannot download
-      image files, so the 12 icons shipping now are line marks I drew.
+      image files, so the 14 icons shipping now are line marks I drew.
 
   Drop real SVGs into `apps/site/assets/icons/` using the existing filenames
   (`unwomen.svg`, `icj.svg`, `unodc.svg`) and they appear with no code change.

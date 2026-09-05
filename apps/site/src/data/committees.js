@@ -34,8 +34,9 @@
  * that is how many outlets it runs, and the Federal Parliament at sixty because
  * a legislature the size of an ordinary committee is not one.
  *
- * The three exceptions are why the total is 412 rather than a round 400: with
- * the press corps at 22, no set of round fives adds up to exactly four hundred.
+ * Eleven rooms at the house size plus those three exceptions is 482 seats. It
+ * is not a round number and cannot be: with the press corps at 22, no set of
+ * round fives lands on a figure ending in a zero.
  *
  * They are advertised as provisional on the committees section, so they can
  * move before registration opens. What cannot move quietly is the seed: the API
@@ -99,6 +100,36 @@ export const COMMITTEES = [
     meta: ['Advocates and justices'],
     blurb:
       'The principal judicial organ of the UN. Advocates argue a case on the record and the bench rules on it, rather than negotiating a resolution.',
+    agenda: null,
+    chair: null,
+    viceChair: null,
+  },
+  {
+    code: 'ECOSOC',
+    kind: 'Country delegation',
+    name: 'Economic and Social Council',
+    icon: 'ecosoc',
+    level: 'Beginner',
+    seats: 35,
+    seatNoun: 'seats',
+    meta: [],
+    blurb:
+      'The widest brief in the conference: the economic, social and environmental work the rest of the UN system leans on.',
+    agenda: null,
+    chair: null,
+    viceChair: null,
+  },
+  {
+    code: 'SPECPOL',
+    kind: 'Country delegation',
+    name: 'Special Political and Decolonization Committee',
+    icon: 'specpol',
+    level: 'Beginner',
+    seats: 35,
+    seatNoun: 'seats',
+    meta: [],
+    blurb:
+      'The Fourth Committee of the General Assembly: peacekeeping operations, the territories still administered by somebody else, and the political questions the First Committee does not take.',
     agenda: null,
     chair: null,
     viceChair: null,

@@ -22,10 +22,14 @@ const REAL = {
   script: readFileSync(join(root, 'scripts/check-committees.mjs'), 'utf8'),
   committees: readFileSync(join(root, 'apps/site/src/data/committees.js'), 'utf8'),
   seed: readFileSync(join(root, 'prisma/seed.ts'), 'utf8'),
+  // The check also reads the About figures out of the landing page. Leave this
+  // out of the sandbox and every case that expects a pass dies on ENOENT
+  // instead, which is exactly how these four went quietly red.
+  indexHtml: readFileSync(join(root, 'apps/site/index.html'), 'utf8'),
 }
 
 /** Runs the check against a sandboxed copy. Returns { code, stdout, stderr }. */
-function runCheck({ committees = REAL.committees, seed = REAL.seed } = {}) {
+function runCheck({ committees = REAL.committees, seed = REAL.seed, indexHtml = REAL.indexHtml } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'cc-'))
   try {
     mkdirSync(join(dir, 'scripts'), { recursive: true })
@@ -35,6 +39,7 @@ function runCheck({ committees = REAL.committees, seed = REAL.seed } = {}) {
     writeFileSync(join(dir, 'scripts/check-committees.mjs'), REAL.script)
     writeFileSync(join(dir, 'prisma/seed.ts'), seed)
     writeFileSync(join(dir, 'apps/site/src/data/committees.js'), committees)
+    writeFileSync(join(dir, 'apps/site/index.html'), indexHtml)
 
     try {
       const stdout = execFileSync(process.execPath, [join(dir, 'scripts/check-committees.mjs')], {
@@ -69,7 +74,7 @@ const mustFail = (result, why) =>
 test('the untouched tree passes, so a failure below means the mutation was caught', () => {
   const result = runCheck()
   assert.equal(result.code, 0, result.stderr)
-  assert.match(result.stdout, /12 committees, 400 seats, site and seed agree/)
+  assert.match(result.stdout, /14 committees, 482 seats, site and seed agree/)
 })
 
 // --- renames ---------------------------------------------------------------
@@ -105,26 +110,30 @@ test('a code renamed on the site only is caught', () => {
 
 test('a seat count raised on the site only is caught', () => {
   const result = runCheck({
-    committees: edit(REAL.committees, 'seats: 50,\n    seatNoun', 'seats: 80,\n    seatNoun'),
+    committees: edit(
+      REAL.committees,
+      "icon: 'disec',\n    level: 'Advanced',\n    seats: 35,",
+      "icon: 'disec',\n    level: 'Advanced',\n    seats: 80,",
+    ),
   })
   mustFail(result, 'site oversold DISEC')
-  assert.match(result.stderr, /DISEC seats: site advertises 80, seed creates 50/)
+  assert.match(result.stderr, /DISEC seats: site advertises 80, seed creates 35/)
 })
 
 test('a seat count changed in the seed only is caught', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'DISEC', totalSeats: 50", "code: 'DISEC', totalSeats: 20"),
+    seed: edit(REAL.seed, "code: 'DISEC', totalSeats: 35", "code: 'DISEC', totalSeats: 20"),
   })
   mustFail(result, 'seed shrank DISEC')
-  assert.match(result.stderr, /DISEC seats: site advertises 50, seed creates 20/)
+  assert.match(result.stderr, /DISEC seats: site advertises 35, seed creates 20/)
 })
 
 test('a one-seat drift is caught, not rounded away', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 15", "code: 'ICJ', totalSeats: 14"),
+    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 35", "code: 'ICJ', totalSeats: 34"),
   })
   mustFail(result, 'off-by-one on ICJ')
-  assert.match(result.stderr, /ICJ seats: site advertises 15, seed creates 14/)
+  assert.match(result.stderr, /ICJ seats: site advertises 35, seed creates 34/)
 })
 
 // --- additions and removals ------------------------------------------------
@@ -155,8 +164,8 @@ test('a committee added to the seed only is caught', () => {
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "  { name: 'International Press', code: 'IP', totalSeats: 15 },",
-      "  { name: 'International Press', code: 'IP', totalSeats: 15 },\n" +
+      "  { name: 'International Press', code: 'IP', totalSeats: 22 },",
+      "  { name: 'International Press', code: 'IP', totalSeats: 22 },\n" +
         "  { name: 'World Health Organization', code: 'WHO', totalSeats: 40 },",
     ),
   })
@@ -166,7 +175,7 @@ test('a committee added to the seed only is caught', () => {
 
 test('a committee removed from the seed only is caught', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },\n", ''),
+    seed: edit(REAL.seed, "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },\n", ''),
   })
   mustFail(result, 'seed dropped UN Women')
   assert.match(result.stderr, /UNWOMEN is on the site but not in prisma\/seed\.ts/)
@@ -175,7 +184,14 @@ test('a committee removed from the seed only is caught', () => {
 test('an empty site list against a full seed is caught, not treated as nothing to compare', () => {
   const result = runCheck({ committees: 'export const COMMITTEES = []\n' })
   mustFail(result, 'site list emptied')
-  assert.match(result.stderr, /the site lists 0 committees, the seed creates 12/)
+  // Counted off the real seed rather than written in: this number had already
+  // gone stale once, and a test that fails for its own reasons teaches people
+  // to ignore the suite.
+  const seeded = (REAL.seed.match(/totalSeats:/g) ?? []).length
+  assert.match(
+    result.stderr,
+    new RegExp(`the site lists 0 committees, the seed creates ${seeded}`),
+  )
 })
 
 // --- the regex must never match zero entries and call that agreement --------
@@ -193,7 +209,7 @@ test('double-quoted seed entries fail loudly instead of matching nothing', () =>
 
 test('a trailing comma inside a seed entry fails loudly', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 15 }", "code: 'ICJ', totalSeats: 15, }"),
+    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 35 }", "code: 'ICJ', totalSeats: 35, }"),
   })
   mustFail(result, 'trailing comma stops the entry regex matching ICJ')
 })
@@ -202,8 +218,8 @@ test('seed properties reordered fail loudly rather than being skipped silently',
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "{ name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 }",
-      "{ code: 'UNWOMEN', name: 'UN Women', totalSeats: 30 }",
+      "{ name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 }",
+      "{ code: 'UNWOMEN', name: 'UN Women', totalSeats: 35 }",
     ),
   })
   mustFail(result, 'property order change hides UNWOMEN from the regex')
@@ -246,8 +262,8 @@ test('a seed entry split across lines still matches', () => {
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "  { name: 'International Press', code: 'IP', totalSeats: 15 },",
-      "  {\n    name: 'International Press',\n    code: 'IP',\n    totalSeats: 15\n  },",
+      "  { name: 'International Press', code: 'IP', totalSeats: 22 },",
+      "  {\n    name: 'International Press',\n    code: 'IP',\n    totalSeats: 22\n  },",
     ),
   })
   assert.equal(result.code, 0, `reformatting one entry across lines should still pass\n${result.stderr}`)
@@ -259,8 +275,8 @@ test('a commented-out seed entry is not counted as present', () => {
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },",
-      "  // { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },",
+      "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },",
+      "  // { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },",
     ),
   })
   mustFail(
@@ -272,8 +288,12 @@ test('a commented-out seed entry is not counted as present', () => {
 
 test('a committee with zero seats is rejected', () => {
   const result = runCheck({
-    committees: edit(REAL.committees, 'seats: 30,\n    seatNoun', 'seats: 0,\n    seatNoun'),
-    seed: edit(REAL.seed, "code: 'UNWOMEN', totalSeats: 30", "code: 'UNWOMEN', totalSeats: 0"),
+    committees: edit(
+      REAL.committees,
+      "icon: 'unwomen',\n    level: 'Beginner',\n    seats: 35,",
+      "icon: 'unwomen',\n    level: 'Beginner',\n    seats: 0,",
+    ),
+    seed: edit(REAL.seed, "code: 'UNWOMEN', totalSeats: 35", "code: 'UNWOMEN', totalSeats: 0"),
   })
   mustFail(
     result,

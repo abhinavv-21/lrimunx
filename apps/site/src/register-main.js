@@ -63,7 +63,7 @@ const ctx = {
 
 const NUMBER_WORDS = [
   'No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six',
-  'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
+  'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen',
 ]
 
 function boot() {

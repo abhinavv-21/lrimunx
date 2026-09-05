@@ -583,7 +583,7 @@ Deployment:
       `[integration] Skipping the API integration suite`.
 - [ ] Sign in at `/admin` and change the bootstrap admin password.
 - [ ] Confirm the committees are in the database: the hub's Committees page should
-      list all 12.
+      list all 14.
 - [ ] Import the country matrix for each committee under `/admin/matrix`. Until a
       committee has one, country validation is switched off for it and allocations
       accept any typo as a country.

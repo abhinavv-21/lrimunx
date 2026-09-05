@@ -114,14 +114,14 @@ describe('the committee grid on index.html', () => {
   it('renders one card per committee, in catalogue order', () => {
     renderCommitteeCards()
     const cards = Array.from(document.querySelectorAll('[data-committee]')) as HTMLElement[]
-    expect(cards).toHaveLength(12)
+    expect(cards).toHaveLength(14)
     expect(cards.map((c) => c.dataset['code'])).toEqual(catalogue.map((c) => c.code))
   })
 
   it('is idempotent, so a second render does not double the grid', () => {
     renderCommitteeCards()
     renderCommitteeCards()
-    expect(document.querySelectorAll('[data-committee]')).toHaveLength(12)
+    expect(document.querySelectorAll('[data-committee]')).toHaveLength(14)
   })
 
   it('points every icon at a file that exists in assets/icons', () => {
@@ -203,7 +203,7 @@ describe('the committee grid on index.html', () => {
   it('spells the eyebrow count from the list instead of hardcoding it', () => {
     const eyebrow = document.querySelector('[data-committees-eyebrow]') as HTMLElement
     renderCommitteeCards()
-    expect(eyebrow.textContent).toBe('Twelve committees')
+    expect(eyebrow.textContent).toBe('Fourteen committees')
   })
 
   it('survives initCommittees, which no longer measures anything', () => {
