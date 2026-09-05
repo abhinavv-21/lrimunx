@@ -55,10 +55,11 @@ describe('the committee catalogue', () => {
   it('has the twelve committees the site and the seed agree on', () => {
     expect(catalogue).toHaveLength(12)
     // This is the order the cards are numbered in, so it is a decision rather
-    // than an accident: the two advanced rooms open the list together.
+    // than an accident: the three advanced rooms open the list together.
     expect(catalogue.map((c) => c.code)).toEqual([
       'UNSC',
       'DISEC',
+      'HCC',
       'ICJ',
       'INTERPOL',
       'UNODC',
@@ -68,7 +69,6 @@ describe('the committee catalogue', () => {
       'FPN',
       'IP',
       'UNOOSA',
-      'HCC',
     ])
   })
 
@@ -91,13 +91,13 @@ describe('the committee catalogue', () => {
     }
   })
 
-  it('marks the level of every room, and only DISEC and UNSC as advanced', () => {
+  it('marks the level of every room, and only DISEC, HCC and UNSC as advanced', () => {
     const byLevel = (level: string) =>
       catalogue.filter((c) => c.level === level).map((c) => c.code).sort()
 
-    expect(byLevel('Advanced')).toEqual(['DISEC', 'UNSC'])
+    expect(byLevel('Advanced')).toEqual(['DISEC', 'HCC', 'UNSC'])
     expect(byLevel('Intermediate')).toEqual(['ICJ', 'UNHCR', 'UNHRC'])
-    expect(byLevel('Beginner')).toHaveLength(catalogue.length - 5)
+    expect(byLevel('Beginner')).toHaveLength(catalogue.length - 6)
   })
 
   it('never asks a beginner room for a position paper', () => {

@@ -16,6 +16,7 @@ function requireEnv(name: string): string {
 const STANDARD_COMMITTEES = [
   { name: 'United Nations Security Council', code: 'UNSC', totalSeats: 15 },
   { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
+  { name: 'Historical Crisis Cabinet', code: 'HCC', totalSeats: 35 },
   { name: 'International Court of Justice', code: 'ICJ', totalSeats: 35 },
   { name: 'International Criminal Police Organization', code: 'INTERPOL', totalSeats: 35 },
   { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
@@ -25,7 +26,6 @@ const STANDARD_COMMITTEES = [
   { name: 'Federal Parliament of Nepal', code: 'FPN', totalSeats: 60 },
   { name: 'International Press', code: 'IP', totalSeats: 22 },
   { name: 'United Nations Office for Outer Space Affairs', code: 'UNOOSA', totalSeats: 35 },
-  { name: 'Historical Crisis Cabinet', code: 'HCC', totalSeats: 35 },
 ]
 
 async function main() {
