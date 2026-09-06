@@ -1,4 +1,482 @@
-# Deploying LRI MUN X on Oracle Cloud Always Free
+# Setting up LRI MUN X
+
+Two ways to host this, and this file covers both.
+
+**Part One** takes you from no accounts at all to a working site on a free plan,
+with no credit card entered anywhere. About an hour, most of it waiting for
+builds. This is where the site lives now.
+
+**Part Two** is Oracle Cloud Always Free, one virtual machine you control. More
+work, more capable, and the only one of the two whose free tier permits a site
+that asks people for money. Read Step 0 before you decide.
+
+Every command in this file runs from the repository root:
+
+```
+D:\LRI MUN X\Management Webapp
+```
+
+You need **Node 20 or newer** and **git**. Nothing else on your own machine.
+
+---
+
+# Part One: getting it live, free
+
+Steps are numbered 1 to 13 and refer to each other by number. Part Two has its
+own numbering, and says so where it starts.
+
+## Step 0. The money, before anything else
+
+You said the card is not yours. That changes what you should do, so read this
+whole step before creating a single account.
+
+### What the three services cost
+
+| Service | What it does here | Plan | Card needed to sign up | Can it ever charge? |
+| :--- | :--- | :--- | :--- | :--- |
+| **GitHub** | holds the code, triggers deploys | Free | No | No |
+| **Neon** | the PostgreSQL database | Free | No | No |
+| **Vercel** | builds and serves the site, hub and API | Hobby | No | No |
+
+That is the whole hosting bill: nothing.
+
+Neither Neon nor Vercel bills a free account when you run past a limit. Neither
+one *can*, because neither has a card on file and neither offers overage billing
+on its free tier. They stop instead:
+
+- **Neon Free** gives 0.5 GB of storage and 100 compute-hours per project each
+  month, plus 5 GB of network transfer. Run out of compute-hours or transfer and
+  the database is suspended until the next month. Fill the 0.5 GB and writes
+  start failing. Your data is not deleted in any of those cases. The compute
+  also sleeps after 5 minutes of no queries, which is why almost nothing counts
+  against those 100 hours while you are only testing.
+- **Vercel Hobby** has no billing cycle at all. Exceed a limit and that feature
+  pauses, usually for 30 days, and then works again. The published guidance for
+  a Hobby account is up to 100 GB of data transfer, 1M function calls, 4 CPU-hours
+  and 360 GB-hours of memory per month, with 100 deployments a day.
+
+For scale: 400 delegates loading a 1.5 MB page ten times each is under 6 GB of
+transfer. You are not close to any of these numbers.
+
+Vercel's Spend Management, the feature that caps a bill, is a Pro feature and
+shows as **N/A** on Hobby. That is not a gap. There is no bill to cap.
+
+### The one rule that can actually bite you
+
+Vercel's fair use policy restricts Hobby to **non-commercial personal use**, and
+this is their own first example of commercial use:
+
+> Any method of requesting or processing payment from visitors of the site
+
+The registration page shows a payment QR code, states a delegate fee, and asks
+for a screenshot of the transfer. That is requesting payment from visitors.
+Vercel also says plainly that asking for donations counts.
+
+So the honest position: **while the fee is live, this site does not meet the
+terms of the plan it is on.** Vercel enforces by pausing a deployment and asking
+you to upgrade, not by charging you, so the card is still safe either way. But a
+paused site during registration week is its own disaster.
+
+### What to do about it
+
+Three real options.
+
+**Stay on Vercel Hobby while you build.** No card, no charge, nothing to
+decide. Correct for everything up to the day the fee goes live: previews,
+testing, showing the advisors, the whole secretariat learning the hub.
+
+**Move to Oracle Cloud Always Free before registration opens.** Part Two. Its
+free tier has no non-commercial clause, so the payment QR is not a problem.
+Oracle does ask for a card at signup to verify identity, and places a small
+temporary authorisation on it that reverses within a few days. Always Free
+resources are never billed. If the card belongs to the school, this needs the
+cardholder's consent for that one verification step, and Oracle section 1 and
+Step 1 below both tell you how to make sure nothing can charge it later.
+
+**Upgrade Vercel to Pro.** $20 per developer per month, on a real card, every
+month. Only worth raising if the school would rather pay than run a server.
+
+My recommendation: build on Hobby now, and move to Oracle before you publish the
+fee. That is already the plan the repository is written around, which is why
+Part Two exists and is the longer half of this file.
+
+## Step 1. Make sure no card can ever be charged
+
+Do this once at signup and once more before launch.
+
+### Vercel
+
+1. Sign up at **vercel.com/signup** with **Continue with GitHub**. You will not
+   be asked for a card. If a screen ever asks for one, you are on the wrong flow
+   or a Pro trial. Back out.
+2. Stay on the personal **Hobby** account. Do not create a Team. Teams are the
+   Pro billing unit.
+3. **Never start the Pro trial.** It asks for a card and converts to a paid plan
+   when it ends. The Upgrade button is in the sidebar and is easy to hit by
+   accident.
+4. Do not add team members. Developer seats are $20 each per month.
+5. Add the database **from Neon directly** (Step 4), not from Vercel's
+   Storage tab. Adding it through Vercel routes Neon's billing through your
+   Vercel account, which is one more place a charge could appear. Going direct
+   keeps the two completely separate.
+6. Do not buy a domain from Vercel. Domains bought there cost money and renew
+   annually. Adding a domain the school already owns is free, and that is what
+   Step 9 does.
+
+**Prove it:** Vercel dashboard → **Settings** → **Billing**. It should say
+**Hobby**, and there should be no payment method listed.
+
+### Neon
+
+1. Sign up at **neon.com** with GitHub or Google. No card is requested.
+2. Leave the project on the **Free** plan. Ignore the prompts to upgrade to
+   Launch or Scale.
+
+**Prove it:** Neon console → **Billing**. Plan should read **Free**, with no
+payment method.
+
+### If a card is already attached to either account
+
+You cannot remove a payment method while a paid plan is using it. Downgrade
+first, then remove:
+
+- **Vercel:** Settings → Billing → **Plan** → downgrade to Hobby. Then, in the
+  same page, delete the saved card. Check **Settings → Billing → Invoices** is
+  empty or fully paid before you finish.
+- **Neon:** Billing → change plan to **Free**, then remove the card.
+
+If a charge has already happened, both of them will show it under Invoices with
+a date and an amount. Screenshot it before you change anything, so whoever owns
+the card gets a straight answer.
+
+### If you go to Oracle later
+
+Oracle is the one that needs a card at signup. Two things make it safe:
+
+- **Never click "Upgrade to Pay As You Go."** Always Free stays free forever on
+  a free account. Upgrading turns on billing for everything outside the free
+  allowances, permanently, and it is a one-way door.
+- **Set a budget alert at the smallest amount Oracle accepts.** Console →
+  **Billing & Cost Management → Budgets → Create Budget**, scope it to the root
+  compartment, set the amount to 1, and set the alert rule to trigger at 1% of
+  actual spend. Any charge at all then emails you the same day instead of
+  showing up on a statement a month later.
+
+## Step 2. The accounts you need
+
+Three, in this order. Use an address the conference controls, not a personal one
+that leaves with whoever graduates.
+
+| # | Service | Where | Sign in with |
+| :--- | :--- | :--- | :--- |
+| 1 | GitHub | github.com/signup | email |
+| 2 | Neon | neon.com | the GitHub account from 1 |
+| 3 | Vercel | vercel.com/signup | the GitHub account from 1 |
+
+Signing Neon and Vercel in through GitHub means one password to protect rather
+than three. Turn on two-factor authentication on the GitHub account before you
+do anything else: it now controls all three.
+
+## Step 3. Put the code on GitHub
+
+Skip this if the repository already exists. It does for this project, at
+`abhinavv-21/lrimunx`.
+
+```bash
+git remote -v            # already has an origin? skip the rest of this step
+```
+
+Otherwise, on github.com click **New repository**, name it `lrimunx`, leave it
+**Private**, and do not let it add a README or a `.gitignore`. Then:
+
+```bash
+git remote add origin https://github.com/<your-username>/lrimunx.git
+git branch -M main
+git push -u origin main
+```
+
+Nothing secret is in the repository. `.env` is gitignored and stays on your
+machine. Every real secret lives in Vercel's environment variables instead.
+
+## Step 4. Create the database on Neon
+
+1. Neon console → **New Project**.
+2. Name it `lrimunx`.
+3. **Region: Singapore (ap-southeast-1).** This matters. `vercel.json` pins the
+   function to `sin1`, which is Singapore. A database in Virginia would add
+   roughly 200ms to every single query.
+4. Postgres version: the default is fine.
+5. Create it, and leave the connection details on screen. You need two strings
+   from this page and they are not the same string.
+
+**The pooled one**, for `DATABASE_URL`. It has `-pooler` in the hostname. Add
+two parameters to the end by hand:
+
+```
+postgresql://…-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true&connection_limit=1
+```
+
+Every cold start of the function opens its own connection. Without the pooler
+and that limit, a handful of people registering at once exhausts the database's
+connection cap instead of queueing behind it.
+
+**The direct one**, for `DIRECT_URL`. Same string with **no** `-pooler` in the
+hostname, and without `pgbouncer` or `connection_limit`:
+
+```
+postgresql://….ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+```
+
+Database migrations take a PostgreSQL advisory lock, and a transaction-mode
+pooler cannot hold one across statements. Point migrations at the pooled URL and
+they hang forever rather than failing with a message.
+
+`DIRECT_URL` is not optional and cannot be blank. The schema declares it, and
+Prisma has no fallback: unset, every command dies with `P1012`; set to an empty
+string, it dies with "You must provide a nonempty direct URL".
+
+Keep both strings somewhere safe for Step 6. They contain the database password.
+
+## Step 5. Create the Vercel project
+
+1. Vercel dashboard → **Add New → Project**.
+2. **Import Git Repository**, and authorise Vercel to read the GitHub account.
+   Grant it access to the one repository rather than all of them.
+3. Pick `lrimunx`.
+4. **Do not touch the build settings.** `vercel.json` in the repository already
+   sets the build command, the output directory and the region. Anything you
+   type into the dashboard overrides that file and will drift out of sync with it.
+5. Expand **Environment Variables** and add everything in Step 6 *before* you
+   click Deploy. The first build runs migrations, so it needs the database
+   already configured.
+6. Deploy.
+
+The first build takes three to four minutes. It runs `prisma generate`, then
+`prisma migrate deploy` (which creates every table in the empty Neon database),
+then builds all three workspaces.
+
+## Step 6. Environment variables
+
+In Vercel: **Settings → Environment Variables**. Add each one to **Production**,
+**Preview** and **Development** unless noted.
+
+Generate every secret separately. Never reuse one for two variables:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+### Required. The server refuses to start without these
+
+| Variable | Value |
+| :--- | :--- |
+| `DATABASE_URL` | the pooled string from Step 4 |
+| `DIRECT_URL` | the direct string from Step 4 |
+| `JWT_SECRET` | a fresh 48-byte random string |
+| `JWT_REFRESH_SECRET` | a **different** 48-byte random string |
+| `GOOGLE_SHEETS_WEBHOOK_SECRET` | any 16+ character random string |
+
+`GOOGLE_SHEETS_WEBHOOK_SECRET` is required even though most deployments never
+use the webhook. It is the single most common reason a first deploy will not
+boot. Give it a random value and move on.
+
+### Required for Vercel specifically
+
+| Variable | Value | Why |
+| :--- | :--- | :--- |
+| `SERVE_STATIC` | `false` | Vercel serves `dist/` itself. Leave this `true` and the function tries to serve files it was never given: the site 404s while the API keeps answering, which is a confusing way to find out. |
+| `TRUST_PROXY` | `1` | Vercel is a proxy hop. At `0` the app ignores `X-Forwarded-For` and sees one IP for the whole internet. Registration is rate limited to 5 per 15 minutes per IP, so the sixth delegate anywhere in the world gets blocked, and so does everyone after them. |
+| `VITE_API_BASE_URL` | `/api/v1` | Compiled into the browser bundle at build time, not read at runtime. Changing it later does nothing until you redeploy. |
+| `CORS_ORIGIN` | `https://lrimunx.vercel.app` | Comma-separated. Add the real domain here too once Step 9 is done. |
+
+**Do not set `NODE_ENV`.** Vercel sets it to `production` for you, and a
+hardcoded value here has caused trouble before.
+
+### Optional, and safe to leave out at first
+
+| Variable | Leaving it empty means |
+| :--- | :--- |
+| `S3_*` (five of them) | Payment screenshot uploads answer 503. The form says so and registration still completes. Step 10. |
+| `SMTP_*` | Approving a registration works, and the hub says plainly that no email was sent rather than claiming one was. Step 11. |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VITE_VAPID_PUBLIC_KEY` | No browser push notifications. Generate with `npx web-push generate-vapid-keys`. |
+| `DANGER_RESET_PASSPHRASE` | The endpoint that wipes all conference data is disabled entirely. That is the right default until you need it. |
+
+### Two you add now and delete later
+
+| Variable | Value |
+| :--- | :--- |
+| `SEED_ADMIN_USERNAME` | e.g. `secretariat` |
+| `SEED_ADMIN_PASSWORD` | something long, changed on first sign-in |
+
+Step 8 uses these once, then tells you to remove them.
+
+## Step 7. Watch the first build
+
+Vercel dashboard → **Deployments** → click the running one.
+
+If it fails, the log names the cause. The three that actually happen:
+
+- **Hangs at `prisma migrate deploy`.** `DIRECT_URL` is pointing at the pooled
+  host. It must be the one *without* `-pooler`.
+- **`P1012 Environment variable not found: DIRECT_URL`.** You did not set it, or
+  set it to an empty string. Both fail. See Step 4.
+- **The build aborts saying the API base is unreachable.** A deliberate guard.
+  It scans the built bundle and rejects any API base that is `localhost` or a
+  hostname with no dot in it. `/api/v1` is what you want here.
+
+When it goes green, open the deployment URL. The site loads, but nobody can sign
+in yet, because the database has tables and nothing in them.
+
+## Step 8. The first admin account and the committees
+
+The build deliberately does not create accounts. A build container should not be
+writing users into your database, so you run this once, yourself.
+
+```bash
+npx vercel login
+npx vercel link                       # pick the lrimunx project
+npx vercel env pull .env.production.local --environment=production
+```
+
+That file holds live credentials. It is gitignored. **Delete it when you are
+done.**
+
+Open it, copy the **`DIRECT_URL`** value, and run this in **Git Bash** (the
+backslashes and the `VAR="…"` prefixes are Bash syntax and will not parse in
+PowerShell):
+
+```bash
+DATABASE_URL="<paste DIRECT_URL here>" \
+DIRECT_URL="<paste DIRECT_URL here>" \
+SEED_ADMIN_USERNAME="secretariat" \
+SEED_ADMIN_PASSWORD="<the password from Step 6>" \
+node scripts/bootstrap-admin.mjs
+```
+
+Use the direct string for both. This is a one-off script rather than a
+serverless function, so it wants a direct connection.
+
+It does two things, both safe to repeat:
+
+1. Creates the first account, as ADMIN and as the owner, **only if no account
+   exists at all**. The owner flag matters: settings, the danger zone and the
+   restart button answer to it and nothing else, so an account created without
+   it produces a hub whose owner-only screens can never be reached.
+2. Creates every committee from `apps/site/src/data/committees.js` that is not
+   already there, and never modifies one that is. If the secretariat has changed
+   a seat count in the hub, re-running this will not undo it.
+
+Then clean up:
+
+```bash
+rm .env.production.local
+```
+
+And in Vercel, **Settings → Environment Variables**, delete `SEED_ADMIN_PASSWORD`
+from every environment after you have signed in once and changed it.
+
+## Step 9. The domain
+
+The school's IT team controls `lri.edu.np`. `DOMAIN-REQUEST.md` in this
+repository is the request to hand them; it asks for one A record and nothing
+else. Confirm with them whether the zone is `lri.edu.np` or `lrischool.edu.np`,
+because the site currently links to the second one.
+
+On Vercel: **Settings → Domains → Add**, type `mun.lri.edu.np`, and Vercel shows
+you the exact record to give IT. Do not buy a domain here. Adding one the school
+already owns is free; buying one is not.
+
+Once it resolves, add it to `CORS_ORIGIN` alongside the Vercel URL and redeploy.
+`VITE_API_BASE_URL` stays `/api/v1`, because the site and the API are the same
+origin either way.
+
+## Step 10. Payment screenshots
+
+Registration works without this. The upload endpoint answers 503, the form says
+so plainly, and the application still completes. What you lose is any proof that
+someone paid, so fill it in before registration opens.
+
+Five variables, S3-compatible so the provider can change later without touching
+code. Oracle Object Storage is covered in Oracle section 14; Cloudflare R2 and
+Supabase Storage both work the same way.
+
+```
+S3_ENDPOINT, S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY
+```
+
+**The bucket must be private.** Payment screenshots are transaction records.
+They are readable only through a signed URL, which only a signed-in hub user can
+obtain. A public bucket puts every delegate's bank screenshot on the open
+internet under a guessable name.
+
+`S3_REGION` catches people out. Signing puts a region in every request even
+where the provider ignores it. Cloudflare R2 and MinIO accept `auto`. Oracle
+does not, because it validates the region inside the signature, so use the real
+region id there.
+
+## Step 11. Approval emails
+
+Also optional. Without it, approving a registration still creates the delegate,
+and the hub says no email was sent rather than pretending one was.
+
+For Gmail or Google Workspace: `smtp.gmail.com`, port 587, `SMTP_SECURE=false`,
+and an **app password** from the Google account's security page. A normal
+account password will not authenticate, and generating an app password requires
+2FA to be on. `SMTP_FROM` has to match the authenticated mailbox or most
+providers refuse to send.
+
+## Step 12. Check it works
+
+On the deployment URL:
+
+- [ ] `/` loads and the committee grid shows 14 cards
+- [ ] **Details** on a committee opens the dialog
+- [ ] **Apply** from that dialog lands on `/register` with the committee preselected
+- [ ] `/register` submits and you get a confirmation
+- [ ] `/admin` shows the login page
+- [ ] you can sign in with the account from Step 8
+- [ ] the hub's **Committees** page lists all 14
+- [ ] **Admin** appears in the sidebar. It is owner-only, so if it is missing,
+      the owner flag did not get set
+- [ ] `/health` returns `{"status":"ok",…}`
+- [ ] paste the URL into WhatsApp and check the share preview
+
+And locally, before every deploy:
+
+```bash
+npm run verify
+```
+
+That runs the committee and page checks, the script tests, the linter, the type
+checker and both test suites. The API integration suite self-skips when
+`DATABASE_URL` and the JWT secrets are absent and still lets the run go green,
+so read the output for `[integration] Skipping the API integration suite` if you
+meant it to run.
+
+## Step 13. The monthly money check
+
+Two minutes, once a month, until the conference is over.
+
+| Where | What you want to see |
+| :--- | :--- |
+| Vercel → Settings → Billing | Plan **Hobby**, no payment method, no invoices |
+| Vercel → the project → **Usage** | every bar well short of its limit |
+| Neon → Billing | Plan **Free**, no payment method |
+| Neon → the project → **Monitoring** | compute-hours under 100 for the month |
+
+If you moved to Oracle, add: Console → **Billing & Cost Management → Cost
+Analysis**, which should read 0.00 for every month, and confirm the budget alert
+from Step 1 still exists.
+
+---
+
+# Part Two: Oracle Cloud Always Free
+
+Where this is going, and the only one of the two free tiers that permits a site
+asking visitors for money. Step 0 explains why that matters.
+
+**The section numbers below belong to Part Two.** A reference to "section 6"
+means section 6 of this part, not Step 6 of Part One.
 
 One Node process serves the public site, the operations hub and the API on a single
 port. Caddy sits in front for HTTPS. PostgreSQL runs on the same machine. Payment
@@ -52,7 +530,11 @@ and the load balancer's 10 Mbps cap is lower than the instance's own throughput.
 A credit card is required at signup for identity verification. Always Free resources
 are not charged against it. If you later upgrade to Pay As You Go, the Always Free
 resources stay free, but everything else starts billing, so stay on the free tier
-unless you have decided otherwise.
+unless you have decided otherwise. Upgrading is a one-way door.
+
+**Set a budget alert before you build anything.** Part One, Step 1 has the exact
+click path: it takes a minute and turns any charge at all into an email the same
+day.
 
 ## 2. Pick your home region, and get it right the first time
 
@@ -559,15 +1041,15 @@ Content, in `apps/site`:
       PLACEHOLDER drawn across it, and it is not scannable.
 - [ ] Fill in the account name and number on `register.html`, and the delegate fee,
       which appears on both `index.html` and `register.html`.
-- [ ] Replace `Email and phone to be announced` in the footer of both pages once those
-      exist. Five separate copy blocks tell users to reach the secretariat through the
-      footer.
-- [ ] Add the 12 committee agendas in `src/data/committees.js`. They all currently
+- [ ] Replace `Phone number to be announced` in the footer once a number exists, and
+      replace `lrimodelun@gmail.com` if the conference gets its own address. Five
+      separate copy blocks tell users to reach the secretariat through the footer.
+- [ ] Add the 14 committee agendas in `src/data/committees.js`. They all currently
       render "To be announced."
 - [ ] Add the chair and vice-chair for each committee in the same file.
 - [ ] Confirm the seat counts in that file. They are sized to each body but were not
       set from a real plan, and the API enforces them at allocation time.
-- [ ] Add the 13 organising committee portraits to `assets/oc/`, named after the
+- [ ] Add the 12 organising committee portraits to `assets/oc/`, named after the
       `photo` field in `src/modules/oc.js`. Portrait crops, 800×1000, under ~120 KB.
 - [ ] Add one photograph per past edition to `assets/past-galleries/edition-01/01.jpg`
       through `edition-09/01.jpg`. 1600 px on the long edge, ~200 KB.
@@ -592,6 +1074,10 @@ Deployment:
 - [ ] Check the share preview by pasting the URL into WhatsApp.
 
 ## 19. Vercel, until the Oracle VM is up
+
+**Part One is the step-by-step version of this section.** What follows is the
+short reference: why the two deployments are not the same shape, and what
+changes between them.
 
 Oracle is the destination. Vercel is the interim home for previews and the test
 environment, and the two are not the same shape: Oracle runs one long-lived Node
