@@ -223,15 +223,16 @@ Check the shape shows the **Always Free-eligible** label, then **Select shape**.
 
 Under **Image**, click **Change image** → **Ubuntu** → tick **Canonical Ubuntu 24.04**.
 Not the one that says *Minimal*: it leaves out tools this guide uses. If there is an
-**Image build** dropdown, pick the newest one. With the Ampere shape selected, only ARM
-(`aarch64`) builds are compatible, and the console offers those.
+**Image build** dropdown, pick the newest one. With the Ampere shape selected, the
+console only offers ARM builds, so you cannot pick a wrong one by accident.
 
 **Check** before moving on. The Image and shape area should read:
 
 | Line | Should say |
 | :--- | :--- |
 | Operating system | Canonical Ubuntu 24.04 |
-| Image build | something containing `aarch64` |
+| Image build | a date, e.g. `2026.09.18-0`. It does not name the architecture; the shape decides that |
+| Security | a list such as *BM Confidential computing*. That is what the image supports, not something switched on. Ignore it |
 | Shape | VM.Standard.A1.Flex, Always Free-eligible |
 | Shape build | 2 core OCPU, 12 GB memory |
 
