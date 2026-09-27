@@ -154,7 +154,17 @@ This is only the first of two firewalls. Step 9 is the other one.
 
 The key is how your PC proves to the server who it is. There is no password login.
 
-**PowerShell (your PC):**
+**PowerShell (your PC).** The prompt should start with `PS`. In the older Command Prompt
+(`C:\>` with no `PS`), `$env:USERPROFILE` is not understood and these commands fail.
+
+A fresh Windows account has no `.ssh` folder yet, so make it first. This does nothing
+if it already exists:
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.ssh"
+```
+
+Then make the key:
 
 ```powershell
 ssh-keygen -t ed25519 -C "lrimunx-oracle" -f "$env:USERPROFILE\.ssh\lrimunx"
