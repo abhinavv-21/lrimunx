@@ -281,9 +281,17 @@ needs more.
 
 ### 5e. Review and create
 
-Click **View estimated cost** first. For this shape and disk it should show nothing to
-pay. If it shows a monthly amount, something above is not Always Free: go back and
-check the shape and the disk size.
+Click **View estimated cost** first. Expect it to show about **$2/month for the boot
+volume**. That is the list price, and it does not mean you will be charged: the small
+print says the estimate ignores "tier unit pricing", which is the Always Free allowance.
+The disk sits inside the free 200 GB, and a free-tier account cannot be billed at all.
+
+What to check is what is *not* there. There should be **no line for OCPUs or memory**.
+A paid shape shows a compute line with its own monthly price; A1 at 2 OCPU / 12 GB does
+not. If a compute line appears, go back and fix the shape.
+
+A day after creating the instance, **Billing & Cost Management → Cost Analysis** should
+show 0.00. That is the real confirmation.
 
 Then **Create**. The status goes **Provisioning** → **Running** in one to three minutes.
 
