@@ -214,9 +214,10 @@ Not IT's problem, listed so it is not forgotten:
 - `SITE_URL` and `CORS_ORIGIN` set to `https://mun.lri.edu.np`. `SITE_URL` feeds
   every canonical tag, `og:url`, `sitemap.xml` and `robots.txt` from one place, so
   this is one variable rather than an edit across six files.
-- The `Caddyfile` hostname (`SETUP.md` §13).
-- `SETUP.md` and `TODO.md` both currently say `mun.lrischool.edu.np`. If the zone
-  turns out to be `lri.edu.np`, both need correcting.
+- The `Caddyfile` hostname (`SETUP.md` step 17).
+- `SETUP.md` writes the name as `mun.lri.edu.np` throughout. If the zone turns out
+  to be `lrischool.edu.np`, swap it wherever it appears, including `.env` on the
+  server (`CORS_ORIGIN`, `SITE_URL`) and the Caddyfile.
 - The hub path, if we are renaming `/admin` to `/ops`: the Vercel rewrites, the
   Express static routes, the hub's router basename, `robots.txt` and the
   `X-Robots-Tag` header that keeps it out of search results.
