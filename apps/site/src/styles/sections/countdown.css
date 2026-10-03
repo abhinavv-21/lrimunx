@@ -1,0 +1,364 @@
+/* The countdown band, between the hero and About.
+
+   The After state ([data-phase='after'] here, the Adjourned line and the
+   closing sentence in countdown.js) only ever shows from 12 January 2027. Once
+   that has passed it can be removed by hand, or the whole band with it.
+
+   Gold digits that fall one at a time toward day one, over a 100-day ruler that
+   fills in gold. Flat ink, with a hard edge into the blush About below. */
+.countdown {
+  --cd-numeral: clamp(4.5rem, 1.6rem + 9vw, 7.5rem);
+  --cd-final: clamp(3.5rem, 1.2rem + 8vw, 7.5rem);
+  --cd-cell-pad: clamp(var(--sp-4), 2vw, var(--sp-6));
+  --cd-progress: 0;
+  border-block-start: 1px solid var(--hairline-on-ink);
+  padding-block: clamp(var(--sp-8), 6vw, var(--sp-10)) clamp(var(--sp-7), 5vw, var(--sp-9));
+}
+
+/* Rows are spaced by margins, not row-gap, because the gaps differ. */
+.countdown__inner {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0;
+}
+
+/* Baseline, so the row's baseline is the text's and not the rule's. */
+.countdown__eyebrow {
+  margin-block-end: 0;
+  align-items: baseline;
+}
+
+.countdown__eyebrow::before {
+  align-self: center;
+}
+
+.countdown__lead {
+  margin-block-start: var(--sp-4);
+}
+
+.countdown__clock {
+  display: flex;
+  align-items: baseline;
+  margin-block-start: var(--sp-5);
+}
+
+.countdown[data-phase='final'] .countdown__clock {
+  margin-block-start: var(--sp-4);
+}
+
+.countdown__ruler {
+  margin-block-start: var(--sp-7);
+}
+
+.countdown__ref {
+  margin-block-start: var(--sp-5);
+  max-inline-size: var(--measure-tight);
+  font-size: var(--fs-300);
+  line-height: 1.5;
+  color: rgb(var(--rgb-text-inverse) / 0.72);
+}
+
+/* The After line's two dates, so neither "Monday 11 January 2027" nor
+   "Poush 27, 2083 BS" splits. */
+.countdown__nowrap {
+  white-space: nowrap;
+}
+
+/* Type */
+
+.countdown__static,
+.countdown__numeral,
+.countdown__word,
+.countdown__value,
+.countdown__adjourned {
+  font-family: var(--font-display);
+}
+
+.countdown__static {
+  font-size: var(--fs-800);
+  font-weight: 500;
+  line-height: var(--lh-display);
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  color: var(--color-accent-gold);
+}
+
+.countdown__days {
+  white-space: nowrap;
+}
+
+.countdown__numeral {
+  font-size: var(--cd-numeral);
+  font-weight: 500;
+  font-variation-settings: 'opsz' 96, 'WONK' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  color: var(--color-accent-gold);
+}
+
+.countdown__word {
+  font-size: var(--fs-700);
+  font-weight: 400;
+  font-variation-settings: 'opsz' 40, 'WONK' 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--on-ground-muted);
+}
+
+.countdown__numeral + .countdown__word,
+.countdown__word + .countdown__numeral {
+  margin-inline-start: var(--sp-3);
+}
+
+.countdown__adjourned {
+  font-size: var(--fs-900);
+  font-weight: 500;
+  line-height: var(--lh-tight);
+  font-variation-settings: 'opsz' 144, 'SOFT' 0, 'WONK' 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--color-text-inverse);
+}
+
+.countdown__value {
+  font-size: var(--fs-800);
+  font-weight: 500;
+  font-variation-settings: 'opsz' 72, 'WONK' 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  color: var(--color-text-inverse);
+}
+
+.countdown[data-phase='final'] .countdown__value {
+  font-size: var(--cd-final);
+  font-variation-settings: 'opsz' 96, 'WONK' 1;
+  color: var(--color-accent-gold);
+}
+
+/* The clock. The house fact divider between cells, no colons. */
+.countdown__cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.countdown__cell + .countdown__cell {
+  padding-inline-start: var(--cd-cell-pad);
+  border-inline-start: 1px solid var(--hairline-gold);
+}
+
+/* :has, so the minutes cell loses its end padding when reduced motion hides
+   the seconds. */
+.countdown__cell:has(~ .countdown__cell:not([hidden])) {
+  padding-inline-end: var(--cd-cell-pad);
+}
+
+.countdown__cell-label {
+  margin-block-start: var(--sp-2);
+  color: var(--on-ground-muted);
+}
+
+/* Digits. One clipped slot each, so a digit can roll without its neighbours
+   moving. content-box, so the descender room sits below the 1em. Centred,
+   because Fraunces' 1 is narrower than the 0 that 1ch measures. */
+.countdown__slot {
+  position: relative;
+  display: inline-block;
+  box-sizing: content-box;
+  inline-size: 1ch;
+  block-size: 1em;
+  padding-block-end: 0.06em;
+  overflow: clip;
+  text-align: center;
+  transition: inline-size var(--dur-reveal) var(--ease-house);
+}
+
+.countdown__digit {
+  display: inline-block;
+}
+
+.countdown__digit.is-incoming {
+  position: absolute;
+  inset: 0 0 auto;
+  display: block;
+}
+
+/* The ruler: 100 days out to day one. */
+.countdown__track,
+.countdown__seg {
+  position: relative;
+  display: block;
+  block-size: 2px;
+  background-color: var(--hairline-on-ink-strong);
+}
+
+.countdown__fill,
+.countdown__seg-fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-accent-gold);
+  transform-origin: 0 50%;
+}
+
+.countdown__fill {
+  transform: scaleX(var(--cd-progress));
+}
+
+.countdown__marker {
+  position: absolute;
+  inset-block-start: -5px;
+  inset-inline-start: max(0px, calc(var(--cd-progress) * 100% - 1px));
+  inline-size: 1px;
+  block-size: 12px;
+  background-color: var(--color-accent-gold);
+}
+
+.countdown__ticks {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.countdown__ticks > span {
+  inline-size: 1px;
+  block-size: 6px;
+  background-color: var(--hairline-on-ink-strong);
+}
+
+.countdown__ticks > span:first-child,
+.countdown__ticks > span:last-child {
+  block-size: 10px;
+}
+
+.countdown__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-2);
+  color: var(--on-ground-muted);
+}
+
+/* During and after: one segment per day. */
+.countdown__sessions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: var(--sp-2);
+}
+
+.countdown__seg-fill {
+  transform: scaleX(var(--cd-seg, 0));
+}
+
+.countdown__session .countdown__marker {
+  display: none;
+  inset-inline-start: max(0px, calc(var(--cd-seg, 0) * 100% - 1px));
+}
+
+.countdown__session.is-today .countdown__marker {
+  display: block;
+}
+
+.countdown__session-date {
+  display: block;
+  margin-block-start: var(--sp-3);
+  color: var(--on-ground-muted);
+}
+
+.countdown__session.is-today .countdown__session-date {
+  color: var(--accent-on-ground);
+}
+
+.countdown__session-bs {
+  display: block;
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-200);
+  color: rgb(var(--rgb-text-inverse) / 0.72);
+}
+
+@media (min-width: 640px) {
+  /* The first column is as wide as the eyebrow (or the days figure), and the
+     reference line wraps inside whatever is left rather than pushing it. */
+  .countdown__inner {
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: var(--sp-5);
+  }
+
+  .countdown__eyebrow {
+    grid-area: 1 / 1;
+    align-self: baseline;
+  }
+
+  .countdown__ref {
+    grid-area: 1 / 2;
+    justify-self: end;
+    align-self: baseline;
+    margin-block-start: 0;
+    text-align: end;
+  }
+
+  .countdown__lead {
+    grid-area: 2 / 1;
+    align-self: baseline;
+    margin-block-start: var(--sp-5);
+  }
+
+  .countdown__clock {
+    grid-area: 2 / 2;
+    justify-self: end;
+    align-self: baseline;
+    margin-block-start: var(--sp-5);
+  }
+
+  .countdown__ruler {
+    grid-area: 3 / 1 / auto / -1;
+    margin-block-start: var(--sp-7);
+  }
+
+  /* No clock alongside: the figure gets the row. In the last 24 hours the
+     clock takes the figure's place. */
+  .countdown[data-phase='during'] .countdown__lead,
+  .countdown[data-phase='after'] .countdown__lead,
+  .countdown[data-phase='final'] .countdown__clock {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .countdown__inner {
+    grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+    column-gap: var(--grid-gap);
+  }
+
+  .countdown__eyebrow,
+  .countdown__lead {
+    grid-column: 1 / 7;
+  }
+
+  .countdown__ref,
+  .countdown__clock {
+    grid-column: 7 / 13;
+  }
+
+  .countdown__ruler {
+    grid-column: 1 / 13;
+    margin-block-start: var(--sp-8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown__slot {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .countdown__fill,
+  .countdown__seg-fill,
+  .countdown__marker {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+
+  .countdown__track,
+  .countdown__seg,
+  .countdown__ticks > span {
+    forced-color-adjust: none;
+    background-color: GrayText;
+  }
+}

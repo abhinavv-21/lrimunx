@@ -361,7 +361,7 @@
                 <dt class="label">Dates</dt>
                 <dd>
                   <span class="hero__fact-value">
-                    <time datetime="2027-01-09">9</time>&ndash;<time datetime="2027-01-11">11</time>
+                    <time datetime="2027-01-09" data-conference-start>9</time>&ndash;<time datetime="2027-01-11" data-conference-end>11</time>
                     January 2027
                   </span>
                   <span class="hero__fact-alt"
@@ -413,6 +413,89 @@
           <div class="hero__ribbon" data-hero-ribbon-root aria-hidden="true">
             <div class="hero__ribbon-track" data-hero-ribbon></div>
           </div>
+        </div>
+      </section>
+
+      <!-- The countdown. Without the bundle it reads as the sentence below; the
+           script counts from the hero plinth's two <time> elements, so the dates
+           live there and in the three day labels at the bottom of this block. -->
+      <section class="countdown ground-ink" aria-labelledby="countdown-label" data-countdown>
+        <div class="shell grid countdown__inner">
+          <p class="label section__eyebrow countdown__eyebrow" id="countdown-label" data-cd-eyebrow>
+            Day one begins
+          </p>
+          <p class="u-visually-hidden" data-cd-spoken></p>
+
+          <div class="countdown__lead" data-cd-lead>
+            <p class="countdown__static" data-cd-static>Saturday, at midnight</p>
+            <p class="countdown__days" aria-hidden="true" data-cd-days hidden
+              ><span class="countdown__numeral" data-cd-days-digits></span
+              ><span class="countdown__word" data-cd-days-unit>days</span></p
+            >
+            <p class="countdown__days" aria-hidden="true" data-cd-session hidden
+              ><span class="countdown__word">Day</span
+              ><span class="countdown__numeral" data-cd-day-digits></span
+              ><span class="countdown__word" data-cd-of>of 3</span></p
+            >
+            <p class="countdown__adjourned" aria-hidden="true" data-cd-adjourned hidden>Adjourned.</p>
+          </div>
+
+          <div class="countdown__clock" aria-hidden="true" data-cd-clock hidden>
+            <div class="countdown__cell">
+              <span class="countdown__value" data-cd-unit="hours"></span>
+              <span class="label countdown__cell-label">Hours</span>
+            </div>
+            <div class="countdown__cell">
+              <span class="countdown__value" data-cd-unit="minutes"></span>
+              <span class="label countdown__cell-label">Minutes</span>
+            </div>
+            <div class="countdown__cell" data-cd-seconds>
+              <span class="countdown__value" data-cd-unit="seconds"></span>
+              <span class="label countdown__cell-label">Seconds</span>
+            </div>
+          </div>
+
+          <div class="countdown__ruler" aria-hidden="true" data-cd-ruler hidden>
+            <div class="countdown__scale" data-cd-scale>
+              <div class="countdown__track">
+                <span class="countdown__fill"></span>
+                <span class="countdown__marker"></span>
+              </div>
+              <div class="countdown__ticks" data-cd-ticks></div>
+              <div class="countdown__ends">
+                <span class="label">100 days out</span>
+                <span class="label">Day one</span>
+              </div>
+            </div>
+
+            <!-- One per conference day. data-cd-date is what a screen reader
+                 hears for that day, and the last one closes the After line. -->
+            <ol class="countdown__sessions" data-cd-sessions hidden>
+              <li class="countdown__session" data-cd-date="Saturday 9 January 2027, Poush 25, 2083 BS">
+                <span class="countdown__seg"
+                  ><span class="countdown__seg-fill"></span><span class="countdown__marker"></span
+                ></span>
+                <span class="label countdown__session-date">Sat 9 Jan</span>
+                <span class="countdown__session-bs">Poush 25</span>
+              </li>
+              <li class="countdown__session" data-cd-date="Sunday 10 January 2027, Poush 26, 2083 BS">
+                <span class="countdown__seg"
+                  ><span class="countdown__seg-fill"></span><span class="countdown__marker"></span
+                ></span>
+                <span class="label countdown__session-date">Sun 10 Jan</span>
+                <span class="countdown__session-bs">Poush 26</span>
+              </li>
+              <li class="countdown__session" data-cd-date="Monday 11 January 2027, Poush 27, 2083 BS">
+                <span class="countdown__seg"
+                  ><span class="countdown__seg-fill"></span><span class="countdown__marker"></span
+                ></span>
+                <span class="label countdown__session-date">Mon 11 Jan</span>
+                <span class="countdown__session-bs">Poush 27</span>
+              </li>
+            </ol>
+          </div>
+
+          <p class="countdown__ref" data-cd-ref>Kathmandu time, UTC+5:45.</p>
         </div>
       </section>
 

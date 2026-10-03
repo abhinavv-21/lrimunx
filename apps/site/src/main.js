@@ -6,6 +6,7 @@ import './styles/tokens.css'
 import './styles/base.css'
 import './styles/sections/nav.css'
 import './styles/sections/hero.css'
+import './styles/sections/countdown.css'
 import './styles/sections/about.css'
 import './styles/sections/editions-cta.css'
 import './styles/sections/committees.css'
@@ -15,6 +16,7 @@ import './styles/sections/footer.css'
 
 import { initNav } from './modules/nav.js'
 import { initHero } from './modules/hero.js'
+import { initCountdown } from './modules/countdown.js'
 import { renderCommitteeCards } from './modules/committee-cards.js'
 import { initCommittees } from './modules/committees.js'
 import { initCommitteeDialog } from './modules/committee-dialog.js'
@@ -70,6 +72,7 @@ const ctx = {
 
 function boot() {
   initHero(ctx)
+  initCountdown(ctx)
   initNav(ctx)
   renderCommitteeCards()
   initCommittees(ctx)
