@@ -317,8 +317,55 @@ What works:
   is one click.
 
 What not to do: upgrade the account to get capacity (step 2a), or settle for the
-E2.1.Micro shape (step 1). If a few days of trying gets nowhere, stop and ask; there are
-ways round it that do not involve money.
+E2.1.Micro shape (step 1). Switching region does not help either: Always Free only
+applies in the home region, and a machine anywhere else runs on trial credits until the
+trial ends and is then deleted.
+
+### Let a script keep trying
+
+Clicking **Create** by hand gets old quickly. `scripts/oracle-retry.sh` does it every two
+minutes, trying 2 OCPU / 12 GB and then 1 / 6, and stops the moment either works. It runs
+in **Cloud Shell**, the command line built into the console, so there is nothing to
+install. Do steps 3 and 4 first: it needs the network and your key.
+
+1. In the console, top right, click the **Cloud Shell** icon (`>_`). A terminal opens at
+   the bottom of the page.
+2. Copy your public key on your PC. **PowerShell (your PC):**
+
+   ```powershell
+   Get-Content "$env:USERPROFILE\.ssh\lrimunx.pub" | Set-Clipboard
+   ```
+
+3. In Cloud Shell, open a new file, paste with **Ctrl+Shift+V**, then **Ctrl+O**,
+   **Enter**, **Ctrl+X**:
+
+   ```bash
+   nano ~/lrimunx.pub
+   ```
+
+4. Download the script and run it. Type these rather than pasting a long script: an
+   interactive shell treats `!` as a special character, which is why pasting the script
+   itself breaks.
+
+   ```bash
+   curl -fsSLo ~/retry.sh https://raw.githubusercontent.com/abhinavv-21/lrimunx/main/scripts/oracle-retry.sh
+   bash ~/retry.sh
+   ```
+
+It first prints the availability domain, subnet and image it found, then one line per
+attempt. When it says **Created**, go to Compute → Instances and continue at step 7.
+
+It cannot cost money. A failed attempt creates nothing, and before every attempt it
+checks whether an A1 machine already exists and stops if one does, so it never makes a
+second one (two would go over the free limit).
+
+**Cloud Shell closes when it has been idle for a while,** and you cannot change that, so
+it is not a good place for a job that runs for days. When it disconnects, open it again
+and run `bash ~/retry.sh` again; the existing-machine check makes that safe. Keeping
+the tab visible and pressing **Enter** in it now and then keeps it open longer.
+
+If it stops with an error that is not about capacity, it prints Oracle's message. The
+usual one is a missing public subnet (step 3).
 
 ## 7. Make the IP address permanent
 
