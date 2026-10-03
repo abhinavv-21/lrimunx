@@ -29,12 +29,12 @@
  *           rather than printing a heading with nothing under it.
  * agenda    null renders "To be announced." Replace with the motion text.
  *
- * Seat counts are provisional. Thirty-five is the house size; the Security
+ * Seat counts are provisional. Thirty is the house size; the Security
  * Council is deliberately small, the press corps sits at twenty-two because
  * that is how many outlets it runs, and the Federal Parliament at sixty because
  * a legislature the size of an ordinary committee is not one.
  *
- * Eleven rooms at the house size plus those three exceptions is 482 seats. It
+ * Eleven rooms at the house size plus those three exceptions is 427 seats. It
  * is not a round number and cannot be: with the press corps at 22, no set of
  * round fives lands on a figure ending in a zero.
  *
@@ -65,7 +65,7 @@ export const COMMITTEES = [
     name: 'Disarmament and International Security Committee',
     icon: 'disec',
     level: 'Advanced',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Position paper required'],
     blurb:
@@ -80,7 +80,7 @@ export const COMMITTEES = [
     name: 'Historical Crisis Cabinet',
     icon: 'hcc',
     level: 'Advanced',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Portfolio powers, no country delegations'],
     blurb:
@@ -95,7 +95,7 @@ export const COMMITTEES = [
     name: 'International Court of Justice',
     icon: 'icj',
     level: 'Intermediate',
-    seats: 35,
+    seats: 30,
     seatNoun: 'places',
     meta: ['Advocates and justices'],
     blurb:
@@ -110,7 +110,7 @@ export const COMMITTEES = [
     name: 'Economic and Social Council',
     icon: 'ecosoc',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:
@@ -125,7 +125,7 @@ export const COMMITTEES = [
     name: 'Special Political and Decolonization Committee',
     icon: 'specpol',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:
@@ -140,7 +140,7 @@ export const COMMITTEES = [
     name: 'International Criminal Police Organization',
     icon: 'interpol',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:
@@ -155,7 +155,7 @@ export const COMMITTEES = [
     name: 'United Nations Office on Drugs and Crime',
     icon: 'unodc',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:
@@ -170,7 +170,7 @@ export const COMMITTEES = [
     name: 'United Nations Human Rights Council',
     icon: 'unhrc',
     level: 'Intermediate',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Position paper required'],
     blurb:
@@ -185,7 +185,7 @@ export const COMMITTEES = [
     name: 'United Nations High Commissioner for Refugees',
     icon: 'unhcr',
     level: 'Intermediate',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: ['Position paper required'],
     blurb:
@@ -200,7 +200,7 @@ export const COMMITTEES = [
     name: 'UN Women',
     icon: 'unwomen',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:
@@ -245,7 +245,7 @@ export const COMMITTEES = [
     name: 'United Nations Office for Outer Space Affairs',
     icon: 'unoosa',
     level: 'Beginner',
-    seats: 35,
+    seats: 30,
     seatNoun: 'seats',
     meta: [],
     blurb:

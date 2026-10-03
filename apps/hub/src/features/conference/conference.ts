@@ -3,8 +3,8 @@ import type { ConferenceDay, ConferenceMode } from '@/types/api'
 /**
  * Conference mode as the rest of the hub needs it.
  *
- * The three days and their dates come from the server (21, 22 and 23 November
- * 2026) rather than being repeated here, so moving the conference is one
+ * The three days and their dates come from the server (9, 10 and 11 January
+ * 2027) rather than being repeated here, so moving the conference is one
  * change in one place. What this file holds is the two rules the client has to
  * apply to that answer: which day a screen should open on, and how a day reads
  * on a pill.

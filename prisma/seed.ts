@@ -15,19 +15,19 @@ function requireEnv(name: string): string {
 // copy and deliberately has no column here.
 const STANDARD_COMMITTEES = [
   { name: 'United Nations Security Council', code: 'UNSC', totalSeats: 15 },
-  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 35 },
-  { name: 'Historical Crisis Cabinet', code: 'HCC', totalSeats: 35 },
-  { name: 'International Court of Justice', code: 'ICJ', totalSeats: 35 },
-  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 35 },
-  { name: 'Special Political and Decolonization Committee', code: 'SPECPOL', totalSeats: 35 },
-  { name: 'International Criminal Police Organization', code: 'INTERPOL', totalSeats: 35 },
-  { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 35 },
-  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 35 },
-  { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 35 },
-  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },
+  { name: 'Disarmament and International Security Committee', code: 'DISEC', totalSeats: 30 },
+  { name: 'Historical Crisis Cabinet', code: 'HCC', totalSeats: 30 },
+  { name: 'International Court of Justice', code: 'ICJ', totalSeats: 30 },
+  { name: 'Economic and Social Council', code: 'ECOSOC', totalSeats: 30 },
+  { name: 'Special Political and Decolonization Committee', code: 'SPECPOL', totalSeats: 30 },
+  { name: 'International Criminal Police Organization', code: 'INTERPOL', totalSeats: 30 },
+  { name: 'United Nations Office on Drugs and Crime', code: 'UNODC', totalSeats: 30 },
+  { name: 'United Nations Human Rights Council', code: 'UNHRC', totalSeats: 30 },
+  { name: 'United Nations High Commissioner for Refugees', code: 'UNHCR', totalSeats: 30 },
+  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },
   { name: 'Federal Parliament of Nepal', code: 'FPN', totalSeats: 60 },
   { name: 'International Press', code: 'IP', totalSeats: 22 },
-  { name: 'United Nations Office for Outer Space Affairs', code: 'UNOOSA', totalSeats: 35 },
+  { name: 'United Nations Office for Outer Space Affairs', code: 'UNOOSA', totalSeats: 30 },
 ]
 
 async function main() {

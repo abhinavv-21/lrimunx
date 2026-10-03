@@ -1412,7 +1412,7 @@ describe.skipIf(!boot.ready)('API integration', () => {
         days: Array<{ day: number; date: string; checkedIn: number }>
       }
       expect(body.day).toBe(2)
-      expect(body.days.map((d) => d.date)).toEqual(['2026-11-20', '2026-11-21', '2026-11-22'])
+      expect(body.days.map((d) => d.date)).toEqual(['2027-01-09', '2027-01-10', '2027-01-11'])
       expect(body.checkedIn).toBeGreaterThanOrEqual(1)
 
       const outOfRange = await api.request('get', '/api/v1/attendance/summary?day=4', {

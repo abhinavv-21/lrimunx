@@ -205,7 +205,7 @@ All of this lives in one file: `apps/site/src/data/committees.js`.
 
 - [ ] **Confirm the seat counts.** This is the one that will bite you.
 
-  I set working defaults sized to each real body, 482 seats across 14 committees.
+  I set working defaults sized to each real body, 427 seats across 14 committees.
   **The API enforces them.** Once a committee is full, allocation is refused with
   a message naming the numbers, so whatever the site advertises becomes a hard
   cap. Fix these before you publish, not after a delegate is turned away.

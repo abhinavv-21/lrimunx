@@ -74,7 +74,7 @@ const mustFail = (result, why) =>
 test('the untouched tree passes, so a failure below means the mutation was caught', () => {
   const result = runCheck()
   assert.equal(result.code, 0, result.stderr)
-  assert.match(result.stdout, /14 committees, 482 seats, site and seed agree/)
+  assert.match(result.stdout, /14 committees, 427 seats, site and seed agree/)
 })
 
 // --- renames ---------------------------------------------------------------
@@ -112,28 +112,28 @@ test('a seat count raised on the site only is caught', () => {
   const result = runCheck({
     committees: edit(
       REAL.committees,
-      "icon: 'disec',\n    level: 'Advanced',\n    seats: 35,",
+      "icon: 'disec',\n    level: 'Advanced',\n    seats: 30,",
       "icon: 'disec',\n    level: 'Advanced',\n    seats: 80,",
     ),
   })
   mustFail(result, 'site oversold DISEC')
-  assert.match(result.stderr, /DISEC seats: site advertises 80, seed creates 35/)
+  assert.match(result.stderr, /DISEC seats: site advertises 80, seed creates 30/)
 })
 
 test('a seat count changed in the seed only is caught', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'DISEC', totalSeats: 35", "code: 'DISEC', totalSeats: 20"),
+    seed: edit(REAL.seed, "code: 'DISEC', totalSeats: 30", "code: 'DISEC', totalSeats: 20"),
   })
   mustFail(result, 'seed shrank DISEC')
-  assert.match(result.stderr, /DISEC seats: site advertises 35, seed creates 20/)
+  assert.match(result.stderr, /DISEC seats: site advertises 30, seed creates 20/)
 })
 
 test('a one-seat drift is caught, not rounded away', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 35", "code: 'ICJ', totalSeats: 34"),
+    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 30", "code: 'ICJ', totalSeats: 29"),
   })
   mustFail(result, 'off-by-one on ICJ')
-  assert.match(result.stderr, /ICJ seats: site advertises 35, seed creates 34/)
+  assert.match(result.stderr, /ICJ seats: site advertises 30, seed creates 29/)
 })
 
 // --- additions and removals ------------------------------------------------
@@ -175,7 +175,7 @@ test('a committee added to the seed only is caught', () => {
 
 test('a committee removed from the seed only is caught', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },\n", ''),
+    seed: edit(REAL.seed, "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },\n", ''),
   })
   mustFail(result, 'seed dropped UN Women')
   assert.match(result.stderr, /UNWOMEN is on the site but not in prisma\/seed\.ts/)
@@ -209,7 +209,7 @@ test('double-quoted seed entries fail loudly instead of matching nothing', () =>
 
 test('a trailing comma inside a seed entry fails loudly', () => {
   const result = runCheck({
-    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 35 }", "code: 'ICJ', totalSeats: 35, }"),
+    seed: edit(REAL.seed, "code: 'ICJ', totalSeats: 30 }", "code: 'ICJ', totalSeats: 30, }"),
   })
   mustFail(result, 'trailing comma stops the entry regex matching ICJ')
 })
@@ -218,8 +218,8 @@ test('seed properties reordered fail loudly rather than being skipped silently',
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "{ name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 }",
-      "{ code: 'UNWOMEN', name: 'UN Women', totalSeats: 35 }",
+      "{ name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 }",
+      "{ code: 'UNWOMEN', name: 'UN Women', totalSeats: 30 }",
     ),
   })
   mustFail(result, 'property order change hides UNWOMEN from the regex')
@@ -275,8 +275,8 @@ test('a commented-out seed entry is not counted as present', () => {
   const result = runCheck({
     seed: edit(
       REAL.seed,
-      "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },",
-      "  // { name: 'UN Women', code: 'UNWOMEN', totalSeats: 35 },",
+      "  { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },",
+      "  // { name: 'UN Women', code: 'UNWOMEN', totalSeats: 30 },",
     ),
   })
   mustFail(
@@ -290,10 +290,10 @@ test('a committee with zero seats is rejected', () => {
   const result = runCheck({
     committees: edit(
       REAL.committees,
-      "icon: 'unwomen',\n    level: 'Beginner',\n    seats: 35,",
+      "icon: 'unwomen',\n    level: 'Beginner',\n    seats: 30,",
       "icon: 'unwomen',\n    level: 'Beginner',\n    seats: 0,",
     ),
-    seed: edit(REAL.seed, "code: 'UNWOMEN', totalSeats: 35", "code: 'UNWOMEN', totalSeats: 0"),
+    seed: edit(REAL.seed, "code: 'UNWOMEN', totalSeats: 30", "code: 'UNWOMEN', totalSeats: 0"),
   })
   mustFail(
     result,

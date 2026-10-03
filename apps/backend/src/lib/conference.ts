@@ -14,11 +14,11 @@ import type { PrismaTransaction } from './prisma.js'
  * into the database by hand can only be wrong in one place.
  */
 
-/** 20, 21 and 22 November 2026. */
+/** 9, 10 and 11 January 2027 (Poush 25 to 27, 2083 BS). */
 export const CONFERENCE_DAYS = [
-  { day: 1, date: '2026-11-20' },
-  { day: 2, date: '2026-11-21' },
-  { day: 3, date: '2026-11-22' },
+  { day: 1, date: '2027-01-09' },
+  { day: 2, date: '2027-01-10' },
+  { day: 3, date: '2027-01-11' },
 ] as const
 
 export const FIRST_DAY = 1

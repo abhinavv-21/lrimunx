@@ -79,8 +79,8 @@ describe('the per-day attendance migration', () => {
 })
 
 describe('the conference days the migration writes into', () => {
-  it('runs on 20, 21 and 22 November 2026', () => {
-    expect(CONFERENCE_DAYS.map((d) => d.date)).toEqual(['2026-11-20', '2026-11-21', '2026-11-22'])
+  it('runs on 9, 10 and 11 January 2027', () => {
+    expect(CONFERENCE_DAYS.map((d) => d.date)).toEqual(['2027-01-09', '2027-01-10', '2027-01-11'])
     expect(CONFERENCE_DAYS.map((d) => d.day)).toEqual([1, 2, 3])
   })
 

@@ -68,8 +68,8 @@ export function initStructuredData() {
         `${COMMITTEES.length} committees and ${seats} seats over three days at LRI School, Kalanki, Kathmandu.`,
       // No time zone offset on purpose: this is an all-day, multi-day event and
       // a bare date is what schema.org asks for in that case.
-      startDate: '2026-11-20',
-      endDate: '2026-11-22',
+      startDate: '2027-01-09',
+      endDate: '2027-01-11',
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       inLanguage: 'en',
